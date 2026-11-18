@@ -1,0 +1,16 @@
+#!/bin/sh
+# rekit 启动器：优先用项目 venv，其次用 WorkBuddy 的 python 环境
+DIR=$(cd "$(dirname "$0")" && pwd)
+
+for PY in \
+  "$DIR/.venv/bin/python" \
+  "$HOME/.workbuddy/binaries/python/envs/default/bin/python" \
+  "$(command -v python3)"
+do
+  if [ -x "$PY" ]; then
+    REKIT_ROOT="$DIR" exec "$PY" "$DIR/cli.py" "$@"
+  fi
+done
+
+echo "找不到可用的 python3" >&2
+exit 1

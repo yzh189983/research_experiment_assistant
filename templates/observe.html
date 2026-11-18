@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% set active = 'exp' %}
+{% block title %}{{ exp.title }} · 只读观察{% endblock %}
+
+{% block body %}
+<div class="page-narrow">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Read-only · 只读观察</div>
+      <h1>{{ exp.title }}</h1>
+      <p class="page-sub">由 {{ owner }} 分享的实验快照。链接带签名，默认 7 天有效；本页不提供 shell 或任何写操作。</p>
+    </div>
+    <span class="badge idle"><i class="dot"></i>只读快照</span>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-head"><div class="sec-title">创新点</div><span class="tiny muted">{{ exp.status }}</span></div>
+    <div class="card-pad"><div class="profile-value">{{ exp.innovation }}</div></div>
+  </div>
+
+  {% if summary %}
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-head"><div class="sec-title">实验结论</div><span class="tiny muted">自动生成</span></div>
+    <div class="card-pad">
+      {% if summary.verdicts %}
+        <div class="profile-label">假设判定</div>
+        <div class="profile-value">
+          {% for v in summary.verdicts %}
+            {{ loop.index }}. {{ v.hypothesis or v.name or '' }}：{{ v.verdict or v.result or '' }}
+            {% if v.note %}— {{ v.note }}{% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if summary.key_findings %}
+        <div class="profile-label" style="margin-top:14px">关键发现</div>
+        <div class="tag-row">
+          {% for f in summary.key_findings %}<span class="tag">{{ f }}</span>{% endfor %}
+        </div>
+      {% endif %}
+      {% if summary.limitations %}
+        <div class="profile-label" style="margin-top:14px">局限</div>
+        <div class="profile-value">{{ summary.limitations | join('；') }}</div>
+      {% endif %}
+      {% if summary.paper_ready %}
+        <div class="profile-label" style="margin-top:14px">可直接用于论文</div>
+        <div class="profile-value">{{ summary.paper_ready }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="sec-head"><div class="sec-title">运行记录</div><span class="tiny muted">共 {{ runs | length }} 次</span></div>
+    <div class="card-pad" style="padding:0">
+      <table class="grid-table">
+        <thead><tr><th>Run</th><th>状态</th><th>Commit</th><th>开始</th><th>结束</th><th>日志摘要</th></tr></thead>
+        <tbody>
+          {% for r in runs %}
+          <tr>
+            <td class="mono">#{{ r.id }}</td>
+            <td>{{ r.status }}</td>
+            <td class="mono tiny">{{ r.git_sha[:8] if r.git_sha else '—' }}</td>
+            <td class="mono">{{ r.started_at | dt if r.started_at else '—' }}</td>
+            <td class="mono">{{ r.finished_at | dt if r.finished_at else '—' }}</td>
+            <td class="mono faint">{{ (r.log_tail or '').split('\n')[-1][:90] if r.log_tail else '' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" class="muted">还没有运行记录</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="hint" style="margin-top:16px">此页面是权限受限的快照视图：无法连接终端、无法编辑方案/代码、无法读取服务器密码或 API Key。</div>
+</div>
+{% endblock %}

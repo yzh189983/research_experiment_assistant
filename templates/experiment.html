@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% set active = 'exp' %}
+{% block title %}{{ exp.title }} · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="exp-head">
+  <div>
+    <div class="eyebrow">Experiment · 实验档案</div>
+    <h1>{{ exp.title }}</h1>
+    <div class="exp-meta">
+      <span>No. {{ '%03d' % exp.id }}</span>
+      <span id="meta-status">{{ exp.status }}</span>
+      <span id="meta-run"></span>
+    </div>
+  </div>
+  <div class="exp-actions">
+    <button class="btn sm" id="btn-mode" title="自主模式一键跑到底；副驾驶模式在阶段间等待你的确认">自主模式</button>
+    <a class="btn sm" href="{{ url_for('observe_page', token=observe_token) }}" title="只读分享链接，7 天有效">只读观察</a>
+    <button class="btn sm" id="btn-replan">重新生成方案</button>
+    <button class="btn sm" id="btn-recode">重新生成代码</button>
+    <button class="btn sm accent" id="btn-run">运行实验</button>
+  </div>
+</div>
+
+<div id="checkpoint-banner" class="checkpoint-banner" style="display:none"></div>
+
+<div class="layout">
+  <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+
+    <!-- 1 创新点 -->
+    <section class="card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num done">1</span>创新点</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn ghost sm" id="btn-swap-innov" title="重新上传一份文稿，用抽取器替换创新点">换一份文稿</button>
+          <button class="btn ghost sm" id="btn-toggle-innov">展开/收起</button>
+        </div>
+      </div>
+      <div class="plan-block" id="innov-body" style="display:none">
+        <div id="innov-text" style="white-space:pre-wrap;line-height:1.8;font-size:13.5px">{{ exp.innovation }}</div>
+        <input type="file" id="innov-file" hidden accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
+      </div>
+    </section>
+
+    <!-- 2 方案 -->
+    <section class="card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num" id="num-plan">2</span>实验方案</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="tiny faint" id="plan-hint"></span>
+          <button class="btn sm" id="btn-plan">生成方案</button>
+        </div>
+      </div>
+      <div id="plan-body"></div>
+    </section>
+
+    <!-- 3 代码 -->
+    <section class="card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num" id="num-code">3</span>实验代码</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="tiny faint" id="code-hint"></span>
+          <button class="btn sm" id="btn-save-code" style="display:none">保存修改</button>
+          <button class="btn sm" id="btn-code">生成代码</button>
+        </div>
+      </div>
+      <div id="code-body"></div>
+      <div id="lineage-panel" class="lineage-panel"></div>
+    </section>
+
+    <!-- 4 结论 -->
+    <section class="card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num" id="num-sum">4</span>实验结论</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost sm" id="btn-summarize" style="display:none">重新总结</button>
+          <button class="btn ghost sm" id="btn-export" style="display:none">导出 Markdown</button>
+          <button class="btn ghost sm" id="btn-export-docx" style="display:none">导出 Word</button>
+          <a class="btn ghost sm" id="btn-export-pdf" style="display:none" target="_blank">打印 / PDF</a>
+        </div>
+      </div>
+      <div id="summary-body"></div>
+    </section>
+
+    <!-- 5 预注册判据 -->
+    <section class="card" id="criteria-card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num" id="num-criteria">5</span>预注册判据</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="criteria-lock-badge"></span>
+          <button class="btn sm" id="btn-edit-criteria">编辑判据</button>
+        </div>
+      </div>
+      <div id="criteria-body"></div>
+    </section>
+
+    <!-- 6 过程审计 -->
+    <section class="card" id="audit-card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num">6</span>实验过程 · 审计轨迹</div>
+        <span class="eyebrow" id="audit-count"></span>
+      </div>
+      <div id="audit-body"></div>
+    </section>
+
+    <!-- 7 用量与复现配置 -->
+    <section class="card" id="usage-card">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num">7</span>成本用量 · 复现配置</div>
+      </div>
+      <div id="usage-body"></div>
+    </section>
+  </div>
+
+  <!-- 右侧监控 -->
+  <aside class="rail">
+    <div class="card">
+      <div class="mon-head">
+        <b>实时监控</b>
+        <span id="mon-status">{{ statusBadge(exp.status) | safe }}</span>
+      </div>
+      <div class="mon-body">
+        <div class="stat-row">
+          <div class="stat"><i>阶段</i><b id="st-stage">—</b></div>
+          <div class="stat"><i>已运行</i><b id="st-elapsed">—</b></div>
+          <div class="stat"><i>PID</i><b id="st-pid">—</b></div>
+          <div class="stat"><i>退出码</i><b id="st-exit">—</b></div>
+        </div>
+        <div id="gpu-box" style="display:none;margin-bottom:12px"></div>
+        <div class="charts" id="charts"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;flex-wrap:wrap">
+          <span class="tiny faint">运行日志</span>
+          <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <input type="text" id="log-search" class="log-tool" placeholder="搜索日志…" title="按关键字过滤日志行">
+            <select id="log-filter" class="log-tool" title="按类型筛选">
+              <option value="all">全部</option>
+              <option value="metric">仅指标</option>
+              <option value="error">仅错误</option>
+              <option value="stage">仅阶段</option>
+            </select>
+            <button class="btn ghost sm log-btn" id="btn-log-fold" title="折叠连续的重复行">折叠</button>
+            <button class="btn ghost sm log-btn" id="btn-scroll" title="跳到最新">↓</button>
+            <button class="btn ghost sm log-btn" id="btn-stop" style="display:none" title="停止远程进程">停止</button>
+          </div>
+        </div>
+        <div class="logbox" id="logbox"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+window.__EXP__ = {{ boot | tojson }};
+window.__HOSTS__ = {{ hosts | tojson }};
+window.__LLM_OK__ = {{ 'true' if llm_ok else 'false' }};
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/experiment.js"></script>
+{% endblock %}

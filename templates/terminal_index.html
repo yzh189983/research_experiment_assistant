@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% set active = 'terminal' %}
+{% block title %}终端 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="term-pick">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Shell · 远程终端</div>
+      <h1>打开服务器终端</h1>
+      <p class="page-sub">选一台服务器，直接在浏览器里操作。会话走 SSH，和你本地 <span class="mono">ssh</span> 进去是同一个环境。</p>
+    </div>
+  </div>
+
+  <div class="card">
+    {% if hosts %}
+      {% for h in hosts %}
+      <a class="host-card" href="/terminal/{{ h.id }}">
+        <div class="h-main">
+          <b>{{ h.name }}</b>
+          <small>{{ h.username }}@{{ h.host }}:{{ h.port }} · {{ h.workdir }}</small>
+        </div>
+        {% if h.gpu %}<span class="badge ok">GPU</span>{% endif %}
+        <span class="go">打开 →</span>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="term-empty">
+        还没有服务器。<a href="/hosts" style="color:var(--accent);text-decoration:underline">先去添加一台</a>，或者用 <span class="mono tiny">rekit host add</span>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="hint" style="margin-top:16px">
+    快捷键：<span class="mono">Ctrl+C</span> 中断 · <span class="mono">Ctrl+D</span> 退出 ·
+    <span class="mono">Ctrl+L</span> 清屏。贴长命令前先确认剪贴板内容。
+  </div>
+</div>
+{% endblock %}

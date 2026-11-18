@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% set active = 'hosts' %}
+{% block title %}服务器 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="page-narrow">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Compute · 运行服务器</div>
+      <h1>运行服务器</h1>
+      <p class="page-sub">实验会部署到这些机器上跑。代码上传到 <span class="mono">workdir/exp&lt;id&gt;_r&lt;run&gt;</span>，用独立 venv，不污染你的环境。</p>
+    </div>
+  </div>
+
+  <div class="card sec">
+    <div class="sec-head"><div class="sec-title">已添加的服务器</div>
+      <span class="eyebrow">{{ hosts|length }} 台</span></div>
+    {% if hosts %}
+    <div id="host-list">
+      {% for h in hosts %}
+      {% set runs = active_by_host.get(h.id, []) %}
+      <div class="host-card" data-id="{{ h.id }}">
+        <div class="h-main">
+          <b>{{ h.name }}</b>
+          <small>{{ h.username }}@{{ h.host }}:{{ h.port }} · {{ '密钥' if h.auth_type=='key' else '密码' }}登录</small>
+          <div class="host-runs" id="host-runs-{{ h.id }}" data-host="{{ h.id }}">
+            {% if runs %}
+              {% for r in runs %}
+              <div class="host-run">
+                <div class="host-run-top">
+                  {{ statusBadge(r.status)|safe }}
+                  <a href="/exp/{{ r.exp_id }}">#{{ r.run_id }} {{ r.exp_title }}</a>
+                  <span class="mono faint">{{ r.script }}</span>
+                  <span class="tiny faint">已运行 {{ r.elapsed }}</span>
+                  {% if r.pid %}<span class="tiny faint mono">PID {{ r.pid }}</span>{% endif %}
+                </div>
+                {% if r.progress.percent is not none %}
+                <div class="progress-line">
+                  <div class="progress-track"><div class="progress-fill" style="width:{{ r.progress.percent }}%"></div></div>
+                  <span class="tiny mono">{{ r.progress.text }} · {{ r.progress.percent }}%</span>
+                  <span class="tiny faint">来源：{{ r.progress.source }}</span>
+                </div>
+                {% else %}
+                <div class="tiny faint">{{ r.progress.text }}（来源：{{ r.progress.source }}）</div>
+                {% endif %}
+                {% if r.last_line %}<div class="host-run-log mono" title="{{ r.last_line }}">{{ r.last_line }}</div>{% endif %}
+              </div>
+              {% endfor %}
+            {% else %}
+              <div class="host-run-empty">当前无本项目启动的运行任务</div>
+            {% endif %}
+          </div>
+          <div class="host-processes" id="host-processes-{{ h.id }}" data-host="{{ h.id }}">
+            <div class="host-run-empty">正在扫描手动运行的 Python 脚本…</div>
+          </div>
+        </div>
+        {% if h.gpu %}<span class="badge ok">GPU</span>{% endif %}
+        <span class="tiny faint mono" id="test-{{ h.id }}"></span>
+        <a class="btn sm quiet" href="/terminal/{{ h.id }}">终端</a>
+        <button class="btn sm" onclick="testHost({{ h.id }})">测试连接</button>
+        <button class="btn sm danger" onclick="delHost({{ h.id }})">删除</button>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">还没有服务器。在下面填一台，30 秒搞定。</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="sec-head"><div class="sec-title">添加服务器</div></div>
+    <div class="card-pad">
+      <div class="grid2">
+        <label class="field"><span>名称</span>
+          <input type="text" id="f-name" placeholder="实验室 4090 机器"></label>
+        <label class="field"><span>主机地址</span>
+          <input type="text" id="f-host" placeholder="10.0.0.12 或 example.com"></label>
+        <label class="field"><span>端口</span>
+          <input type="number" id="f-port" value="22"></label>
+        <label class="field"><span>用户名</span>
+          <input type="text" id="f-user" placeholder="root"></label>
+        <label class="field"><span>认证方式</span>
+          <select id="f-auth">
+            <option value="password">密码</option>
+            <option value="key">SSH 私钥</option>
+          </select></label>
+        <label class="field" id="wrap-pass"><span>密码</span>
+          <input type="password" id="f-pass" placeholder="只存在本地数据库"></label>
+        <label class="field" id="wrap-key" style="display:none"><span>私钥路径</span>
+          <input type="text" id="f-key" placeholder="~/.ssh/id_rsa"></label>
+        <label class="field"><span>Python 解释器</span>
+          <input type="text" id="f-py" value="python3" placeholder="python3 或 /opt/conda/bin/python"></label>
+        <label class="field"><span>工作目录</span>
+          <input type="text" id="f-workdir" value="~/research-runs"></label>
+        <label class="field"><span>GPU</span>
+          <select id="f-gpu">
+            <option value="0">CPU / 不需要采集</option>
+            <option value="1">有 GPU（采集利用率与显存）</option>
+          </select></label>
+      </div>
+      <button class="btn primary" id="btn-add">添加服务器</button>
+      <span class="tiny faint" style="margin-left:10px">添加后点「测试连接」确认能通</span>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const authSel = document.getElementById('f-auth');
+authSel.onchange = () => {
+  const isKey = authSel.value === 'key';
+  document.getElementById('wrap-key').style.display = isKey ? '' : 'none';
+  document.getElementById('wrap-pass').style.display = isKey ? 'none' : '';
+  document.getElementById('f-pass').placeholder = isKey ? '私钥口令（无则留空）' : '只存在本地数据库';
+};
+
+document.getElementById('btn-add').onclick = async () => {
+  const d = {
+    name: document.getElementById('f-name').value.trim(),
+    host: document.getElementById('f-host').value.trim(),
+    port: Number(document.getElementById('f-port').value || 22),
+    username: document.getElementById('f-user').value.trim(),
+    auth_type: authSel.value,
+    password: document.getElementById('f-pass').value,
+    key_path: document.getElementById('f-key').value.trim(),
+    python_bin: document.getElementById('f-py').value.trim() || 'python3',
+    workdir: document.getElementById('f-workdir').value.trim() || '~/research-runs',
+    gpu: Number(document.getElementById('f-gpu').value),
+  };
+  try {
+    await api('/api/hosts', { method: 'POST', body: d });
+    toast('已添加');
+    location.reload();
+  } catch (e) { toast(e.message, true); }
+};
+
+async function testHost(id) {
+  const el = document.getElementById('test-' + id);
+  el.textContent = '连接中…';
+  try {
+    const r = await api(`/api/hosts/${id}/test`, { method: 'POST' });
+    if (r.ok) {
+      el.innerHTML = `<span style="color:var(--accent)">✓ ${esc(r.info.os || '已连通')}</span> ${r.info.has_gpu ? '· GPU ' + esc((r.info.gpu || '').split('\n')[0].slice(0, 24)) : '· 无 GPU'}`;
+    } else {
+      el.innerHTML = `<span style="color:var(--err)">✕ ${esc(r.error)}</span>`;
+    }
+  } catch (e) { el.innerHTML = `<span style="color:var(--err)">✕ ${esc(e.message)}</span>`; }
+}
+
+async function delHost(id) {
+  if (!confirm('删除这台服务器配置？')) return;
+  await api(`/api/hosts/${id}`, { method: 'DELETE' });
+  location.reload();
+}
+
+function renderHostRuns(runs) {
+  if (!runs || !runs.length) return '<div class="host-run-empty">当前无本项目启动的运行任务</div>';
+  return runs.map(r => {
+    const p = r.progress || {};
+    const pid = r.pid ? `<span class="tiny faint mono">PID ${esc(r.pid)}</span>` : '';
+    const progress = (p.percent === null || p.percent === undefined)
+      ? `<div class="tiny faint">${esc(p.text || '等待脚本输出 step 信息')}（来源：${esc(p.source || '阶段')}）</div>`
+      : `<div class="progress-line"><div class="progress-track"><div class="progress-fill" style="width:${Number(p.percent)}%"></div></div><span class="tiny mono">${esc(p.text)} · ${p.percent}%</span><span class="tiny faint">来源：${esc(p.source || '日志')}</span></div>`;
+    const log = r.last_line
+      ? `<div class="host-run-log mono" title="${esc(r.last_line)}">${esc(r.last_line)}</div>` : '';
+    return `<div class="host-run"><div class="host-run-top">${statusBadge(r.status)}<a href="/exp/${r.exp_id}">#${r.run_id} ${esc(r.exp_title)}</a><span class="mono faint">${esc(r.script)}</span><span class="tiny faint">已运行 ${esc(r.elapsed)}</span>${pid}</div>${progress}${log}</div>`;
+  }).join('');
+}
+
+async function refreshHostActivity() {
+  try {
+    const data = await api('/api/hosts/activity');
+    const hosts = data.hosts || {};
+    document.querySelectorAll('.host-runs').forEach(el => {
+      el.innerHTML = renderHostRuns(hosts[el.dataset.host] || []);
+    });
+  } catch (e) { /* 轮询失败不影响页面其他操作 */ }
+}
+
+function renderHostProcesses(procs, error) {
+  const head = '<div class="proc-head">手动运行的 Python 脚本 <span class="tiny faint">SSH ps 扫描 · 每 10 秒</span></div>';
+  if (error) return head + `<div class="tiny" style="color:var(--err)">扫描失败：${esc(error)}</div>`;
+  if (!procs || !procs.length) return head + '<div class="host-run-empty">未发现手动运行的 Python 脚本</div>';
+  return head + procs.map(p => `
+    <div class="proc-run">
+      <div class="host-run-top">
+        <span class="badge warn"><i class="dot"></i>手动</span>
+        <span class="tiny faint mono">PID ${esc(p.pid)}${p.ppid ? ' · 父进程 ' + esc(p.ppid) : ''}</span>
+        <span class="mono accent-text">${esc(p.script)}</span>
+        <span class="tiny faint">已运行 ${esc(p.elapsed)}</span>
+        <span class="tiny faint">CPU ${esc(p.cpu)} · 内存 ${esc(p.mem)}</span>
+      </div>
+      <div class="host-run-log mono" title="${esc(p.command)}">${esc(p.command)}</div>
+      <div class="tiny faint" style="margin-top:3px">进度：${esc((p.progress || {}).text || '未知')}（手动任务未登记到项目，无法读取 step）</div>
+    </div>`).join('');
+}
+
+let procRefreshing = false;
+async function refreshHostProcesses() {
+  if (procRefreshing) return;
+  procRefreshing = true;
+  const els = Array.from(document.querySelectorAll('.host-processes'));
+  await Promise.all(els.map(async el => {
+    try {
+      const r = await api(`/api/hosts/${el.dataset.host}/processes`);
+      el.innerHTML = renderHostProcesses(r.processes, r.error);
+    } catch (e) {
+      el.innerHTML = renderHostProcesses([], e.message);
+    }
+  }));
+  procRefreshing = false;
+}
+
+refreshHostActivity();
+setInterval(refreshHostActivity, 5000);
+refreshHostProcesses();
+setInterval(refreshHostProcesses, 10000);
+</script>
+{% endblock %}

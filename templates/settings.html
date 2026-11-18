@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% set active = 'settings' %}
+{% block title %}设置 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="page-narrow">
+  <div class="page-head">
+    <div>
+      <div class="eyebrow">Configuration · 设置</div>
+      <h1>设置</h1>
+      <p class="page-sub">配置按账号隔离，你改的 Key 只对你自己生效，存在 <span class="mono">data/users/&lt;你的id&gt;/config.json</span>，不用动代码。</p>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">大模型</div>
+        <span class="badge {{ 'ok' if has_key else 'err' }}">{{ '已配置' if has_key else '未配置' }}</span></div>
+      <div class="card-pad">
+        <label class="field"><span>接口地址（OpenAI 兼容）</span>
+          <input type="text" id="s-url" value="{{ cfg.llm.base_url }}"></label>
+        <div class="mono-list">
+          <div><span>智谱</span><code>https://open.bigmodel.cn/api/paas/v4</code></div>
+          <div><span>DeepSeek</span><code>https://api.deepseek.com/v1</code></div>
+          <div><span>Qwen</span><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code></div>
+        </div>
+        <label class="field"><span>模型名</span>
+          <input type="text" id="s-model" value="{{ cfg.llm.model }}"></label>
+        <label class="field"><span>API Key</span>
+          <input type="password" id="s-key" placeholder="{{ api_key_masked or '填写你的 API Key' }}"></label>
+        <div class="hint" style="margin:-8px 0 12px">留空则保持原值不变。Key 只存在本机、仅对你这个账号生效。</div>
+        <label class="field"><span>温度</span>
+          <input type="number" id="s-temp" step="0.05" min="0" max="2" value="{{ cfg.llm.temperature }}"></label>
+        <div style="display:flex;gap:10px">
+          <button class="btn primary" id="btn-save">保存</button>
+          <button class="btn" id="btn-test">测试连通性</button>
+          <span class="tiny" id="test-result" style="align-self:center"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">监控</div></div>
+      <div class="card-pad">
+        <label class="field"><span>轮询间隔（秒）</span>
+          <input type="number" id="s-interval" min="1" max="60" value="{{ cfg.monitor.interval_sec }}"></label>
+        <div class="hint" style="margin:-8px 0 14px">越小越实时，但 SSH 连接会更频繁。建议 3–5 秒。</div>
+        <label class="field"><span>卡死提醒阈值（秒）</span>
+          <input type="number" id="s-stall" min="60" value="{{ cfg.monitor.stall_warn_sec }}"></label>
+        <div class="hint" style="margin:-8px 0 14px">日志超过这个时间没有增长，会在日志里提示可能卡住。</div>
+
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+          <div class="tiny muted" style="line-height:1.8">
+            <b>指标上报协议</b><br>
+            生成的代码会在训练过程中打印<br>
+            <span class="mono" style="color:var(--accent)">@@METRIC name=loss value=0.23 step=10</span><br>
+            监控端据此画曲线。你手写的代码也遵守这个格式，一样能被监控。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-grid" style="margin-top:16px">
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">命令行登录令牌</div></div>
+      <div class="card-pad">
+        <div class="hint" style="margin:0 0 12px">命令行用 <span class="mono">rekit login</span> 登录后会存令牌；也可以在这里生成后手动设置环境变量 <span class="mono">REKIT_TOKEN</span>。令牌等同于你的账号密码，别外泄。</div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="btn" id="btn-token">生成新令牌</button>
+          <code class="mono" id="token-out" style="color:var(--accent);word-break:break-all"></code>
+        </div>
+      </div>
+    </div>
+
+    {% if users %}
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">账号管理</div>
+        <span class="badge idle">{{ users|length }} 个账号</span></div>
+      <div class="card-pad">
+        <table class="mt" style="width:100%;margin-bottom:14px">
+          <thead><tr><th>用户名</th><th>角色</th><th style="width:70px"></th></tr></thead>
+          <tbody>
+          {% for u in users %}
+            <tr><td>{{ u.username }}</td><td>{{ '管理员' if u.role=='admin' else '成员' }}</td>
+              <td>{% if u.id != current_user.id %}<button class="btn sm danger" data-del-user="{{ u.id }}">删除</button>{% endif %}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="text" id="nu-name" placeholder="用户名" style="width:110px">
+          <input type="password" id="nu-pass" placeholder="密码（≥6 位）" style="width:140px">
+          <select id="nu-role" style="width:90px"><option value="member">成员</option><option value="admin">管理员</option></select>
+          <button class="btn sm accent" id="btn-add-user">添加账号</button>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btn-save').onclick = async () => {
+  const body = {
+    llm: {
+      base_url: document.getElementById('s-url').value.trim(),
+      model: document.getElementById('s-model').value.trim(),
+      api_key: document.getElementById('s-key').value.trim(),
+      temperature: Number(document.getElementById('s-temp').value),
+    },
+    monitor: {
+      interval_sec: Number(document.getElementById('s-interval').value),
+      stall_warn_sec: Number(document.getElementById('s-stall').value),
+    },
+  };
+  try {
+    const r = await api('/api/settings', { method: 'POST', body });
+    toast('已保存');
+    if (r.llm_configured) setTimeout(() => location.reload(), 600);
+  } catch (e) { toast(e.message, true); }
+};
+
+document.getElementById('btn-test').onclick = async () => {
+  const el = document.getElementById('test-result');
+  el.textContent = '测试中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/llm/test', { method: 'POST' });
+    if (r.ok) { el.textContent = '✓ 可用：' + r.reply; el.style.color = 'var(--accent)'; }
+    else { el.textContent = '✕ ' + r.error; el.style.color = 'var(--err)'; }
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+};
+
+const btnToken = document.getElementById('btn-token');
+if (btnToken) btnToken.onclick = async () => {
+  try {
+    const r = await api('/api/users/me/token', { method: 'POST' });
+    document.getElementById('token-out').textContent = r.token;
+    toast('新令牌已生成，旧令牌立即失效');
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnAddUser = document.getElementById('btn-add-user');
+if (btnAddUser) btnAddUser.onclick = async () => {
+  const body = {
+    username: document.getElementById('nu-name').value.trim(),
+    password: document.getElementById('nu-pass').value,
+    role: document.getElementById('nu-role').value,
+  };
+  try {
+    await api('/api/users', { method: 'POST', body });
+    toast('账号已创建'); location.reload();
+  } catch (e) { toast(e.message, true); }
+};
+
+document.querySelectorAll('[data-del-user]').forEach(btn => {
+  btn.onclick = async () => {
+    if (!confirm('确定删除这个账号及其全部实验数据？不可恢复。')) return;
+    try {
+      await api('/api/users/' + btn.dataset.delUser, { method: 'DELETE' });
+      toast('账号已删除'); location.reload();
+    } catch (e) { toast(e.message, true); }
+  };
+});
+</script>
+{% endblock %}

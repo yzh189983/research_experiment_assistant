@@ -1,0 +1,377 @@
+{% extends "base.html" %}
+{% set active = 'exp' %}
+{% block title %}科研实验助手{% endblock %}
+
+{% block body %}
+<div class="hero">
+  <div class="card card-pad">
+    <div class="eyebrow">Research pipeline · 研究流水线</div>
+    <h1>把创新点交给它，<br>剩下的实验它替你盯着。</h1>
+    <p class="sub">写清楚你的想法，系统会拆成实验方案、写出能跑的代码、SSH 部署到你的服务器上跑，全程盯日志和指标，跑完自动给出结论。</p>
+
+    <div class="field">
+      <div class="field-head">
+        <span>实验模板 <em class="faint">选一个快速起步，也可自定义</em></span>
+      </div>
+      <select id="template-select" style="width:100%">
+        <option value="">— 不使用模板 —</option>
+        {% for t in templates %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <span>实验标题</span>
+      <input type="text" id="new-title" placeholder="例：反事实增强的医学 VQA 幻觉检测">
+    </div>
+    <div class="field">
+      <div class="field-head">
+        <span>创新点 / 研究想法 <em class="faint">越具体，方案越准</em></span>
+        <button type="button" class="btn sm" id="btn-pick-file">从文件读取</button>
+      </div>
+      <div class="drop-wrap" id="drop-wrap">
+        <textarea id="new-innovation" rows="7" placeholder="例：现有的幻觉检测方法依赖输出置信度，但模型对自身知识边界的判断更可靠。
+我想验证：在医学 VQA 上，把反事实问题下的答案一致性（AIC）与原始的 epistemic 信号组合起来，
+能否比单一置信度更好地把幻觉样本区分出来。计划在 VQA-RAD / SLAKE 上做，指标用 AUROC 与 F1。"></textarea>
+        <div class="drop-mask">松手即可读取 · 支持 .md .txt .docx .pdf</div>
+      </div>
+      <div class="file-chip" id="file-chip" hidden>
+        <span class="mono" id="file-name"></span>
+        <span class="faint" id="file-meta"></span>
+        <button type="button" class="x" id="btn-clear-file" title="清掉文件内容">×</button>
+      </div>
+      <input type="file" id="file-input" hidden
+             accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="btn primary" id="btn-create">创建实验 →</button>
+      <button class="btn" id="btn-toggle-batch">批量参数实验</button>
+      <span class="tiny faint" id="create-hint"></span>
+    </div>
+
+    <div id="batch-panel" style="display:none;margin-top:14px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--rule)">
+      <div class="plan-label" style="margin-bottom:6px">参数矩阵（JSON，最多 50 组）</div>
+      <textarea id="batch-params" rows="3" style="width:100%;font-family:var(--mono);font-size:12px" placeholder='例：{"lr":[0.01,0.001],"batch_size":[32,64]}　→ 自动生成 4 个实验'>{"lr":[0.01,0.001],"batch_size":[32,64]}</textarea>
+      <div class="tiny faint" style="margin:6px 0 10px">每组参数会生成一个独立实验，方案里会带上本次参数；创建后可逐个生成方案并排队运行。</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="batch-prefix" placeholder="标题前缀（可选）" style="width:170px">
+        <button class="btn sm" id="btn-batch-create">批量创建</button>
+        <span class="tiny faint" id="batch-hint"></span>
+      </div>
+    </div>
+
+    {% if not llm_ok %}
+    <div style="margin-top:18px;padding:11px 13px;background:var(--warn-soft);border:1px solid #E8D5AE;border-left:2px solid var(--warn);border-radius:0" class="tiny">
+      还没有配置大模型 API Key，只能生成占位代码。<a href="/settings" style="color:var(--warn);text-decoration:underline">去设置 →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
+    {% if failed_runs %}
+    <div class="run-alert">
+      <b>⚠ 最近有 {{ failed_runs|length }} 次运行未正常完成</b>
+      <div class="tiny">点开对应实验查看日志与异常原因，必要时重新运行。</div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-title">最近运行</div>
+        <span class="eyebrow">实时状态</span>
+      </div>
+      {% if recent_runs %}
+      <div class="exp-list">
+        {% for r in recent_runs %}
+        <a class="exp-item" href="/exp/{{ r.experiment_id }}">
+          <div class="t">
+            <b>{{ r.exp_title or ('实验 #' ~ r.experiment_id) }}</b>
+            <small>run #{{ r.id }} · {{ r.started_at|timestamp }}{% if r.exit_code %} · 退出码 {{ r.exit_code }}{% endif %}</small>
+          </div>
+          {{ statusBadge(r.status) | safe }}
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty">还没有运行记录</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-title">最近的实验</div>
+        <span class="eyebrow">{{ experiments|length }} 项</span>
+      </div>
+      {% if experiments %}
+      <div class="exp-list">
+        {% for e in experiments %}
+        <a class="exp-item" href="/exp/{{ e.id }}">
+          <div class="t">
+            <b>{{ e.title }}</b>
+            <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行</small>
+          </div>
+          {{ statusBadge(e.status) | safe }}
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty">还没有实验，左边写一个创新点开始</div>
+      {% endif %}
+    </div>
+
+    {% set batch_exps = experiments | selectattr('template_id') | list %}
+    {% if batch_exps|length > 1 %}
+    <div class="card" id="batch-compare-card">
+      <div class="sec-head">
+        <div class="sec-title">批量实验对比</div>
+        <button class="btn sm" id="btn-compare">对比选中项</button>
+      </div>
+      <div class="exp-list">
+        {% for e in batch_exps[:20] %}
+        <label class="exp-item" style="cursor:pointer">
+          <input type="checkbox" class="batch-check" value="{{ e.id }}" checked>
+          <div class="t">
+            <b>{{ e.title }}</b>
+            <small>{{ e.template_id }} · {{ e.run_count }} 次运行</small>
+          </div>
+          {{ statusBadge(e.status) | safe }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="sec-head">
+        <div class="sec-title">概览</div>
+        <span class="eyebrow">at a glance</span>
+      </div>
+      <div class="stat-row plain">
+        <div class="stat"><i>实验总数</i><b>{{ stats.exp }}</b></div>
+        <div class="stat"><i>进行中</i><b>{{ stats.busy }}</b></div>
+        <div class="stat"><i>已完成</i><b>{{ stats.done }}</b></div>
+        <div class="stat"><i>服务器</i><b>{{ stats.hosts }}</b></div>
+      </div>
+      <div class="plan-block" style="padding:13px 18px">
+        <div class="plan-label" style="margin-bottom:5px">大模型</div>
+        <div class="tiny" style="color:{{ 'var(--accent)' if llm_ok else 'var(--warn)' }}">
+          {{ '已配置 · 方案与代码由 LLM 生成' if llm_ok else '未配置 · 仅生成占位方案与代码' }}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="compare-modal" class="compare-modal" style="display:none">
+  <div class="card" style="width:100%;max-width:820px;max-height:82vh;overflow:auto">
+    <div class="sec-head">
+      <div class="sec-title">批量实验对比</div>
+      <button class="btn ghost sm" id="cmp-close">关闭</button>
+    </div>
+    <div id="cmp-body" style="padding:14px 20px"></div>
+    <div style="padding:12px 20px;border-top:1px solid var(--rule);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="tiny faint">续跑服务器</span>
+      <select id="cmp-host" style="font:inherit;font-size:12px;padding:5px 8px;background:var(--surface);border:1px solid var(--rule);color:var(--ink)">
+        {% for h in hosts %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}
+      </select>
+      <button class="btn sm" id="cmp-retry">重试失败项</button>
+      <span class="tiny faint" id="cmp-hint"></span>
+    </div>
+  </div>
+</div>
+
+<div class="card card-pad">
+  <div class="eyebrow" style="margin-bottom:14px">Workflow · 一次实验的六个环节</div>
+  <div class="flow">
+    <div class="flow-step"><i>01</i> 创新点</div><span class="flow-arrow">→</span>
+    <div class="flow-step"><i>02</i> 实验方案</div><span class="flow-arrow">→</span>
+    <div class="flow-step"><i>03</i> 生成代码</div><span class="flow-arrow">→</span>
+    <div class="flow-step"><i>04</i> SSH 部署运行</div><span class="flow-arrow">→</span>
+    <div class="flow-step"><i>05</i> 实时监控</div><span class="flow-arrow">→</span>
+    <div class="flow-step"><i>06</i> 自动总结</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ta = document.getElementById('new-innovation');
+const fileInput = document.getElementById('file-input');
+const dropWrap = document.getElementById('drop-wrap');
+const fileChip = document.getElementById('file-chip');
+
+/* ---------- 从本地文件读创新点 ---------- */
+document.getElementById('btn-pick-file').onclick = () => fileInput.click();
+
+fileInput.onchange = () => {
+  if (fileInput.files[0]) loadFile(fileInput.files[0]);
+  fileInput.value = '';           // 允许连续选同一个文件
+};
+
+['dragenter', 'dragover'].forEach(ev => dropWrap.addEventListener(ev, e => {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+  dropWrap.classList.add('drag');
+}));
+['dragleave', 'dragend'].forEach(ev => dropWrap.addEventListener(ev, e => {
+  if (!dropWrap.contains(e.relatedTarget)) dropWrap.classList.remove('drag');
+}));
+dropWrap.addEventListener('drop', e => {
+  e.preventDefault();
+  dropWrap.classList.remove('drag');
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f) loadFile(f);
+});
+
+document.getElementById('btn-clear-file').onclick = () => {
+  ta.value = '';
+  fileChip.hidden = true;
+  ta.focus();
+};
+
+async function loadFile(file) {
+  if (ta.value.trim() && !confirm(`文本框里已经有内容，用「${file.name}」的内容替换？`)) return;
+  const hint = document.getElementById('create-hint');
+  hint.textContent = `读取 ${file.name}…`;
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/extract', { method: 'POST', body: fd });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || `读取失败 ${r.status}`);
+    ta.value = d.text;
+    document.getElementById('file-name').textContent = d.name;
+    document.getElementById('file-meta').textContent =
+      `${d.chars.toLocaleString()} 字 · ${(file.size / 1024).toFixed(0)} KB`;
+    fileChip.hidden = false;
+
+    // 标题还空着就用文稿首行顶上，没有就用文件名
+    const titleEl = document.getElementById('new-title');
+    if (!titleEl.value.trim()) {
+      const firstLine = d.text.split('\n').map(s => s.trim())
+        .find(s => s.length >= 4) || '';
+      const guess = firstLine.replace(/^#+\s*/, '').slice(0, 60).trim()
+        || d.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
+      titleEl.value = guess;
+    }
+    toast('已读取 ' + d.name);
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    hint.textContent = '';
+  }
+}
+
+/* ---------- 模板与批量实验 ---------- */
+const TEMPLATES = {{ templates | tojson }};
+const templateSel = document.getElementById('template-select');
+templateSel.onchange = () => {
+  const t = TEMPLATES.find(x => x.id === templateSel.value);
+  if (!t) return;
+  if (!ta.value.trim() || confirm('用模板内容替换当前创新点？')) ta.value = t.innovation;
+  const titleEl = document.getElementById('new-title');
+  if (!titleEl.value.trim()) titleEl.value = t.name;
+};
+
+document.getElementById('btn-toggle-batch').onclick = () => {
+  const p = document.getElementById('batch-panel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+};
+
+document.getElementById('btn-batch-create').onclick = async () => {
+  let params;
+  try { params = JSON.parse(document.getElementById('batch-params').value.trim() || '{}'); }
+  catch (e) { return toast('参数矩阵不是合法 JSON', true); }
+  const btn = document.getElementById('btn-batch-create');
+  const hint = document.getElementById('batch-hint');
+  btn.disabled = true; hint.textContent = '创建中…';
+  try {
+    const r = await api('/api/experiments/batch', {
+      method: 'POST',
+      body: {
+        template_id: templateSel.value,
+        innovation: ta.value.trim(),
+        params: params,
+        title_prefix: document.getElementById('batch-prefix').value.trim(),
+      }
+    });
+    toast(`已创建 ${r.count} 个实验`);
+    location.href = '/exp/' + r.ids[0];
+  } catch (e) {
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false; hint.textContent = '';
+  }
+};
+
+/* ---------- 批量实验对比 / 断点续跑 ---------- */
+let cmpIds = [];
+const cmpModal = document.getElementById('compare-modal');
+
+document.getElementById('btn-compare').onclick = async () => {
+  cmpIds = Array.from(document.querySelectorAll('.batch-check:checked')).map(x => Number(x.value));
+  if (cmpIds.length < 2) return toast('至少勾选两个实验', true);
+  cmpModal.style.display = 'flex';
+  const body = document.getElementById('cmp-body');
+  body.innerHTML = '<div class="empty">加载对比数据…</div>';
+  try {
+    const d = await api('/api/batch/compare?ids=' + cmpIds.join(','));
+    const names = d.metric_names || [];
+    const head = '<tr><th>实验</th><th>参数</th><th>状态</th>' +
+      names.map(n => `<th>${esc(n)}</th>`).join('') + '</tr>';
+    const rows = (d.rows || []).map(r => {
+      const params = Object.entries(r.params || {}).map(([k, v]) => `${k}=${v}`).join(' & ');
+      const cells = names.map(n => {
+        const m = r.metrics[n];
+        return `<td class="mono">${m ? esc(m.last ?? '—') : '—'}</td>`;
+      }).join('');
+      return `<tr><td><a href="/exp/${r.id}">${esc(r.title)}</a></td>
+        <td class="tiny">${esc(params || '—')}</td>
+        <td>${statusBadge(r.run_status || r.status)}</td>${cells}</tr>`;
+    }).join('');
+    body.innerHTML = names.length || rows
+      ? `<table class="mt"><thead>${head}</thead><tbody>${rows}</tbody></table>`
+      : '<div class="empty">这些实验还没有可比对的指标，先运行几次再看。</div>';
+  } catch (e) {
+    body.innerHTML = `<div class="empty" style="color:var(--err)">${esc(e.message)}</div>`;
+  }
+};
+
+document.getElementById('cmp-close').onclick = () => { cmpModal.style.display = 'none'; };
+cmpModal.onclick = e => { if (e.target === cmpModal) cmpModal.style.display = 'none'; };
+
+document.getElementById('cmp-retry').onclick = async () => {
+  const hostId = Number(document.getElementById('cmp-host').value);
+  if (!hostId) return toast('请先在「服务器」页添加主机', true);
+  if (!confirm('只对失败 / 失联 / 已停止且有代码的实验重新入队，确认继续？')) return;
+  const btn = document.getElementById('cmp-retry');
+  const hint = document.getElementById('cmp-hint');
+  btn.disabled = true; hint.textContent = '提交中…';
+  try {
+    const r = await api('/api/batch/retry-failed', {
+      method: 'POST', body: { ids: cmpIds, host_id: hostId }
+    });
+    toast(`已续跑 ${r.started.length} 项，跳过 ${r.skipped.length} 项`);
+    if (r.started.length) { cmpModal.style.display = 'none'; location.reload(); }
+    else hint.textContent = `跳过：${r.skipped.map(x => `#${x.id} ${x.reason}`).join('；')}`;
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; }
+};
+
+document.getElementById('btn-create').onclick = async () => {
+  const title = document.getElementById('new-title').value.trim();
+  const innovation = ta.value.trim();
+  if (innovation.length < 10) return toast('创新点至少写 10 个字', true);
+  const btn = document.getElementById('btn-create');
+  btn.disabled = true; btn.textContent = '创建中…';
+  try {
+    const r = await api('/api/experiments', {
+      method: 'POST',
+      body: { title, innovation, template_id: templateSel.value }
+    });
+    location.href = '/exp/' + r.id;
+  } catch (e) {
+    toast(e.message, true);
+    btn.disabled = false; btn.textContent = '创建实验 →';
+  }
+};
+</script>
+{% endblock %}

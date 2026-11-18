@@ -1,0 +1,12 @@
+{
+  "llm": {
+    "base_url": "https://api.deepseek.com/v1",
+    "model": "deepseek-flash",
+    "temperature": 0.35,
+    "api_key": "enc:v1:gAAAAABq_a1hYnnARI3x4uZc-HmQFVhLtR4TPHpxXZIEBTnsT4CK9SYnGtSDWhQLJaVuhsiOCW2FGwf7OBLm4s7X6XTC-WtX9PL1oqsPrHmVfGb7zatbCT23rQb2Adc8pLDAoP6RFSJE"
+  },
+  "monitor": {
+    "interval_sec": 3,
+    "stall_warn_sec": 600
+  }
+}

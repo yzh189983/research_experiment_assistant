@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% set active = 'terminal' %}
+{% block title %}{{ host.name }} · 终端{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/vendor/xterm/xterm.css">
+{% endblock %}
+
+{% block body %}
+<style>
+  /* 终端页要占满视口，覆盖全局的居中留白 */
+  .wrap{max-width:none !important; padding:0 !important; padding-bottom:0 !important}
+</style>
+
+<div class="term-page">
+  <div class="term-bar">
+    <div class="term-host">
+      <span class="term-dot wait" id="conn-dot"></span>
+      <b>{{ host.name }}</b>
+      <span class="addr">{{ host.username }}@{{ host.host }}:{{ host.port }}</span>
+    </div>
+    <div class="term-actions">
+      <span class="tiny faint" id="term-status">连接中…</span>
+      {% if read_only %}<span class="badge warn">只读观察</span>{% endif %}
+      <button class="btn" id="btn-reconnect">重连</button>
+      <button class="btn" id="btn-font-minus" title="缩小字号">A−</button>
+      <button class="btn" id="btn-font-plus" title="放大字号">A+</button>
+      <a class="btn" href="/terminal">换主机</a>
+    </div>
+  </div>
+  <div class="term-body">
+    <div id="terminal"></div>
+    <div class="term-overlay hide" id="overlay">
+      <div class="msg" id="overlay-msg"></div>
+      <button class="btn" id="btn-overlay-retry">重新连接</button>
+    </div>
+  </div>
+</div>
+
+<script>
+window.__HOST__ = {{ host | tojson }};
+window.__READ_ONLY__ = {{ 'true' if read_only else 'false' }};
+</script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/vendor/xterm/xterm.js"></script>
+<script src="/static/vendor/xterm/addon-fit.js"></script>
+<script src="/static/js/terminal.js"></script>
+{% endblock %}

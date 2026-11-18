@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>科研实验助手 rekit · 详细使用指南</title>
+<style>
+:root{
+  --paper:#FFFFFF; --bg:#F5F7FA; --text:#1A1A18; --muted:#666B78;
+  --rule:#DFE3EA; --rule-strong:#B8C0CC; --accent:#0F7A5A;
+  --blue:#2563A6; --amber:#B8771F; --red:#B3372B; --violet:#6D4AC4; --cyan:#0E8FA8;
+  --code-bg:#1E2430; --code-fg:#E6EBF2;
+  --shadow:0 18px 50px rgba(30,45,75,.10);
+  --serif:"Songti SC","STSong",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.8;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(1100px 520px at 6% -8%, rgba(15,122,90,.16), transparent 60%),
+    radial-gradient(900px 480px at 98% 4%, rgba(109,74,196,.14), transparent 60%),
+    radial-gradient(700px 420px at 50% 100%, rgba(14,143,168,.10), transparent 60%),
+    var(--bg);
+}
+.paper{
+  max-width:1100px;margin:0 auto;background:rgba(255,255,255,.95);padding:0 62px 80px;
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);
+  min-height:100vh;box-shadow:var(--shadow);position:relative;
+}
+.paper::before{content:"";position:absolute;top:0;left:-1px;right:-1px;height:5px;background:linear-gradient(90deg,var(--accent),var(--cyan),var(--violet),var(--pink,#B83E77),var(--amber))}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--rule);font-size:12px;letter-spacing:.04em;color:var(--muted);background:rgba(255,255,255,.9);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:9px;color:var(--text);font-weight:600}
+.brand-mark{width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;position:relative;display:inline-block}
+.brand-mark::after{content:"";position:absolute;inset:3px;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+.topbar nav a{color:var(--muted);text-decoration:none;margin-left:14px;padding:5px 7px;border-radius:4px;transition:.2s}
+.topbar nav a:hover{color:var(--accent);background:rgba(15,122,90,.08)}
+
+/* masthead */
+.masthead{padding:48px 0 28px;border-bottom:1px solid var(--rule);position:relative;overflow:hidden}
+.masthead::after{content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(14,143,168,.18),transparent 70%)}
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--violet);font-weight:700;margin-bottom:14px}
+.masthead h1{font-family:var(--serif);font-size:46px;line-height:1.15;font-weight:600;letter-spacing:-.02em;background:linear-gradient(92deg,#123B31,var(--accent) 42%,var(--cyan) 72%,var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.masthead .sub{font-family:var(--serif);font-size:19px;color:var(--muted);margin-top:8px;font-style:italic}
+.meta{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:22px;font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--text);font-weight:600}
+
+/* quick jump */
+.jump{margin:26px 0 0;padding:20px 24px;border:1px solid #DCE7E3;border-left:5px solid var(--accent);border-radius:4px;background:linear-gradient(135deg,#F0F9F5,#F7F4FF)}
+.jump .lbl{font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:700;margin-bottom:12px}
+.jump ol{list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:6px 28px;counter-reset:j}
+.jump li{counter-increment:j;font-size:13.5px;padding-left:26px;position:relative}
+.jump li::before{content:counter(j);position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:18px}
+.jump a{color:var(--text);text-decoration:none;border-bottom:1px dotted var(--rule-strong)}
+.jump a:hover{color:var(--accent);border-color:var(--accent)}
+
+/* section */
+section{padding-top:52px;scroll-margin-top:70px}
+.sec-head{display:flex;align-items:baseline;gap:13px;border-bottom:1px solid var(--rule);padding-bottom:11px;margin-bottom:24px}
+.sec-num{font-family:var(--mono);font-size:13px;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--cyan));padding:2px 8px;border-radius:4px}
+.sec-head h2{font-family:var(--serif);font-size:27px;font-weight:600;letter-spacing:-.01em}
+.sec-head .en{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:auto}
+.lead{font-family:var(--serif);font-size:16.5px;color:#33322E;max-width:780px;margin-bottom:20px}
+h3.sub-h{font-size:17px;font-weight:600;margin:26px 0 10px;padding-left:11px;border-left:3px solid var(--cyan)}
+p.txt{font-size:14.5px;color:#33322E;margin:10px 0}
+ul.bullets,ol.steps{margin:10px 0 10px 4px;list-style:none}
+ul.bullets li,ol.steps li{font-size:14px;color:#33322E;padding:6px 0 6px 24px;position:relative}
+ul.bullets li::before{content:"";position:absolute;left:5px;top:14px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+ol.steps{counter-reset:s}
+ol.steps li{counter-increment:s;padding-left:34px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:7px;width:21px;height:21px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;text-align:center;line-height:21px}
+
+/* inline code */
+code{font-family:var(--mono);font-size:12.5px;color:var(--accent);background:#EFF8F4;padding:1px 6px;border-radius:3px}
+kbd{font-family:var(--mono);font-size:11.5px;color:#33322E;border:1px solid var(--rule-strong);border-bottom-width:2px;border-radius:4px;padding:1px 6px;background:#fff}
+
+/* code block */
+.code{background:var(--code-bg);color:var(--code-fg);border-radius:7px;padding:16px 20px;margin:14px 0;position:relative;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.7;box-shadow:0 10px 28px rgba(20,30,50,.18)}
+.code .cap{position:absolute;right:12px;top:8px;font-size:10px;color:#8A97AB;letter-spacing:.08em;text-transform:uppercase}
+.code pre{white-space:pre;font-family:inherit}
+.code .cm{color:#7C8BA3}
+.code .kw{color:#7FD1B9}
+.code .st{color:#E8C07D}
+.code .pm{color:#9FC7F0}
+
+/* callouts */
+.note-box{padding:16px 20px;margin:16px 0;border-radius:0 6px 6px 0;border-left:5px solid var(--blue);background:linear-gradient(135deg,#F3F8FF,#F7F4FF)}
+.note-box .lbl{font-size:12px;letter-spacing:.1em;color:var(--blue);font-weight:700;margin-bottom:6px}
+.warn-box{padding:16px 20px;margin:16px 0;border-radius:0 6px 6px 0;border-left:5px solid var(--amber);background:linear-gradient(135deg,#FFF9EF,#FFFDF7)}
+.warn-box .lbl{font-size:12px;letter-spacing:.1em;color:var(--amber);font-weight:700;margin-bottom:6px}
+.tip-box{padding:16px 20px;margin:16px 0;border-radius:0 6px 6px 0;border-left:5px solid var(--accent);background:linear-gradient(135deg,#F0F9F5,#FBFFFD)}
+.tip-box .lbl{font-size:12px;letter-spacing:.1em;color:var(--accent);font-weight:700;margin-bottom:6px}
+.note-box p,.warn-box p,.tip-box p{font-size:13.5px;color:#33322E}
+
+/* three-line table */
+table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px}
+caption{text-align:left;font-size:12px;color:var(--muted);margin-bottom:9px;font-style:italic}
+thead th{border-top:1.5px solid var(--text);border-bottom:1px solid var(--text);padding:9px 11px;text-align:left;font-weight:600}
+tbody td{border-bottom:1px solid var(--rule);padding:10px 11px;vertical-align:top;color:#33322E}
+tbody tr:last-child td{border-bottom:1.5px solid var(--text)}
+
+/* cards grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:16px 0}
+.mini-card{border:1px solid var(--rule);border-radius:6px;padding:16px 18px;background:linear-gradient(160deg,#fff,#FCFDFE);transition:transform .25s,box-shadow .25s}
+.mini-card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(30,60,90,.08)}
+.mini-card h4{font-size:14px;font-weight:600;margin-bottom:5px;color:var(--accent)}
+.mini-card p{font-size:12.5px;color:var(--muted);line-height:1.6}
+
+/* flow steps */
+.flowline{display:flex;flex-wrap:wrap;gap:0;margin:16px 0}
+.flowstep{flex:1 1 0;min-width:120px;padding:14px 12px 14px 0;position:relative;transition:transform .3s}
+.flowstep:hover{transform:translateY(-4px)}
+.flowstep::after{content:"→";position:absolute;right:4px;top:20px;color:var(--cyan);font-size:16px}
+.flowstep:last-child::after{display:none}
+.flowstep .num{font-family:var(--mono);font-size:11px;color:#fff;background:var(--accent);padding:1px 6px;border-radius:3px;font-weight:700}
+.flowstep h4{font-size:13.5px;font-weight:600;margin:5px 0 3px}
+.flowstep p{font-size:11.5px;color:var(--muted);line-height:1.5}
+
+/* FAQ */
+.faq{margin:14px 0}
+details{border:1px solid var(--rule);border-radius:6px;margin-bottom:9px;background:#fff;overflow:hidden}
+summary{cursor:pointer;padding:13px 18px;font-size:14px;font-weight:600;list-style:none;position:relative;padding-left:40px;transition:background .2s}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";position:absolute;left:16px;color:var(--accent);font-weight:700;font-size:18px;line-height:1}
+details[open] summary{background:#F0F9F5}
+details[open] summary::before{content:"−"}
+.faq-body{padding:4px 18px 16px 40px;font-size:13.5px;color:#33322E;border-top:1px dotted var(--rule)}
+.faq-body p{margin:8px 0}
+
+/* footer */
+.foot{margin-top:60px;padding-top:18px;border-top:2px solid var(--text);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;color:var(--muted)}
+#toTop{position:fixed;right:24px;bottom:24px;width:42px;height:42px;border:none;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:18px;cursor:pointer;box-shadow:0 10px 24px rgba(30,50,90,.25);opacity:0;transform:translateY(12px);transition:.3s;z-index:30}
+#toTop.show{opacity:1;transform:none}
+#toTop:hover{transform:translateY(-3px)}
+
+@media (max-width:760px){
+  .paper{padding:0 20px 60px}
+  .masthead h1{font-size:34px}
+  .jump ol,.grid2,.grid3{grid-template-columns:1fr}
+  .topbar nav{display:none}
+  .sec-head .en{display:none}
+  .flowstep{flex-basis:100%;border-bottom:1px solid var(--rule)}
+  .flowstep::after{display:none}
+}
+@media print{
+  body{background:#fff;font-size:11pt}
+  .paper{border:none;padding:0;max-width:none;box-shadow:none}
+  .topbar nav,#toTop{display:none}
+  details{break-inside:avoid}
+  details .faq-body{display:block!important}
+  section{page-break-inside:avoid}
+  .code,.mini-card,table{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="paper">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark"></span>科研实验助手 <span style="color:var(--muted);font-weight:400">/ 使用指南</span></div>
+    <nav>
+      <a href="#start">快速开始</a>
+      <a href="#account">账号</a>
+      <a href="#create">建实验</a>
+      <a href="#detail">实验页</a>
+      <a href="#setup">配置</a>
+      <a href="#run">运行监控</a>
+      <a href="#advanced">进阶</a>
+      <a href="#cli">命令行</a>
+      <a href="#faq">FAQ</a>
+      <a href="项目介绍.html" style="color:var(--accent);font-weight:600">← 项目介绍</a>
+    </nav>
+  </div>
+
+  <header class="masthead">
+    <div class="eyebrow">User Guide · v1.1 · 2026-11</div>
+    <h1>详细使用指南</h1>
+    <div class="sub">从写下创新点，到拿到一份可提交的实验报告。</div>
+    <div class="meta">
+      <span><b>适合</b>　第一次使用 / 想用全功能的科研者</span>
+      <span><b>入口</b>　https://127.0.0.1:7788</span>
+      <span><b>命令行</b>　./rekit</span>
+      <span><b>前置</b>　Python 3.9+ · 一台 SSH 服务器 · 一个 LLM API Key</span>
+    </div>
+  </header>
+
+  <div class="jump">
+    <div class="lbl">快速跳转 / CONTENTS</div>
+    <ol>
+      <li><a href="#start">安装与启动（5 分钟）</a></li>
+      <li><a href="#account">登录、注册与个人主页</a></li>
+      <li><a href="#setup">先配两样：大模型与服务器</a></li>
+      <li><a href="#create">创建第一个实验</a></li>
+      <li><a href="#detail">实验详情页全解</a></li>
+      <li><a href="#run">运行与实时监控</a></li>
+      <li><a href="#advanced">进阶：核验 / 副驾驶 / 判据 / 谱系</a></li>
+      <li><a href="#report">导出报告与批量实验</a></li>
+      <li><a href="#cli">命令行完全指南</a></li>
+      <li><a href="#faq">常见问题排查</a></li>
+    </ol>
+  </div>
+
+  <!-- 1 快速开始 -->
+  <section id="start">
+    <div class="sec-head"><span class="sec-num">01</span><h2>安装与启动</h2><span class="en">Quick Start</span></div>
+    <p class="lead">三步跑起来。默认绑定本机 <code>127.0.0.1:7788</code> 并启用 HTTPS，数据在 <code>data/</code> 目录。</p>
+
+    <h3 class="sub-h">1. 安装依赖</h3>
+    <div class="code"><span class="cap">bash</span><pre>cd 科研实验助手
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt</pre></div>
+
+    <h3 class="sub-h">2. 启动服务</h3>
+    <div class="code"><span class="cap">bash</span><pre>.venv/bin/python app.py
+<span class="cm"># 或者用启动器（服务没起会自动拉起）</span>
+./rekit server start
+./rekit server          <span class="cm"># 查看状态</span></pre></div>
+
+    <h3 class="sub-h">3. 打开页面并登录</h3>
+    <p class="txt">浏览器访问 <code>https://127.0.0.1:7788</code>。自签证书会提示不安全，点「继续访问」即可。首次启动自动创建管理员 <code>admin</code>，初始密码用下面的命令查看：</p>
+    <div class="code"><span class="cap">bash</span><pre>./rekit admin-password</pre></div>
+
+    <div class="warn-box">
+      <div class="lbl">注意 / NOTE</div>
+      <p>网页终端等价于服务器 shell。默认只监听 <code>127.0.0.1</code>；若要给局域网他人使用，请先替换正式证书、做好网络隔离，不要把自签证书的实例直接暴露公网。</p>
+    </div>
+
+    <h3 class="sub-h">整体流程一览</h3>
+    <div class="flowline">
+      <div class="flowstep"><span class="num">1</span><h4>创新点</h4><p>手写或拖入文稿</p></div>
+      <div class="flowstep"><span class="num">2</span><h4>实验方案</h4><p>假设 / 指标 / 判据</p></div>
+      <div class="flowstep"><span class="num">3</span><h4>生成代码</h4><p>可编辑多文件</p></div>
+      <div class="flowstep"><span class="num">4</span><h4>部署运行</h4><p>SSH 后台执行</p></div>
+      <div class="flowstep"><span class="num">5</span><h4>实时监控</h4><p>日志 / 曲线 / GPU</p></div>
+      <div class="flowstep"><span class="num">6</span><h4>总结与核验</h4><p>报告一键导出</p></div>
+    </div>
+  </section>
+
+  <!-- 2 账号 -->
+  <section id="account">
+    <div class="sec-head"><span class="sec-num">02</span><h2>账号、注册与个人主页</h2><span class="en">Accounts</span></div>
+    <p class="lead">默认开启登录鉴权，实验、服务器、配置、文稿按账号隔离，互不可见。</p>
+
+    <ul class="bullets">
+      <li><b>自助注册</b>：登录页点「注册账号」创建成员账号；管理员可在「设置 → 账号管理」增删账号、改角色。</li>
+      <li><b>双通道登录</b>：浏览器用签名 Session Cookie；脚本 / CI 用 Bearer API Token（只存摘要，可随时轮换）。</li>
+      <li><b>命令行登录</b>：<code>./rekit login -u admin -p 密码</code>，令牌存到 <code>data/cli_token</code>（权限 600），之后命令免登录；也可用环境变量 <code>REKIT_TOKEN</code> 覆盖。</li>
+      <li><b>网页端拿令牌</b>：「设置 → 命令行登录令牌」生成，供多台机器或 CI 使用。</li>
+      <li><b>个人主页</b>：点顶部「个人主页」，可填姓名、单位、研究方向、技能、教育经历、邮箱与学术链接；资料按账号隔离保存。</li>
+      <li><b>修改密码</b>：「个人主页 → 账号安全」验证当前密码后修改。</li>
+    </ul>
+    <div class="tip-box">
+      <div class="lbl">提示 / TIP</div>
+      <p>命令行用 <code>./rekit whoami</code> 确认当前登录身份；<code>./rekit logout</code> 删除本地令牌。忘记密码可让管理员在账号管理里重置。</p>
+    </div>
+  </section>
+
+  <!-- 3 配置 -->
+  <section id="setup">
+    <div class="sec-head"><span class="sec-num">03</span><h2>先配两样：大模型与服务器</h2><span class="en">Setup</span></div>
+    <p class="lead">正式建实验前，建议先把 LLM 和 SSH 主机配好并测试通过。不配 LLM 也能跑，但只会生成占位方案和占位代码（仅用于验证链路）。</p>
+
+    <h3 class="sub-h">3.1 配置大模型（设置页）</h3>
+    <p class="txt">打开「设置」页，填写任意 OpenAI 兼容接口，点「测试连通性」：</p>
+    <table>
+      <caption>表 1　常见的兼容接口</caption>
+      <thead><tr><th>服务</th><th>接口地址（base_url）</th><th>模型名示例</th></tr></thead>
+      <tbody>
+        <tr><td>智谱</td><td><code>https://open.bigmodel.cn/api/paas/v4</code></td><td>glm-4-plus</td></tr>
+        <tr><td>DeepSeek</td><td><code>https://api.deepseek.com/v1</code></td><td>deepseek-chat</td></tr>
+        <tr><td>通义千问</td><td><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code></td><td>qwen-max</td></tr>
+      </tbody>
+    </table>
+    <p class="txt">填接口地址、模型名、API Key，按需调温度（默认 0.35），保存后测试。API Key 以 <code>enc:v1:</code> 加密落盘，界面只显示掩码。</p>
+    <div class="tip-box">
+      <div class="lbl">提示 / TIP</div>
+      <p>方案和代码都靠模型生成，建议选能力较强的模型。该配置按用户隔离；管理员也可在 <code>data/config.json</code> 设系统默认值。</p>
+    </div>
+
+    <h3 class="sub-h">3.2 添加 SSH 服务器（服务器页）</h3>
+    <p class="txt">打开「服务器 → 添加服务器」，逐项填写：</p>
+    <table>
+      <caption>表 2　服务器字段说明</caption>
+      <thead><tr><th>字段</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td>名称</td><td>易记的显示名，如「实验室 4090 机器」</td></tr>
+        <tr><td>主机地址 / 端口</td><td>IP 或域名，端口默认 22</td></tr>
+        <tr><td>用户名</td><td>如 root</td></tr>
+        <tr><td>认证方式</td><td>密码（仅存本地数据库，加密）或私钥路径（如 <code>~/.ssh/id_rsa</code>）</td></tr>
+        <tr><td>Python 解释器</td><td><code>python3</code> 或绝对路径 <code>/opt/conda/bin/python</code></td></tr>
+        <tr><td>工作目录</td><td>远程实验目录，默认 <code>~/research-runs</code></td></tr>
+        <tr><td>GPU</td><td>勾选后每次监控会顺带采集 <code>nvidia-smi</code></td></tr>
+      </tbody>
+    </table>
+    <p class="txt">添加后务必点卡片上的「测试连接」确认能通。服务器卡片会显示本项目启动的任务及 step 进度，并通过 SSH <code>ps</code> 扫描手动运行的 Python 脚本（PID、命令、CPU/内存、运行时长）。</p>
+  </section>
+
+  <!-- 4 创建实验 -->
+  <section id="create">
+    <div class="sec-head"><span class="sec-num">04</span><h2>创建第一个实验</h2><span class="en">Create</span></div>
+    <p class="lead">在首页写创新点即可创建。创新点不用手打——支持拖拽或读取本地文稿。</p>
+
+    <h3 class="sub-h">4.1 写创新点</h3>
+    <ul class="bullets">
+      <li>直接在文本框写一段研究想法（至少 10 个字）。</li>
+      <li><b>从文件读取</b>：把 <code>.md / .txt / .tex / .csv / .docx / .pdf</code> 拖进输入框，或点「从文件读取」选择；读进来会自动填正文，标题空着时取文稿第一行。</li>
+      <li>PDF 解析需 <code>pip install pypdf</code>。</li>
+    </ul>
+
+    <h3 class="sub-h">4.2 选模板（可选）</h3>
+    <p class="txt">首页「实验模板」下拉可选：训练分类器、LoRA 微调、超参网格、消融实验。选中会填入对应创新点，可再改。在实验页「创新点」区块点「换一份文稿」也能随时替换，并自动记录审计。</p>
+
+    <h3 class="sub-h">4.3 批量参数实验（可选）</h3>
+    <p class="txt">点「批量参数实验」展开面板，用 JSON 写参数矩阵，一次生成多个实验（最多 50 组）：</p>
+    <div class="code"><span class="cap">参数矩阵</span><pre>{"lr":[0.01, 0.001], "batch_size":[32, 64]}</pre></div>
+    <p class="txt">上例会生成 4 个实验（2×2），每组参数写进各自方案。创建后可在首页「批量实验对比」勾选多个实验，查看参数与最新指标的对比表；失败项可一键「重试失败项」实现断点续跑。</p>
+
+    <div class="code"><span class="cap">bash · 命令行创建</span><pre>./rekit new -t "标题" -i @想法.md        <span class="cm"># @ 开头读文件</span>
+./rekit auto -i @想法.docx              <span class="cm"># 一条命令跑完全程</span></pre></div>
+  </section>
+
+  <!-- 5 实验详情 -->
+  <section id="detail">
+    <div class="sec-head"><span class="sec-num">05</span><h2>实验详情页全解</h2><span class="en">Experiment Page</span></div>
+    <p class="lead">详情页是主战场，从上到下分为七个区块，每个区块都对应流程的一环。</p>
+
+    <table>
+      <caption>表 3　实验详情页的七个区块</caption>
+      <thead><tr><th style="width:22%">区块</th><th>能做什么</th></tr></thead>
+      <tbody>
+        <tr><td>① 创新点</td><td>展开/收起原文；「换一份文稿」复用抽取器替换。</td></tr>
+        <tr><td>② 实验方案</td><td>核心命题、可证伪假设、数据集、指标、基线、消融、成败判据与风险；「重新生成方案」可重做。</td></tr>
+        <tr><td>③ 代码</td><td>可编辑的多文件实验代码；改动后点「保存」。遵循指标上报协议、自动检测 GPU、数据缺失时降级到合成数据。</td></tr>
+        <tr><td>④ 实验结论</td><td>假设判定、关键发现、异常、局限、下一步与论文段落；下方是「结果核验」面板。</td></tr>
+        <tr><td>⑤ 预注册判据</td><td>结构化判据编辑与锁定、变更记录、结果逐条判定。</td></tr>
+        <tr><td>⑥ 审计轨迹</td><td>方案/代码/判据/运行/总结等全部关键操作的时间线。</td></tr>
+        <tr><td>⑦ 成本用量 · 复现配置</td><td>LLM token 账本与预算；seed、Python、主机、代码 commit、pip freeze、nvidia-smi。</td></tr>
+      </tbody>
+    </table>
+
+    <h3 class="sub-h">5.1 生成方案与代码</h3>
+    <p class="txt">点顶部「重新生成方案」「重新生成代码」。生成是后台任务，进度会实时提示；带意见重做：在副驾驶模式的批注框里写，见第 7 节，或用命令行 <code>./rekit plan 3 -f "数据集再小一点"</code>。</p>
+
+    <h3 class="sub-h">5.2 结果核验（抑制幻觉）</h3>
+    <p class="txt">结论生成后自动运行核验：把报告里的数字逐条回查指标表，未找到来源的标为「待人工确认」；列出每个指标的证据来源（指标名 + step + 原始日志行号）；明确区分实测数据与推断性解读。图表中的「已核验 / 待人工确认」标记即来自这里。</p>
+
+    <div class="warn-box">
+      <div class="lbl">诚信提醒 / NOTE</div>
+      <p>核验能显著降低虚构结论，但不能替代人工判断。写进论文前，请亲自复核关键数字与证据来源。</p>
+    </div>
+  </section>
+
+  <!-- 6 运行监控 -->
+  <section id="run">
+    <div class="sec-head"><span class="sec-num">06</span><h2>运行与实时监控</h2><span class="en">Run & Monitor</span></div>
+
+    <h3 class="sub-h">6.1 启动运行</h3>
+    <ul class="bullets">
+      <li>点顶部「运行实验」，选择一台服务器即开始部署：SFTP 上传 → 建 venv → 装依赖（失败自动切官方源重试）→ <code>nohup</code> 后台启动。</li>
+      <li>长任务走「后台 + 退出码文件」轮询，SSH 断开也不会中断实验。</li>
+      <li>运行前自动 git commit 当前代码，SHA 写入本次运行，结果可追溯到确切代码版本。</li>
+      <li>运行前生成随机 seed 写入 <code>SEED</code> 环境变量，随 run 存档 seed / pip freeze / nvidia-smi。</li>
+    </ul>
+
+    <h3 class="sub-h">6.2 看日志与曲线</h3>
+    <p class="txt">右侧监控面板每 3 秒增量刷新：运行日志、指标曲线、GPU 状态、进程存活。日志工具条支持：</p>
+    <ul class="bullets">
+      <li><b>搜索</b>：按关键字过滤日志行；</li>
+      <li><b>类型筛选</b>：全部 / 仅指标 / 仅错误 / 仅阶段；</li>
+      <li><b>折叠</b>：把连续重复行折叠成「重复 ×N」；</li>
+      <li><b>↓</b> 跳到最新，<b>停止</b> 发送停止信号。</li>
+    </ul>
+    <p class="txt">日志卡住不增长会提醒；进程消失且没写退出码会判失败。服务重启后会自动接管正在跑的任务（按心跳与进程存活恢复，僵尸任务自动巡检处理），刷新页面也能补齐历史日志与指标。</p>
+
+    <h3 class="sub-h">6.3 指标上报协议</h3>
+    <p class="txt">生成的代码会自动遵守；你自己写的代码按这个格式打印，一样能被监控和画图：</p>
+    <div class="code"><span class="cap">python</span><pre><span class="kw">print</span>(<span class="st">"@@METRIC name=loss value=0.234 step=10"</span>, flush=<span class="kw">True</span>)
+<span class="kw">print</span>(<span class="st">"@@METRIC name=accuracy value=0.91 step=10"</span>, flush=<span class="kw">True</span>)</pre></div>
+    <p class="txt">也识别常见的 <code>loss: 0.23</code> / <code>acc=0.9</code> 写法做兜底。指标名建议用英文小写下划线，方便画曲线。</p>
+  </section>
+
+  <!-- 7 进阶 -->
+  <section id="advanced">
+    <div class="sec-head"><span class="sec-num">07</span><h2>进阶功能</h2><span class="en">Advanced</span></div>
+    <p class="lead">这些功能让实验更可信、更可控，也是本工具相对同类产品的差异点。</p>
+
+    <div class="grid2">
+      <div class="mini-card"><h4>副驾驶 checkpoint</h4><p>右上角切「副驾驶模式」，方案 / 代码 / 运行各阶段会暂停等待确认，可写批注回灌给下一阶段。适合想要掌控每一步的场景。</p></div>
+      <div class="mini-card"><h4>预注册与判据锁定</h4><p>在实验开始前锁定结构化判据（指标 + 运算符 + 阈值）；锁定后修改必须写原因并留历史。总结时按锁定判据逐条判定通过/未通过。</p></div>
+      <div class="mini-card"><h4>Git 快照谱系</h4><p>每次运行锁定一个 commit。可查看任意 run 的代码 Diff、恢复历史快照、从某次快照 Fork 出新实验，形成真实谱系。</p></div>
+      <div class="mini-card"><h4>审计轨迹</h4><p>谁在何时改了方案、代码、判据、创新点、模式，全部不可变记录。报告导出自动附一段实验过程摘要，防 p-hacking。</p></div>
+      <div class="mini-card"><h4>成本与用量</h4><p>记录每次 LLM 调用的 token 与成本，在详情页看账本并设预算，超预算告警。<code>/api/usage</code> 提供全局汇总。</p></div>
+      <div class="mini-card"><h4>只读观察分享</h4><p>详情页「只读观察」生成 7 天有效链接，他人能看实验与报告但拿不到终端 shell；终端也支持只读观察模式。</p></div>
+    </div>
+
+    <h3 class="sub-h">7.1 副驾驶模式怎么用</h3>
+    <ol class="steps">
+      <li>在实验页右上角点「自主模式」切到「副驾驶模式」。</li>
+      <li>页面顶部出现「待确认 · 方案阶段」提示条，写一句批注（如「重点看消融、指标换成 AUROC」）或直接确认。</li>
+      <li>确认后进入下一阶段，再次暂停于代码阶段、运行阶段；批注会作为 feedback 传给对应生成环节。</li>
+      <li>切回「自主模式」则取消暂停，一键跑到底。</li>
+    </ol>
+
+    <h3 class="sub-h">7.2 判据锁定怎么用</h3>
+    <ol class="steps">
+      <li>在「预注册判据」区块点「编辑判据」，按行填：指标名、运算符（≥/&gt;/≤/&lt;/==）、阈值、取末值或最优。</li>
+      <li>点「保存并锁定」。实验开始后再改会要求填写变更原因，旧判据与原因写入历史。</li>
+      <li>实验结束后，结论和报告里会按锁定判据逐条显示判定结果。</li>
+    </ol>
+  </section>
+
+  <!-- 8 报告与批量 -->
+  <section id="report">
+    <div class="sec-head"><span class="sec-num">08</span><h2>导出报告与批量对比</h2><span class="en">Report & Batch</span></div>
+
+    <h3 class="sub-h">8.1 三种导出格式</h3>
+    <p class="txt">在「实验结论」区块右上角有三个按钮，均包含结论、结果核验、判据判定、审计摘要与复现配置：</p>
+    <ul class="bullets">
+      <li><b>导出 Markdown</b>：下载 <code>.md</code> 文件。</li>
+      <li><b>导出 Word</b>：论文式 <code>.docx</code>（三线表、分节标题）。</li>
+      <li><b>打印 / PDF</b>：打开打印页，用浏览器「另存为 PDF」。</li>
+    </ul>
+    <div class="code"><span class="cap">bash · 命令行导出</span><pre>./rekit report 3                <span class="cm"># 打印结论</span>
+./rekit report 3 --markdown 报告.md   <span class="cm"># 导出 Markdown</span></pre></div>
+
+    <h3 class="sub-h">8.2 批量对比与断点续跑</h3>
+    <p class="txt">首页「批量实验对比」卡片列出所有来自模板的批量实验，勾选多个点「对比选中项」，按参数组合对照各自最新指标；弹窗里选服务器点「重试失败项」，只会重新入队那些失败/失联/已停止且已有代码的实验。</p>
+  </section>
+
+  <!-- 9 CLI -->
+  <section id="cli">
+    <div class="sec-head"><span class="sec-num">09</span><h2>命令行完全指南</h2><span class="en">CLI</span></div>
+    <p class="lead">所有网页操作几乎都能在终端完成。服务没起会自动在后台拉起；输出到管道时自动去掉颜色和动态刷新，方便写脚本。</p>
+
+    <h3 class="sub-h">9.1 鉴权与体检</h3>
+    <div class="code"><span class="cap">bash</span><pre>./rekit                       <span class="cm"># 概览：服务 / 服务器 / 实验</span>
+./rekit doctor                <span class="cm"># 体检：依赖 / 服务 / 大模型 / 服务器</span>
+./rekit doctor --fix          <span class="cm"># 自动补装缺失依赖</span>
+./rekit login -u admin -p 密码
+./rekit whoami / token / logout
+./rekit admin-password        <span class="cm"># 查看 admin 初始密码</span></pre></div>
+
+    <h3 class="sub-h">9.2 实验操作</h3>
+    <div class="code"><span class="cap">bash</span><pre>./rekit new -t "标题" -i @想法.md    <span class="cm"># 建实验</span>
+./rekit plan 3                    <span class="cm"># 生成方案</span>
+./rekit code 3                    <span class="cm"># 生成代码</span>
+./rekit run 3 -H 2                <span class="cm"># 部署并实时跟随日志</span>
+./rekit run 3 -H 2 --detach       <span class="cm"># 只提交，立即返回</span>
+./rekit logs 3 -f                 <span class="cm"># 跟随日志</span>
+./rekit watch 3                   <span class="cm"># 实时指标曲线（终端 sparkline）</span>
+./rekit report 3                  <span class="cm"># 结论</span>
+./rekit stop 3 / show 3 / list / open 3</pre></div>
+
+    <h3 class="sub-h">9.3 服务器与配置</h3>
+    <div class="code"><span class="cap">bash</span><pre>./rekit host list
+./rekit host add -a 1.2.3.4 -u root -p 22 --gpu
+./rekit host add -a 1.2.3.4 -u root --key ~/.ssh/id_rsa
+./rekit host test / host rm 3
+./rekit config / config --edit / config --set-key sk-xxx
+./rekit server / server restart / server logs -f</pre></div>
+
+    <div class="tip-box">
+      <div class="lbl">提示 / TIP</div>
+      <p>想在任意目录敲 <code>rekit</code>：<code>ln -s "$PWD/rekit" /usr/local/bin/rekit</code>。</p>
+    </div>
+  </section>
+
+  <!-- 10 FAQ -->
+  <section id="faq">
+    <div class="sec-head"><span class="sec-num">10</span><h2>常见问题排查</h2><span class="en">FAQ</span></div>
+    <p class="lead">按现象查找原因与处理办法。</p>
+
+    <div class="faq">
+      <details open>
+        <summary>浏览器提示证书不安全，页面打不开？</summary>
+        <div class="faq-body"><p>本地用的是自签证书，浏览器会告警，点「高级 → 继续访问」即可。若想消除告警，可购买/签发正式证书替换 <code>data/certs/</code> 下的文件，并把域名加入 hosts。</p></div>
+      </details>
+      <details>
+        <summary>测试连接失败 / SSH 连不上？</summary>
+        <div class="faq-body"><p>先确认主机地址、端口、用户名、密码或私钥正确；服务器需开启 SSH 密码认证或对应公钥。确认防火墙放行。网络可用时用 <code>./rekit host test</code> 复测；凭据修改后需重新保存主机。若报认证失败，多半是密码/私钥不对，而不是服务问题。</p></div>
+      </details>
+      <details>
+        <summary>点运行后一直停在「上传中 / 配置环境」？</summary>
+        <div class="faq-body"><p>看右侧日志尾部。常见原因：远程 Python 路径不对、pip 装依赖慢、磁盘空间不足。装依赖默认走清华镜像，失败会回退官方源。服务重启会自动接管还在跑的任务，不会一直卡住。</p></div>
+      </details>
+      <details>
+        <summary>远程中文文件名显示成转义字符？</summary>
+        <div class="faq-body"><p>这是远端 <code>LANG</code> 为空导致的。网页终端连接时会探测并选择 UTF-8 locale 自动注入（sshd 不支持 AcceptEnv 时退回会话内 export），一般无需手动处理。</p></div>
+      </details>
+      <details>
+        <summary>实验失败了，怎么排查？</summary>
+        <div class="faq-body"><p>打开实验页看监控面板的日志（可筛选「仅错误」）与退出码。常见：OOM（exit 137）、CUDA 显存不足、缺依赖、数据路径错误。修好后可重跑；批量实验用「重试失败项」只重跑失败组。代码有版本快照，可在 Git 谱系里恢复历史版本。</p></div>
+      </details>
+      <details>
+        <summary>结论里有我不放心的数据怎么办？</summary>
+        <div class="faq-body"><p>看「结果核验」面板：标为「待人工确认」的数字在指标表里没有来源，请重点复核；每条实测值都能点开看证据来源（step 与日志行号）。核验只做机器检查，最终以你的人工判断为准。</p></div>
+      </details>
+      <details>
+        <summary>忘了 admin 密码 / 命令提示未登录？</summary>
+        <div class="faq-body"><p>初始密码用 <code>./rekit admin-password</code> 查看；若改过请以新密码为准。命令行未登录用 <code>./rekit login -u 用户名 -p 密码</code>；网页直接用账号密码登录。令牌失效可 <code>./rekit token</code> 重新生成。</p></div>
+      </details>
+      <details>
+        <summary>数据会上传到云端吗？</summary>
+        <div class="faq-body"><p>不会。所有数据（数据库、密钥、文稿、代码、指标）都保存在本机 <code>data/</code> 目录。只有访问 LLM 接口和连接你自己的 SSH 服务器时才会发出必要请求。凭据字段均加密落盘，日志与错误响应自动脱敏。</p></div>
+      </details>
+      <details>
+        <summary>如何运行自测？</summary>
+        <div class="faq-body"><p>单元测试零依赖：<code>python -m unittest discover -s tests -p 'test_*.py'</code>（35 项，临时 data 目录隔离，不碰真实数据）。端到端测试需先起服务和 <code>tests/fake_ssh_server.py</code>，再跑 <code>tests/e2e_test.py</code>。</p></div>
+      </details>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <span>科研实验助手 rekit · 详细使用指南 · v1.1　<a href="项目介绍.html" style="color:var(--accent)">← 返回项目介绍</a></span>
+    <span class="mono">入口 https://127.0.0.1:7788 · CLI ./rekit · 数据全部本地</span>
+  </footer>
+</div>
+
+<button id="toTop" title="回到顶部">↑</button>
+
+<script>
+  var t = document.getElementById('toTop');
+  window.addEventListener('scroll', function () {
+    if (window.scrollY > 400) t.classList.add('show'); else t.classList.remove('show');
+  });
+  t.onclick = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+</script>
+</body>
+</html>

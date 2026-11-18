@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>科研实验助手 rekit · 项目介绍</title>
+<style>
+:root{
+  --paper:#FFFFFF; --bg:#F5F7FA; --text:#1A1A18; --muted:#666B78;
+  --rule:#DFE3EA; --rule-strong:#B8C0CC; --accent:#0F7A5A;
+  --blue:#2563A6; --amber:#B8771F; --red:#B3372B; --violet:#6D4AC4; --cyan:#0E8FA8; --pink:#B83E77;
+  --shadow:0 18px 50px rgba(30,45,75,.10);
+  --serif:"Source Serif 4","Songti SC","STSong",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+  background:
+    radial-gradient(1100px 520px at 8% -8%, rgba(15,122,90,.16), transparent 60%),
+    radial-gradient(900px 480px at 96% 4%, rgba(109,74,196,.14), transparent 60%),
+    radial-gradient(700px 420px at 50% 100%, rgba(14,143,168,.10), transparent 60%),
+    var(--bg);
+}
+.paper{
+  max-width:1040px;margin:0 auto;background:rgba(255,255,255,.93);padding:0 72px 80px;
+  border-left:1px solid var(--rule);border-right:1px solid var(--rule);
+  min-height:100vh;box-shadow:var(--shadow);position:relative;
+}
+.paper::before{content:"";position:absolute;top:0;left:-1px;right:-1px;height:5px;background:linear-gradient(90deg,var(--accent),var(--cyan),var(--violet),var(--pink),var(--amber))}
+
+/* topbar */
+.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid var(--rule);font-size:12px;letter-spacing:.04em;color:var(--muted);background:rgba(255,255,255,.88);backdrop-filter:blur(10px)}
+.brand{display:flex;align-items:center;gap:9px;color:var(--text);font-weight:600}
+.brand-mark{width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;display:inline-block;position:relative;animation:markPulse 3s ease-in-out infinite}
+.brand-mark::after{content:"";position:absolute;inset:3px;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+@keyframes markPulse{0%,100%{box-shadow:0 0 0 0 rgba(15,122,90,.25)}50%{box-shadow:0 0 0 6px rgba(15,122,90,0)}}
+.topbar nav a{color:var(--muted);text-decoration:none;margin-left:16px;padding:5px 7px;border-radius:4px;transition:.2s}
+.topbar nav a:hover{color:var(--accent);background:rgba(15,122,90,.08)}
+.topbar nav a.on{color:var(--accent);background:rgba(15,122,90,.10);font-weight:600}
+
+/* masthead */
+.masthead{padding:52px 0 32px;border-bottom:1px solid var(--rule);position:relative;overflow:hidden}
+.masthead::after{content:"";position:absolute;right:-70px;top:-70px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(14,143,168,.18),rgba(109,74,196,.06) 58%,transparent 70%);animation:floatOrb 9s ease-in-out infinite}
+@keyframes floatOrb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-18px,22px) scale(1.08)}}
+.eyebrow{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--violet);font-weight:700;margin-bottom:16px}
+.masthead h1{font-family:var(--serif);font-size:50px;line-height:1.15;font-weight:600;letter-spacing:-.02em;background:linear-gradient(92deg,#123B31 0%,var(--accent) 42%,var(--cyan) 72%,var(--violet) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.masthead .sub{font-family:var(--serif);font-size:20px;color:var(--muted);margin-top:10px;font-style:italic}
+.meta{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:26px;font-size:12.5px;color:var(--muted)}
+.meta b{color:var(--text);font-weight:600}
+.tags{margin-top:20px;display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:11.5px;color:var(--accent);border:1px solid #C8E3D8;border-radius:20px;padding:4px 11px;background:linear-gradient(135deg,#F1FAF6,#FFFFFF);transition:transform .25s,box-shadow .25s}
+.tag:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(15,122,90,.14)}
+.tag.blue{color:var(--blue);border-color:#CADCF0;background:linear-gradient(135deg,#F2F7FD,#FFFFFF)}
+.tag.violet{color:var(--violet);border-color:#DDD3F4;background:linear-gradient(135deg,#F8F5FF,#FFFFFF)}
+.tag.amber{color:var(--amber);border-color:#EDDCBE;background:linear-gradient(135deg,#FFF9EF,#FFFFFF)}
+
+/* abstract / tldr */
+.tldr{margin:34px 0 10px;padding:26px 30px;background:linear-gradient(135deg,#F0F9F5 0%,#F5F8FF 55%,#FBF6FF 100%);border:1px solid #DCE7E3;border-left:5px solid var(--accent);border-radius:4px;position:relative;overflow:hidden}
+.tldr::after{content:"TL;DR";position:absolute;right:-6px;top:4px;font-family:var(--mono);font-size:52px;font-weight:700;color:rgba(15,122,90,.055);letter-spacing:-.04em}
+.tldr .lbl{font-size:12px;letter-spacing:.14em;color:var(--accent);font-weight:700;margin-bottom:12px}
+.tldr p{font-family:var(--serif);font-size:18px;line-height:1.7;position:relative;z-index:1}
+.tldr ul{list-style:none;margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px 28px;position:relative;z-index:1}
+.tldr li{font-size:14px;padding-left:20px;position:relative;color:#33322E}
+.tldr li::before{content:"";position:absolute;left:2px;top:11px;width:7px;height:7px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+
+/* section */
+section{padding-top:56px}
+.sec-head{display:flex;align-items:baseline;gap:14px;border-bottom:1px solid var(--rule);padding-bottom:12px;margin-bottom:26px}
+.sec-num{font-family:var(--mono);font-size:13px;color:#fff;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--cyan));padding:2px 8px;border-radius:4px}
+.sec-head h2{font-family:var(--serif);font-size:28px;font-weight:600;letter-spacing:-.01em}
+.sec-head .en{font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-left:auto}
+.lead{font-family:var(--serif);font-size:17px;color:#33322E;max-width:760px;margin-bottom:24px}
+
+/* scroll reveal */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+
+/* pipeline */
+.pipe{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin:8px 0 6px}
+.step{flex:1 1 0;min-width:130px;padding:18px 14px 18px 0;position:relative;transition:transform .3s}
+.step:hover{transform:translateY(-5px)}
+.step::after{content:"→";position:absolute;right:6px;top:26px;color:var(--cyan);font-size:18px;transition:transform .3s,color .3s}
+.step:hover::after{transform:translateX(4px);color:var(--accent)}
+.step:last-child::after{display:none}
+.step .n{font-family:var(--mono);font-size:12px;color:#fff;background:var(--accent);padding:1px 6px;border-radius:3px;font-weight:700}
+.step h3{font-size:15px;font-weight:600;margin:6px 0 5px}
+.step p{font-size:12.5px;color:var(--muted);line-height:1.6}
+.step .en{font-family:var(--mono);font-size:10.5px;color:var(--rule-strong);letter-spacing:.03em}
+
+/* capability cards */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{border:1px solid var(--rule);border-radius:6px;padding:22px 20px;background:linear-gradient(160deg,#FFFFFF 0%,#FCFDFE 100%);position:relative;overflow:hidden;transition:border-color .25s,transform .25s,box-shadow .25s}
+.card::before{content:"";position:absolute;left:0;top:0;height:3px;width:100%;background:linear-gradient(90deg,var(--accent),var(--cyan));transform:scaleX(0);transform-origin:left;transition:transform .35s}
+.card:hover{border-color:#BFDCCF;transform:translateY(-4px);box-shadow:0 12px 30px rgba(20,60,80,.10)}
+.card:hover::before{transform:scaleX(1)}
+.card .ic{width:34px;height:34px;border:1.5px solid var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;margin-bottom:14px;color:var(--accent);background:rgba(15,122,90,.06)}
+.card .ic svg{width:18px;height:18px}
+.card:nth-child(2) .ic,.card:nth-child(5) .ic,.card:nth-child(8) .ic{border-color:var(--blue);color:var(--blue);background:rgba(37,99,166,.06)}
+.card:nth-child(3) .ic,.card:nth-child(6) .ic,.card:nth-child(9) .ic{border-color:var(--amber);color:var(--amber);background:rgba(184,119,31,.07)}
+.card h3{font-size:15.5px;font-weight:600;margin-bottom:7px}
+.card p{font-size:13px;color:var(--muted);line-height:1.65}
+.card code{font-family:var(--mono);font-size:11.5px;color:var(--accent);background:#EFF8F4;padding:1px 5px;border-radius:3px}
+
+/* interactive showcase */
+.showcase{border:1px solid #DCE5EA;border-radius:8px;overflow:hidden;background:linear-gradient(145deg,#FBFDFF,#F8F5FF 55%,#F1FAF7)}
+.tabs{display:flex;gap:6px;padding:14px 16px 0;flex-wrap:wrap;background:rgba(255,255,255,.6);border-bottom:1px solid var(--rule)}
+.tab{border:1px solid transparent;background:transparent;border-radius:20px 20px 0 0;padding:9px 16px;font-size:13px;color:var(--muted);cursor:pointer;transition:.25s;font-weight:600}
+.tab:hover{color:var(--accent);background:rgba(15,122,90,.06)}
+.tab.on{color:#fff;background:linear-gradient(135deg,var(--accent),var(--cyan));box-shadow:0 6px 16px rgba(15,122,90,.22)}
+.panel{display:none;padding:26px;min-height:250px}
+.panel.on{display:block;animation:fadeUp .45s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.panel-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:24px;align-items:center}
+.panel h3{font-family:var(--serif);font-size:22px;margin-bottom:10px;color:#18332D}
+.panel p{font-size:14px;color:var(--muted);margin-bottom:14px}
+.feature-list{list-style:none;display:grid;gap:8px}
+.feature-list li{font-size:13px;padding:8px 12px;background:#fff;border:1px solid #E3E8EF;border-radius:5px;position:relative;padding-left:32px}
+.feature-list li::before{content:"✓";position:absolute;left:10px;color:var(--accent);font-weight:700}
+.mock{border:1px solid var(--rule);border-radius:7px;background:#fff;padding:16px;box-shadow:0 10px 28px rgba(30,50,80,.08)}
+.mock-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin-bottom:12px}
+.mock-row{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;padding:7px 0;border-bottom:1px dashed var(--rule)}
+.mock-row:last-child{border-bottom:none}
+.mock-row b{color:var(--accent)}
+.bar{height:7px;border-radius:20px;background:#E8EDF2;overflow:hidden;margin:8px 0 4px}
+.bar > i{display:block;height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,var(--accent),var(--cyan),var(--violet));transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.showcase.in .bar > i{width:var(--w,72%)}
+.pulse-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--red);margin-right:7px;box-shadow:0 0 0 0 rgba(179,55,43,.5);animation:dotPulse 1.8s infinite}
+@keyframes dotPulse{70%{box-shadow:0 0 0 9px rgba(179,55,43,0)}100%{box-shadow:0 0 0 0 rgba(179,55,43,0)}}
+
+/* architecture */
+.layers{display:flex;flex-direction:column;gap:10px}
+.layer{display:flex;align-items:flex-start;gap:18px;border:1px solid var(--rule);border-radius:5px;padding:16px 18px;transition:transform .25s,border-color .25s,box-shadow .25s}
+.layer:hover{transform:translateX(6px);border-color:#C7D8E3;box-shadow:0 8px 22px rgba(30,60,90,.07)}
+.layer .lh{flex:0 0 108px;font-weight:700;font-size:14px;color:var(--accent);padding-top:2px}
+.layer:nth-child(2) .lh{color:var(--blue)} .layer:nth-child(3) .lh{color:var(--violet)} .layer:nth-child(4) .lh{color:var(--amber)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{font-family:var(--mono);font-size:11.5px;color:#33322E;background:linear-gradient(135deg,#F7F9FC,#FFFFFF);border:1px solid var(--rule);border-radius:20px;padding:3px 10px;transition:transform .2s}
+.chip:hover{transform:translateY(-2px);border-color:var(--cyan)}
+
+/* three-line table */
+table{width:100%;border-collapse:collapse;margin:6px 0 8px;font-size:13.5px}
+caption{text-align:left;font-size:12px;color:var(--muted);margin-bottom:10px;font-style:italic}
+thead th{border-top:1.5px solid var(--text);border-bottom:1px solid var(--text);padding:10px 12px;text-align:left;font-weight:600}
+tbody td{border-bottom:1px solid var(--rule);padding:11px 12px;vertical-align:top;color:#33322E}
+tbody tr:last-child td{border-bottom:1.5px solid var(--text)}
+td .hl{color:var(--accent);font-weight:600}
+td .dim{color:var(--muted);font-size:12px}
+
+/* callout */
+.callout{margin-top:22px;padding:22px 26px;border:1px solid #D6E3F0;border-left:5px solid var(--blue);border-radius:0 6px 6px 0;background:linear-gradient(135deg,#F3F8FF,#F7F4FF)}
+.callout .lbl{font-size:12px;letter-spacing:.12em;color:var(--blue);font-weight:700;margin-bottom:8px}
+.callout p{font-family:var(--serif);font-size:16px;line-height:1.7}
+
+/* roadmap groups */
+.road{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.road-full{grid-column:1/-1}
+.rgroup{border:1px solid var(--rule);border-radius:6px;padding:18px 20px;transition:transform .25s,box-shadow .25s}
+.rgroup:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(30,50,80,.08)}
+.rgroup.p0{border-top:4px solid var(--red)}
+.rgroup.p1{border-top:4px solid var(--amber)}
+.rgroup.p2{border-top:4px solid var(--blue)}
+.rgroup h3{font-size:15px;font-weight:600;margin-bottom:4px}
+.rgroup .rank{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+.rgroup ul{margin:12px 0 0 0;list-style:none}
+.rgroup li{font-size:13px;color:#33322E;padding:6px 0 6px 18px;position:relative;border-top:1px dotted var(--rule)}
+.rgroup li::before{content:"";position:absolute;left:2px;top:14px;width:6px;height:6px;background:var(--cyan);border-radius:2px}
+.rgroup li b{font-weight:600;color:var(--text)}
+.note{margin-top:18px;font-size:12.5px;color:var(--muted);font-style:italic}
+
+/* footer / back to top */
+.foot{margin-top:64px;padding-top:20px;border-top:2px solid var(--text);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;color:var(--muted)}
+.foot .mono{font-family:var(--mono)}
+#toTop{position:fixed;right:24px;bottom:24px;width:42px;height:42px;border:none;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--violet));color:#fff;font-size:18px;cursor:pointer;box-shadow:0 10px 24px rgba(30,50,90,.25);opacity:0;transform:translateY(12px);transition:.3s;z-index:30}
+#toTop.show{opacity:1;transform:none}
+#toTop:hover{transform:translateY(-3px)}
+
+@media (max-width:760px){
+  .paper{padding:0 22px 60px}
+  .masthead h1{font-size:36px}
+  .grid,.tldr ul,.road,.panel-grid{grid-template-columns:1fr}
+  .step{flex-basis:100%;border-bottom:1px solid var(--rule)}
+  .step::after{display:none}
+  .layer{flex-direction:column;gap:8px}
+  .sec-head .en{display:none}
+  .topbar nav{display:none}
+  .tabs{padding:10px}
+  .tab{padding:8px 12px;font-size:12px}
+}
+@media print{
+  body{background:#fff;font-size:11pt}
+  .paper{border:none;padding:0;max-width:none;box-shadow:none}
+  .topbar nav,.card:hover,#toTop,.tabs{display:none}
+  .reveal{opacity:1!important;transform:none!important}
+  section{page-break-inside:avoid}
+  .card,.layer,.rgroup,.showcase{break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
+  .reveal{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+<div class="paper">
+
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark"></span>科研实验助手 <span style="color:var(--muted);font-weight:400">/ rekit</span></div>
+    <nav>
+      <a href="#overview">概述</a>
+      <a href="#workflow">流程</a>
+      <a href="#features">能力</a>
+      <a href="#workspace">运行态</a>
+      <a href="#tech">架构</a>
+      <a href="#market">定位</a>
+      <a href="#roadmap">优化</a>
+      <a href="使用指南.html" style="color:var(--accent);font-weight:600">使用指南 →</a>
+    </nav>
+  </div>
+
+  <header class="masthead">
+    <div class="eyebrow">Project Brief · v1.1 · 2026</div>
+    <h1>科研实验助手</h1>
+    <div class="sub">从一个研究想法，到一份跑完的实验报告。</div>
+    <div class="meta">
+      <span><b>形态</b>　本地优先 · Web + CLI 双入口</span>
+      <span><b>规模</b>　约 4,500 行核心代码</span>
+      <span><b>入口</b>　https://127.0.0.1:7788 · rekit</span>
+      <span><b>状态</b>　账号 / 个人主页 / 服务器运行态 / HTTPS 安全加固已上线</span>
+    </div>
+    <div class="tags">
+      <span class="tag">Flask</span>
+      <span class="tag">SQLite</span>
+      <span class="tag">SSH / paramiko</span>
+      <span class="tag">WebSocket · xterm.js</span>
+      <span class="tag blue">OpenAI 兼容 LLM</span>
+      <span class="tag blue">SSE 实时监控</span>
+      <span class="tag violet">自助注册 / 个人主页</span>
+      <span class="tag violet">SSH 进程扫描</span>
+      <span class="tag blue">Git 实验谱系</span>
+      <span class="tag blue">结果核验 / 审计轨迹</span>
+      <span class="tag violet">副驾驶 checkpoint</span>
+      <span class="tag blue">事件日志 / 断点恢复</span>
+      <span class="tag violet">自动化测试 35 项</span>
+      <span class="tag amber">期刊风实验档案</span>
+    </div>
+  </header>
+
+  <div class="tldr">
+    <div class="lbl">核心结论速览 / ABSTRACT</div>
+    <p>这是一个把科研想法<strong>落地为可复现实验并自动收尾</strong>的本地工作台。它不替你做科研判断，而是把「写代码、连服务器、盯日志、汇总结果、管理账号与查看运行态」这些重复劳动接管掉。</p>
+    <ul>
+      <li>全链路自动化：创新点 → 方案 → 代码 → SSH 部署 → 监控 → 总结</li>
+      <li>本地可控：数据、代码、密钥都留在自己机器上，自带网页服务器终端</li>
+      <li>多账号协作：自助注册、登录改密、个人主页保存科研工作者档案</li>
+      <li>运行态可视：服务器任务 step 进度 + SSH 扫描手动 Python 脚本</li>
+      <li>人机协作：每个阶段都能介入修改，方案与代码均可编辑</li>
+      <li>定位错位竞争：不做“通用 AI 科学家”，做“个人科研者的中文 AI 实验台”</li>
+    </ul>
+  </div>
+
+  <section id="overview">
+    <div class="sec-head"><span class="sec-num">01</span><h2>项目概述</h2><span class="en">Overview</span></div>
+    <p class="lead">做实验的瓶颈，往往不是想法，而是把想法变成一次干净、可追踪、能写进论文的实验：写脚本、配环境、连 GPU 机器、半夜盯日志、最后还要从一堆输出里拼出结论。这款工具把这条链路完整接了起来。</p>
+    <table>
+      <caption>表 1　从痛点到能力的对应关系</caption>
+      <thead><tr><th style="width:30%">科研痛点</th><th>本项目的做法</th></tr></thead>
+      <tbody>
+        <tr><td>想法停留在一句话，不知如何拆成实验</td><td>LLM 拆成<span class="hl">可证伪假设 + 数据集 + 指标 + 基线 + 消融 + 成败判据</span>，形成结构化方案</td></tr>
+        <tr><td>写实验代码重复、易错、难无人值守</td><td>按硬约束生成代码：<span class="hl">指标协议上报、自动检测 GPU、数据缺失自动降级、异常非零退出</span></td></tr>
+        <tr><td>连服务器、传文件、装环境、保持长任务不断线</td><td>SFTP 上传 + venv + 装依赖 + <span class="hl">后台启动 + 轮询退出码文件</span>，SSH 超时也不中断</td></tr>
+        <tr><td>训练中盯日志、看曲线、查 GPU</td><td>每 3 秒增量读日志、解析指标画实时曲线、采集 GPU，SSE 推送到浏览器</td></tr>
+        <tr><td>跑完还要手工整理结论</td><td>自动聚合指标统计、逐条判定假设、产出<span class="hl">关键发现 / 局限 / 下一步 / 可直接进论文的结果段</span>；数字逐条回查指标，区分实测与推断，导出 Markdown / Word / PDF</td></tr>
+        <tr><td>多人共用时需要各自账号与资料</td><td>自助注册 / 登录改密 / session + API Token；<span class="hl">个人主页</span>保存研究方向、单位、技能、教育与学术链接，按账号隔离</td></tr>
+        <tr><td>不知道服务器上正在跑什么</td><td>服务器卡片显示项目任务的运行状态与 step 进度，并通过 SSH 扫描<span class="hl">手动运行的 Python 脚本</span>（PID、父进程、CPU/内存、中文路径）</td></tr>
+        <tr><td>多个终端工具切来切去</td><td>内置<span class="hl">网页终端</span>，真 PTY、中文正常、无需另开 iTerm / Xshell</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="workflow">
+    <div class="sec-head"><span class="sec-num">02</span><h2>工作流</h2><span class="en">Workflow</span></div>
+    <p class="lead">六步串成一条流水线，网页与命令行走的是同一套后端逻辑，可在任意阶段停下来人工检查、修改后继续。</p>
+    <div class="pipe">
+      <div class="step"><div class="n">01</div><h3>创新点</h3><p>手写或拖入本地文稿（md / txt / docx / pdf）</p><div class="en">IDEA</div></div>
+      <div class="step"><div class="n">02</div><h3>实验方案</h3><p>拆成假设、指标、基线、消融与判据</p><div class="en">PLAN</div></div>
+      <div class="step"><div class="n">03</div><h3>生成代码</h3><p>可编辑的多文件实验代码，遵循上报协议</p><div class="en">CODE</div></div>
+      <div class="step"><div class="n">04</div><h3>部署运行</h3><p>SSH 传文件、建环境、后台无人值守执行</p><div class="en">DEPLOY</div></div>
+      <div class="step"><div class="n">05</div><h3>实时监控</h3><p>日志、指标曲线、GPU、进程状态实时推送</p><div class="en">MONITOR</div></div>
+      <div class="step"><div class="n">06</div><h3>自动总结与核验</h3><p>结论 + 数字回查，一键导出 Word / PDF</p><div class="en">SUMMARY</div></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="sec-head"><span class="sec-num">03</span><h2>核心能力</h2><span class="en">Capabilities</span></div>
+    <div class="grid">
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg></div>
+        <h3>Web 实验台</h3><p>六页式管理界面：实验、服务器、终端、个人主页、设置与登录注册。期刊排版风格，可打印成论文式报告。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 17l6-6-6-6M12 19h8"/></svg></div>
+        <h3>命令行 rekit</h3><p><code>auto</code> 一条命令跑完全流程；<code>plan/code/run/watch/report</code> 分步可控。服务未起自动拉起。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></div>
+        <h3>网页服务器终端</h3><p>xterm.js + WebSocket + paramiko 真 PTY，支持 vim / htop，自动注入 UTF-8 locale，中文不乱码。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></div>
+        <h3>本地文稿读取</h3><p>拖入即可解析成创新点，自动填标题。docx 用标准库解，pdf 走 pypdf，GBK 中文文本也不乱码。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-6 4 4 5-8 4 5"/><path d="M3 21h18"/></svg></div>
+        <h3>实时监控与指标</h3><p>自定义 <code>@@METRIC</code> 协议 + 常见 loss/acc 兜底解析，手写 canvas 折线图，无 CDN 依赖。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4h14v16H5z"/><path d="M9 9h6M9 13h6M9 17h4"/></svg></div>
+        <h3>结构化总结与核验</h3><p>LLM 优先、规则兜底。输出假设判定、异常、局限、下一步与论文段落，并把报告数字逐条回查指标、区分实测与推断，导出 Markdown / Word / PDF。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></div>
+        <h3>账号与个人主页</h3><p>自助注册、登录改密、session + API Token 双通道；个人主页保存科研方向与学术链接，数据按账号隔离。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V9m5 9V5m5 13v-7m5 7V8"/></svg></div>
+        <h3>服务器运行态</h3><p>已添加服务器直接显示本项目任务的运行状态与 step 进度，5 秒轮询，不用切回实验页。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h.01M11 9h.01M15 9h6M7 13h10M7 17h6"/></svg></div>
+        <h3>手动脚本扫描</h3><p>SSH 读取远程进程，发现手动跑的 Python 脚本；显示中文路径、PID、父进程、CPU/内存，15 秒短缓存。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="workspace">
+    <div class="sec-head"><span class="sec-num">04</span><h2>账号与运行态</h2><span class="en">Workspace</span></div>
+    <p class="lead">新增的账号体系与个人主页，让工具从“单人脚本”变成可分享的工作台；服务器运行态面板则把“正在跑什么、跑到哪了”直接摊开在眼前。</p>
+    <div class="showcase">
+      <div class="tabs">
+        <button class="tab on" data-tab="account">账号安全</button>
+        <button class="tab" data-tab="profile">个人主页</button>
+        <button class="tab" data-tab="server">服务器运行态</button>
+      </div>
+
+      <div class="panel on" data-panel="account">
+        <div class="panel-grid">
+          <div>
+            <h3>从“只有 admin”到多人可用</h3>
+            <p>登录页可直接注册成员账号，登录后随时改密码；管理员仍可在设置页创建不同角色的账号。</p>
+            <ul class="feature-list">
+              <li>自助注册与重复用户名校验</li>
+              <li>当前密码校验后才允许修改</li>
+              <li>CLI token 摘要存储，可随时轮换</li>
+              <li>所有业务数据按用户隔离</li>
+            </ul>
+          </div>
+          <div class="mock">
+            <div class="mock-title">AUTH FLOW</div>
+            <div class="mock-row"><span>注册账号</span><b>member</b></div>
+            <div class="mock-row"><span>密码存储</span><b>PBKDF2 哈希</b></div>
+            <div class="mock-row"><span>网页会话</span><b>签名 Session</b></div>
+            <div class="mock-row"><span>命令行</span><b>Bearer Token</b></div>
+            <div class="bar" style="--w:88%"><i></i></div>
+            <div class="tiny muted">账号安全等级</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="profile">
+        <div class="panel-grid">
+          <div>
+            <h3>科研工作者的数字名片</h3>
+            <p>个人主页不是一个空壳字段，而是把研究者真正会用到的信息结构化存下来，并留在自己的机器上。</p>
+            <ul class="feature-list">
+              <li>姓名、职称、单位 / 实验室</li>
+              <li>研究方向、关键词、方法与技能</li>
+              <li>教育 / 工作经历、邮箱、ORCID</li>
+              <li>Google Scholar / GitHub / 实验室主页</li>
+            </ul>
+          </div>
+          <div class="mock">
+            <div class="mock-title">PROFILE COMPLETENESS</div>
+            <div class="mock-row"><span>基础信息</span><b>已填写</b></div>
+            <div class="mock-row"><span>研究方向</span><b>医学影像 · 幻觉检测</b></div>
+            <div class="mock-row"><span>学术链接</span><b>Scholar / GitHub</b></div>
+            <div class="bar" style="--w:72%"><i></i></div>
+            <div class="tiny muted">资料完成度 10 / 14</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" data-panel="server">
+        <div class="panel-grid">
+          <div>
+            <h3>服务器不再是个黑盒</h3>
+            <p>任务列表显示项目启动的实验与 step 进度；SSH 进程扫描补上手动运行的 Python 脚本，连中文路径也能正常显示。</p>
+            <ul class="feature-list">
+              <li>项目任务：状态 / PID / 进度条 / 最新日志</li>
+              <li>手动脚本：PID / 父进程 / 运行时长</li>
+              <li>CPU 与内存占用一眼可见</li>
+              <li>过滤 PyTorch worker、Jupyter 等噪声进程</li>
+            </ul>
+          </div>
+          <div class="mock">
+            <div class="mock-title">LIVE PROCESSES</div>
+            <div class="mock-row"><span><i class="pulse-dot"></i>cache_intermediates.py</span><b>120.0%</b></div>
+            <div class="mock-row"><span>已运行</span><b>2小时0分</b></div>
+            <div class="mock-row"><span>父进程</span><b>71849</b></div>
+            <div class="bar" style="--w:64%"><i></i></div>
+            <div class="tiny muted">手动脚本 · 进度未知（未登记到项目）</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tech">
+    <div class="sec-head"><span class="sec-num">05</span><h2>技术架构</h2><span class="en">Architecture</span></div>
+    <p class="lead">四层结构。事件总线既进内存队列（低延迟推送）也落库（断线 / 重启按游标补发），监控线程带心跳、僵尸任务自动巡检恢复；所有数据落在本地 SQLite 与文件系统。</p>
+    <div class="layers">
+      <div class="layer"><div class="lh">表现层</div><div class="chips"><span class="chip">Jinja 模板 · 期刊风 CSS</span><span class="chip">个人主页 / 服务器运行态</span><span class="chip">xterm.js（本地副本）</span><span class="chip">SSE 实时推送 · Last-Event-ID 断线补发</span><span class="chip">canvas 折线图</span><span class="chip">rekit CLI（doctor --fix）</span></div></div>
+      <div class="layer"><div class="lh">应用层</div><div class="chips"><span class="chip">app.py · 页面路由 / 全局钩子 / WebSocket</span><span class="chip">web.api_bp · 54 个 API 路由（Blueprint）</span><span class="chip">实验 / 判据 / 审计 / 用量 API</span><span class="chip">报告导出 API + 打印页</span><span class="chip">后台任务调度 · 僵尸任务巡检</span><span class="chip">bootstrap 重启恢复</span></div></div>
+      <div class="layer"><div class="lh">核心层</div><div class="chips"><span class="chip">auth 鉴权</span><span class="chip">crypto 加密 / 脱敏</span><span class="chip">planner 方案生成</span><span class="chip">coder 代码生成</span><span class="chip">ssh_runner 部署 / 环境快照</span><span class="chip">monitor 监控 · 心跳</span><span class="chip">bus 事件日志</span><span class="chip">summarizer 总结</span><span class="chip">verify 结果核验</span><span class="chip">report 报告导出</span><span class="chip">gitlineage 快照谱系</span><span class="chip">terminal 会话</span></div></div>
+      <div class="layer"><div class="lh">数据层</div><div class="chips"><span class="chip">SQLite：users / hosts / experiments / runs / metrics / events / stream_events / audit_log / usage_log</span><span class="chip">runs.heartbeat_at / env_json / git_sha</span><span class="chip">stream_events 事件日志（重启可补发）</span><span class="chip">experiments.criteria_json / mode / checkpoint</span><span class="chip">users.profile_json</span><span class="chip">data/config.json 集中配置 + config.example</span><span class="chip">本地 git 工作区</span></div></div>
+    </div>
+  </section>
+
+  <section id="market">
+    <div class="sec-head"><span class="sec-num">06</span><h2>竞品定位</h2><span class="en">Positioning</span></div>
+    <p class="lead">同类产品分三层。全自动 AI 科学家与实验管理平台两端都很拥挤，而“面向个人、接自己服务器、人可介入、中文科研档案”的中间地带仍留有空间。</p>
+    <table>
+      <caption>表 2　三层竞品格局（截至 2026-11）</caption>
+      <thead><tr><th style="width:22%">层级</th><th style="width:34%">代表项目</th><th>与本项目关系</th></tr></thead>
+      <tbody>
+        <tr><td>全自动 AI 科学家</td><td>Sakana AI Scientist（已发 Nature 2026）、Google Co-Scientist、MIT Agent Laboratory</td><td><span class="hl">流程相似</span>，但目标是自动写论文、不接用户自己的服务器<span class="dim">；正面竞争无优势</span></td></tr>
+        <tr><td>本地研究工作台</td><td><span class="hl">OpenResearch</span>（~3.5k star，活跃）、AutoLab（近乎停更）</td><td><span class="hl">形态最接近</span>：本地优先 + SSH + agent 跑实验。<span class="dim">OpenResearch 是最强对手</span></td></tr>
+        <tr><td>实验管理 / GPU 云</td><td>W&B、ClearML、Experimaestro、RunPod / AutoDL</td><td>只管“跑”与追踪，<span class="dim">不做“创新点 → 方案代码”</span>；网页终端是标配而非差异</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <div class="lbl">定位建议 / POSITIONING</div>
+      <p>不要叫“通用 AI Scientist”——那是与 Sakana、Google 正面硬碰。更稳的定位是<strong>“个人科研者的中文 AI 实验台 / agentic lab notebook”</strong>：把差异化压在<strong>本地私有、接自己的 SSH、人全程可介入、报告可直接读写</strong>，并以中文文稿输入与论文式档案形成错位。</p>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <div class="sec-head"><span class="sec-num">07</span><h2>后续优化方向</h2><span class="en">Roadmap</span></div>
+    <p class="lead">按优先级分组。下面只列要点，完整的背景、做法与收益见配套文档《产品优化建议.md》与《产品优化建议2.md》。</p>
+    <div class="road">
+      <div class="rgroup p0 road-full">
+        <div class="rank">P0 · 工程地基（2026-11-18 已完成）</div>
+        <h3>可靠性与可维护性</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ 自动化测试 + CI（已完成）</b>：35 项单测覆盖 crypto / verify / db / report / api，临时 data 目录隔离，零依赖可运行</li>
+          <li><b style="color:var(--accent)">✓ 事件持久化与任务恢复（已完成）</b>：SSE 事件落库、断线按游标补发、重启不丢；运行带心跳、僵尸任务自动巡检恢复</li>
+          <li><b style="color:var(--accent)">✓ 依赖 / 配置规范（已完成）</b>：pyproject 与 requirements 对齐、`.gitignore` 防凭据误提交、`config.example`、`doctor --fix` 一键补装</li>
+          <li><b style="color:var(--accent)">✓ app.py Blueprint 拆分（已完成）</b>：54 个 API 路由归入 api_bp，页面路由与 WebSocket 保留，零行为变化</li>
+        </ul>
+      </div>
+      <div class="rgroup p0 road-full">
+        <div class="rank">P0 · 产品化前的必做项</div>
+        <h3>安全与多用户隔离</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ 登录鉴权与多用户隔离（已完成）</b>：自助注册 / 登录改密 / 个人主页 + session/token 双通道 + 数据按用户隔离 + 全链路越权拦截，33 项测试通过</li>
+          <li><b style="color:var(--accent)">✓ 服务器运行态（已完成）</b>：项目任务 step 进度 + SSH 手动 Python 脚本扫描，中文路径正常显示</li>
+          <li><b style="color:var(--accent)">✓ HTTPS 与访问控制（已完成）</b>：默认 HTTPS/WSS、自签证书、Secure Cookie、一次性终端票据、Origin 校验、超时断开</li>
+          <li><b style="color:var(--accent)">✓ 密钥加密存储（已完成）</b>：SSH 密码 / API Key / CLI Token / 初始密码字段级加密，日志与 SSE 统一脱敏</li>
+        </ul>
+      </div>
+      <div class="rgroup p1">
+        <div class="rank">P1 · 核心竞争力</div>
+        <h3>可复现与证据链</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ git 原生实验谱系（已完成）</b>：每次 run 锁定 commit，支持 Diff / 恢复 / Fork，结果可追溯到确切代码版本</li>
+          <li><b style="color:var(--accent)">✓ 结果核验模块（已完成）</b>：把报告里每个数字回查到日志/指标，标记无来源数字，区分实测与推断</li>
+          <li><b style="color:var(--accent)">✓ 人在环 checkpoint（已完成）</b>：自主 / 副驾驶双模式，方案/代码/运行阶段确认与批注回灌</li>
+        </ul>
+      </div>
+      <div class="rgroup p1">
+        <div class="rank">P1 · 科研可信度</div>
+        <h3>审计与规范性</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ 完整审计日志（已完成）</b>：关键动作不可变记录 + 时间线 + 报告过程摘要，防 p-hacking</li>
+          <li><b style="color:var(--accent)">✓ 预注册与判据锁定（已完成）</b>：结构化判据先固定再跑，锁定后修改需写原因，结果逐条判定</li>
+          <li><b style="color:var(--accent)">✓ 种子 / 环境固化（已完成）</b>：随机种子、pip freeze、nvidia-smi 随运行一并存档</li>
+        </ul>
+      </div>
+      <div class="rgroup p2 road-full">
+        <div class="rank">P2 · 体验与扩展</div>
+        <h3>效率与易用性</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ 报告导出 PDF / Word（已完成）</b>：Markdown / docx / 浏览器打印页，含核验与复现配置</li>
+          <li><b style="color:var(--accent)">✓ 任务模板与批量实验（已完成）</b>：4 个模板 + JSON 参数矩阵批量创建 + 对比表 + 失败项断点续跑</li>
+          <li><b style="color:var(--accent)">✓ 成本与用量统计（已完成）</b>：LLM token 账本 + 预算告警</li>
+          <li><b style="color:var(--accent)">✓ 交互细节（已完成）</b>：换文稿 / 日志搜索折叠 / 移动端 / 首页最近运行告警</li>
+          <li><b>垂直领域包 / 收尾清理（暂不实现）</b>：医学 VQA 实验包与依赖、示例工程收尾</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note">※ 完整优化清单（含现状、问题、具体做法、预期收益与参考竞品）见同目录《产品优化建议.md》（功能闭环）与《产品优化建议2.md》（工程地基与下一阶段方向）。</p>
+  </section>
+
+  <footer class="foot">
+    <span>科研实验助手 · rekit　|　项目介绍 v1.1</span>
+    <span class="mono">Updated 2026-11 · 本地优先 · 数据不出机</span>
+  </footer>
+
+</div>
+
+<button id="toTop" title="回到顶部">↑</button>
+
+<script>
+(function () {
+  const revealEls = document.querySelectorAll('section, .card, .layer, .rgroup, .showcase');
+  revealEls.forEach(el => el.classList.add('reveal'));
+
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+  }
+
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(t => t.classList.remove('on'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+    tab.classList.add('on');
+    const panel = document.querySelector('[data-panel="' + tab.dataset.tab + '"]');
+    if (panel) panel.classList.add('on');
+  }));
+
+  const links = Array.from(document.querySelectorAll('.topbar nav a'));
+  const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const toTop = document.getElementById('toTop');
+
+  function onScroll() {
+    const y = window.scrollY + 130;
+    let active = sections[0];
+    sections.forEach(s => { if (s.offsetTop <= y) active = s; });
+    links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + (active && active.id)));
+    if (toTop) toTop.classList.toggle('show', window.scrollY > 500);
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  if (toTop) toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+</script>
+</body>
+</html>

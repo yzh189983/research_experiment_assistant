@@ -1,0 +1,42 @@
+{
+  "_comment": "配置示例。复制为 data/config.json 后按需修改；api_key 会以密文落盘，可直接填明文。",
+  "llm": {
+    "base_url": "https://open.bigmodel.cn/api/paas/v4",
+    "api_key": "",
+    "model": "glm-4-plus",
+    "temperature": 0.35,
+    "timeout": 240
+  },
+  "monitor": {
+    "interval_sec": 3,
+    "max_metrics_points": 800,
+    "stall_warn_sec": 600
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 7788,
+    "scheme": "https",
+    "force_https": true,
+    "ssl_cert": "data/certs/local-cert.pem",
+    "ssl_key": "data/certs/local-key.pem"
+  },
+  "security": {
+    "allowed_origins": [],
+    "trust_proxy": false,
+    "redact_logs": true
+  },
+  "terminal": {
+    "ticket_ttl_sec": 60,
+    "idle_timeout_sec": 900,
+    "max_seconds": 14400,
+    "ping_interval_sec": 15
+  },
+  "codegen": {
+    "metric_protocol": "@@METRIC name=<指标名> value=<数值> [step=<步数>]"
+  },
+  "auth": {
+    "enabled": true,
+    "session_days": 14,
+    "allow_registration": true
+  }
+}

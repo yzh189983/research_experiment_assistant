@@ -1,0 +1,2018 @@
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:14:36] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:36] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:36] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:36] "GET /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:42] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:42] "GET /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:42] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:44] "POST /api/hosts/2/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:44] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:44] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:44] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:44] "GET /api/experiments/4 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:51] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:14:51] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:05] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:06] "POST /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:06] "POST /api/hosts/3/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:17] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:17] "POST /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:17] "POST /api/experiments/5/plan HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:17] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:18] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:18] "POST /api/experiments/5/code HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:18] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:19] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:19] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:19] "POST /api/experiments/5/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:19] "GET /api/experiments/5/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:40] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:52] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:52] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:52] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:52] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:58] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:15:58] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:05] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:05] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:05] "GET /api/experiments/5/metrics?run_id=7 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:05] "GET /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:05] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:23] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:23] "GET /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:32] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:32] "[33mGET /api/experiments/999 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 21:16:32] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:32] "POST /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:38] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:38] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:38] "POST /api/experiments/6/plan HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:38] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:40] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:40] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:40] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:40] "POST /api/experiments/6/code HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:40] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:41] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:48] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:48] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:48] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:48] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:48] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:50] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:50] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:16:50] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:17] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:17] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:17:23] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:16] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:16] "GET /api/experiments HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:18:25] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:25] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:25] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:31] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:52] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:18:58] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:06] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:14] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:14] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:14] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:15] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:15] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:15] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:15] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:47] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:47] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:47] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:47] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:47] "POST /api/experiments/6/run HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:19:48] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:08] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:18] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:18] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:18] "DELETE /api/hosts/3 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "DELETE /api/experiments/4 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "DELETE /api/experiments/5 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:19] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:39] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:39] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:39] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:39] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:20:56] "GET /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:28] "HEAD /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /static/js/experiment.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/runs HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:21:29] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:24:45] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:24:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:51] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:24:51] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:51] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:54] "POST /api/hosts/2/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:24:57] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:24:57] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:57] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:24:57] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:25:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:29:33] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:31:00] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:31:00] "POST /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:31:01] "POST /api/hosts/4/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:31:14] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:33:03] "GET /api/experiments HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4
+127.0.0.1 - - [15/Nov/2026 21:33:05] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:35:16] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:35:16] "GET /api/hosts HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:38:30] "GET /api/experiments HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:38:47] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] connect host=2 100x30
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:39:07] "GET /ws/terminal/2?cols=100&rows=30 HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:39:31] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:39:34] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:36] "GET /static/js/terminal.js HTTP/1.1" 200 -
+[ws-term] connect host=2 160x25
+127.0.0.1 - - [15/Nov/2026 21:46:36] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:46:45] "GET /ws/terminal/2?cols=160&rows=25 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:46:45] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 160x27
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:47:31] "GET /ws/terminal/2?cols=160&rows=27 HTTP/1.1" 200 -
+[ws-term] connect host=2 100x30
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:47:53] "GET /ws/terminal/2?cols=100&rows=30 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:47:54] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:47:58] "HEAD /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:09] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:10] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:24] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:24] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:24] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:33] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:33] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:33] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:33] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:39] "POST /api/hosts/2/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "GET /static/js/terminal.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:51:40] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 181x33
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:52:23] "GET /ws/terminal/2?cols=181&rows=33 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:52:23] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:52:23] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:52:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:52:23] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:52:24] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:52:24] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:52:24] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:52:24] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:54:34] "GET /api/experiments HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:54:45] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:57] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:54:58] "GET /static/js/terminal.js HTTP/1.1" 200 -
+[ws-term] connect host=2 160x27
+127.0.0.1 - - [15/Nov/2026 21:54:58] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:55:36] "GET /ws/terminal/2?cols=160&rows=27 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:55:36] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:55:37] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 160x27
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:56:30] "GET /api/experiments HTTP/1.1" 200 -
+[ws-term] connect host=2 100x30
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:56:42] "GET /ws/terminal/2?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] connect host=2 100x30
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:57:12] "GET /ws/terminal/2?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:57:22] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:58:34] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 21:58:57] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 21:59:01] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 160x27
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 21:59:21] "GET /ws/terminal/2?cols=160&rows=27 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 21:59:26] "HEAD /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:29] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "GET /static/js/terminal.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:30] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 48x32
+127.0.0.1 - - [15/Nov/2026 22:34:31] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 22:34:32] "GET /ws/terminal/2?cols=48&rows=32 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:34:54] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:00] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:35:00] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:00] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:00] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:03] "POST /api/hosts/2/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:35:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 181x33
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 22:36:55] "GET /ws/terminal/2?cols=181&rows=33 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:36:55] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:36:56] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:00] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:37:00] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:00] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:00] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:04] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:07] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:37:07] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:07] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:37:07] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:33] "POST /api/llm/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:39] "POST /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:40] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:40] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:40] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:40] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:43] "POST /api/llm/test HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:53] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:38:57] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:08] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:17] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:17] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:17] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:17] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:23] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:23] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:23] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:26] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:26] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:26] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:26] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:39] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:39:55] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 22:44:37] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:40] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:40] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:49] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:49] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:49] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:49] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:44:49] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 22:45:47] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:45:47] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:45:47] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:45:47] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "GET /static/js/experiment.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:06] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:48] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:48] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:48] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:48] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:51] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:46:51] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:51] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:46:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:10] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:47:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:10] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:47:24] "GET /static/js/terminal.js HTTP/1.1" 200 -
+[ws-term] connect host=2 160x27
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 22:48:30] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:48:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:48:33] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:48:33] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:48:33] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:00] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:03] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:03] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:03] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:03] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:26] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:27] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:49:47] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 22:50:58] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:02] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:17] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:18] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:25] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:51:26] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "GET /exp/6?v=2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:15] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:34] "GET /?v=3 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:52:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:52:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:52:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 22:52:56] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "GET /terminal/2?x=1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:53:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=2 160x27
+[ws-term] connect host=2 100x30
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 22:53:36] "GET /ws/terminal/2?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] connect host=4 100x30
+[ws-term] closed host=4 (client closed)
+127.0.0.1 - - [15/Nov/2026 22:53:46] "GET /ws/terminal/4?cols=100&rows=30 HTTP/1.1" 200 -
+[ws-term] closed host=2 (client closed)
+127.0.0.1 - - [15/Nov/2026 22:54:16] "GET /ws/terminal/2?cols=160&rows=27 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:17] "GET /?v=9 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:17] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:17] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:17] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "GET /exp/6?v=9 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:19] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:24] "GET /settings?v=9 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:24] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:24] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:24] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:54:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:51] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:51] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:51] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:51] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:54:51] "GET /terminal/2 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:56:52] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:56:52] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:56:52] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:56:52] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:00] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:00] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:00] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:00] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:04] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:04] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:04] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:04] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:05] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:05] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:33] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:37] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:37] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:37] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:37] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:40] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:40] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:40] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:40] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:57:41] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 22:58:22] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:22] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:22] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:22] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:23] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:58:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 22:59:35] "[33mGET /apple-touch-icon-precomposed.png HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 22:59:35] "[33mGET /apple-touch-icon.png HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 22:59:35] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 23:01:45] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:01:47] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:01:48] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:01:48] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:01:48] "[31m[1mPOST /api/extract HTTP/1.1[0m" 400 -
+127.0.0.1 - - [15/Nov/2026 23:02:09] "GET /?v=20 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:02:10] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:02:10] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:02:10] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:02:10] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [15/Nov/2026 23:05:58] "GET /?v=20 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:05:58] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:05:58] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:05:58] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:06:17] "POST /api/extract HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [15/Nov/2026 23:06:49] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:06:52] "GET /?v=21 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:06:53] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:06:53] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:06:53] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:06:55] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:07:28] "GET /?v=22 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:07:28] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:07:28] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:07:28] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:07:30] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:08:05] "GET /?v=22 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:08:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:08:05] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:08:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:08:23] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:10:05] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:10:06] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:15:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:15:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:15:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:15:34] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:15:45] "POST /api/extract HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [15/Nov/2026 23:16:49] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:57:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:05] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:57:05] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:17] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:42] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:57:42] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:42] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:57:42] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:58:29] "POST /api/hosts/2/test HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:59:57] "POST /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:59:57] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 21:59:57] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:59:57] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 21:59:57] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:02] "DELETE /api/hosts/2 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:02] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:02] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:02] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:02] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:03] "POST /api/hosts/5/test HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "GET /terminal/5 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:12] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=5 168x32
+[ws-term] closed host=5 (client closed)
+127.0.0.1 - - [16/Nov/2026 22:00:46] "GET /ws/terminal/5?cols=168&rows=32 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:46] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:00:46] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:46] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:00:46] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:01:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:23:51] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:51] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:51] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:23:56] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:23:56] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:56] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:56] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:23:59] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:06] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:10] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:10] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:14] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:14] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:14] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:14] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:18] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:22] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:23] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:37] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:24:48] "[33mGET /register HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Nov/2026 22:25:15] "[33mGET /register HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Nov/2026 22:25:15] "[33mGET /login HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Nov/2026 22:25:15] "GET / HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "/Users/xiayutian/Desktop/科研实验助手/app.py", line 30, in <module>
+    db.init_db()
+    ~~~~~~~~~~^^
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 120, in init_db
+    conn.executescript(SCHEMA)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^
+sqlite3.OperationalError: no such column: user_id
+
+  [auth] 已创建管理员 admin，初始密码见 data/admin_initial_password.txt
+
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 22:26:38] "GET /login HTTP/1.1" 200 -
+[2026-11-16 22:26:43,234] ERROR in app: Exception on /register [GET]
+Traceback (most recent call last):
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+  File "/Users/xiayutian/Desktop/科研实验助手/app.py", line 279, in register_page
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 183, in count_users
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 142, in q1
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 110, in get_conn
+  File "/Users/xiayutian/Desktop/科研实验助手/config.py", line 121, in ensure_dirs
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 738, in _brokered_os_makedirs
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 604, in _broker_request_host_operation
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 500, in _broker_send_request
+sitecustomize._BrokerProtocolError: execution attempt 不存在或已关闭
+127.0.0.1 - - [16/Nov/2026 22:26:43] "[35m[1mGET /register HTTP/1.1[0m" 500 -
+[2026-11-16 22:26:43,250] ERROR in app: Exception on /login [GET]
+Traceback (most recent call last):
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+  File "/Users/xiayutian/Desktop/科研实验助手/app.py", line 211, in login_page
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 183, in count_users
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 142, in q1
+  File "/Users/xiayutian/Desktop/科研实验助手/core/db.py", line 110, in get_conn
+  File "/Users/xiayutian/Desktop/科研实验助手/config.py", line 121, in ensure_dirs
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 738, in _brokered_os_makedirs
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 604, in _broker_request_host_operation
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 500, in _broker_send_request
+sitecustomize._BrokerProtocolError: execution attempt 不存在或已关闭
+127.0.0.1 - - [16/Nov/2026 22:26:43] "[35m[1mGET /login HTTP/1.1[0m" 500 -
+127.0.0.1 - - [16/Nov/2026 22:26:43] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:26:43] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 22:28:50] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:28:51] "[32mGET /register HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:28:51] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:28:51] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:28:56] "[31m[1mPOST /api/auth/login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 22:28:57] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:28:57] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 22:29:01] "POST /api/auth/login HTTP/1.1" 200 -
+[2026-11-16 22:29:01,871] ERROR in app: Exception on / [GET]
+Traceback (most recent call last):
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 1511, in wsgi_app
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 919, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 917, in full_dispatch_request
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/app.py", line 902, in dispatch_request
+  File "/Users/xiayutian/Desktop/科研实验助手/core/auth.py", line 140, in wrapped
+  File "/Users/xiayutian/Desktop/科研实验助手/app.py", line 308, in index
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/templating.py", line 150, in render_template
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/jinja2/environment.py", line 1016, in get_template
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/jinja2/environment.py", line 975, in _load_template
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/jinja2/loaders.py", line 126, in load
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/templating.py", line 66, in get_source
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/flask/templating.py", line 97, in _get_source_fast
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/jinja2/loaders.py", line 214, in get_source
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 695, in _brokered_builtin_open
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 679, in _brokered_open
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 541, in _broker_request_file_token
+  File "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/vendor/sandbox-center-runtime-kit/shim/sitecustomize.py", line 500, in _broker_send_request
+sitecustomize._BrokerProtocolError: execution attempt 不存在或已关闭
+127.0.0.1 - - [16/Nov/2026 22:29:01] "[35m[1mGET / HTTP/1.1[0m" 500 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 22:32:59] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "GET /login?next=/ HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:03] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:46] "[32mPOST /login?next=/ HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:33:46] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:46] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:46] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:46] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:51] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:51] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:51] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "GET /terminal/5 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/vendor/xterm/xterm.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:55] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+[ws-term] connect host=5 user=admin 168x32
+[ws-term] closed host=5 (client closed)
+127.0.0.1 - - [16/Nov/2026 22:33:59] "GET /ws/terminal/5?cols=168&rows=32 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:59] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:59] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:33:59] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:33:59] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:01] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:02] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:02] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:02] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:02] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:09] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:09] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:09] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:34:09] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:09] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:15] "[32mPOST /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:34:15] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:34:15] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:45:20] "GET /login HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 22:46:07] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:09] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:09] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 22:46:14] "[32mGET / HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:46:14] "GET /login?next=/ HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:14] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:46:17] "GET /register?next=/ HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:17] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:46:51] "[32mPOST /register?next=/ HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:46:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:46:51] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:51] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:54] "[32mPOST /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:46:54] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:46:54] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:47:10] "POST /login?next= HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:47:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:47:24] "[32mPOST /login?next= HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 22:47:24] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:47:24] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:47:24] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:47:24] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:50:36] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:50:36] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:50:36] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:50:36] "GET /static/css/pages.css HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 22:54:19] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:54:19] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:54:19] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 22:57:16] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:16] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:16] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:16] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:18] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:18] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:18] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:18] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:59] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:57:59] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:57:59] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:57:59] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 22:59:15] "POST /api/profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:59:16] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:59:16] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:59:16] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 22:59:16] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:04] "POST /api/users/me/password HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:25] "POST /api/profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:25] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:25] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:25] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:25] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:47] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:48] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:48] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:48] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:48] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:49] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:49] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:49] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:49] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:50] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:00:50] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:50] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:00:50] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:00] "[32mPOST /logout HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 23:01:00] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:00] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:32] "[32mPOST /login?next= HTTP/1.1[0m" 302 -
+127.0.0.1 - - [16/Nov/2026 23:01:32] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:32] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:32] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:32] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:34] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:36] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:36] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:36] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:36] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:36] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:43] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:01:43] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:43] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:43] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:01:43] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:41] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:05:41] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:41] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:42] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:49] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:05:49] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:49] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:49] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:50] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:05:50] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:50] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:50] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:51] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:05:51] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:51] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:05:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:06:12] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:06:12] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:06:12] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:06:12] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:06:12] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 23:07:11] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:11] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:11] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 23:07:40] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:40] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:07:40] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:40] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:07:45] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:07:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:07:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:07:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:07:55] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:10] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:21] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:27] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:08:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:09:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:09:18] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:09:18] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:09:18] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:09:18] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 23:10:46] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:10:46] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:10:47] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 23:10:50] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:10:52] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 23:11:27] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:11:27] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:11:27] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 23:11:32] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:11:33] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 23:11:56] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:11:56] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:11:56] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 23:12:00] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:00] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:10] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:12:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:13] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:18] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:23] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:23] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:24] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:28] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:33] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:33] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:33] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:38] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:43] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:43] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:44] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:53] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:53] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:53] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:12:58] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:03] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:03] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:04] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:08] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:13] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:13] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:13] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:18] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:23] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:23] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:24] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:28] "GET /api/hosts/activity HTTP/1.1" 200 -
+
+  科研实验助手已启动 → http://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [16/Nov/2026 23:13:33] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:34] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:34] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [16/Nov/2026 23:13:37] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:39] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:41] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:45] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:45] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:52] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:52] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:52] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:52] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:54] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:54] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:54] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:54] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:55] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:13:56] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:05] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:05] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:10] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:15] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:16] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:25] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:25] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:25] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:30] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:34] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:35] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:36] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:40] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:45] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:45] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:45] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:55] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:55] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:14:56] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:05] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:05] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:15] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:16] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:16] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:25] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:25] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:27] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:35] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:37] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:43] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:45] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:45] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:54] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:55] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:15:56] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:05] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:05] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:06] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:10] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:10] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:11] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:14] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:15] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:19] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:24] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:24] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:24] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:29] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:32] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:32] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:32] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:32] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:39] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:40] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:44] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:49] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:49] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:49] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:54] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:59] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:16:59] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:00] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:04] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:09] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:09] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:09] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:19] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:22] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:25] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:29] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:29] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:30] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:31] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:17:31] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:17:31] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:17:31] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:36] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:36] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:36] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:36] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:39] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:41] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:44] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:45] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:45] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:45] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:45] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:46] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:46] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:46] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:46] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:49] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:49] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:49] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:49] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:51] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:25:51] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:51] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:25:51] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [16/Nov/2026 23:26:13] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [16/Nov/2026 23:26:13] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 21:51:30] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:51:30] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:51:30] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 21:51:30] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:52:31] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:52:31] "POST /api/terminal/5/ticket HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:52:34] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:52:34] "[31m[1mGET /api/auth/me HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 21:54:23] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:23] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:23] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:23] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:23] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:32] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:34] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:34] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:34] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:34] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:34] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:35] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:36] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:40] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:45] "GET /api/hosts/4/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:45] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:46] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:46] "POST /api/hosts/5/test HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "DELETE /api/hosts/4 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:53] "GET /api/hosts/5/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "DELETE /api/hosts/5 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:54:57] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:02] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:07] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:12] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:18] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:23] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:28] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:33] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:38] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:43] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:53] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "POST /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "GET /static/css/app.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "GET /static/js/app.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:56] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:55:57] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:01] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:06] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:07] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:11] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:16] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:16] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:21] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:26] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:27] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:31] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:36] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:37] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:41] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:46] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:47] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:51] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:56] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:56:57] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:01] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:08] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:09] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:14] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:18] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:26] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:31] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:38] "GET /api/hosts/activity HTTP/1.1" 200 -
+Exception (client): Error reading SSH protocol banner
+Traceback (most recent call last):
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/paramiko/transport.py", line 2227, in _check_banner
+    buf = self.packetizer.readline(timeout)
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/paramiko/packet.py", line 395, in readline
+    buf += self._read_timeout(timeout)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/paramiko/packet.py", line 665, in _read_timeout
+    raise EOFError()
+EOFError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/paramiko/transport.py", line 2043, in run
+    self._check_banner()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "/Users/xiayutian/.workbuddy/binaries/python/envs/default/lib/python3.13/site-packages/paramiko/transport.py", line 2231, in _check_banner
+    raise SSHException(
+        "Error reading SSH protocol banner" + str(e)
+    )
+paramiko.ssh_exception.SSHException: Error reading SSH protocol banner
+
+127.0.0.1 - - [18/Nov/2026 21:57:41] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 21:57:50] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:51] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:51] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 21:57:56] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:56] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:57:58] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:00] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:00] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:01] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:03] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:04] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:07] "POST /api/hosts/6/test HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:07] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:08] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:08] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:13] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:19] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:26] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:26] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:26] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:26] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:30] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:40] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:40] "POST /api/hosts/6/test HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:43] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:45] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:50] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:52] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:52] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:52] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:52] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "GET /terminal/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "GET /static/vendor/xterm/xterm.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "GET /static/vendor/xterm/xterm.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "GET /static/vendor/xterm/addon-fit.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "GET /static/js/terminal.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/vendor/xterm/xterm.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/vendor/xterm/addon-fit.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "[36mGET /static/js/terminal.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:58:56] "POST /api/terminal/6/ticket HTTP/1.1" 200 -
+[ws-term] connect host=6 user=admin 181x33 read_only=False
+[ws-term] closed host=6 (client closed)
+127.0.0.1 - - [18/Nov/2026 21:59:01] "GET /ws/terminal/6?cols=181&rows=33&ticket=59ISxk2E_cLLpVpxhwXY-foB7g0ztwPe HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:01] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:02] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:06] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:10] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 21:59:10] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:10] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 21:59:10] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 22:11:13] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:11:13] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:11:13] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:31:55] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:31:55] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:31:55] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:31:55] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:00] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:32:00] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:00] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:00] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:32:02] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:32:04] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:32:04] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:04] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:04] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:06] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:32:06] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:06] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:32:06] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 22:49:24] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:49:24] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 22:49:32] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:49:35] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[31m[1mPOST /api/auth/login HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[31m[1mGET /api/templates HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[31m[1mGET /api/usage HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[31m[1mGET /api/experiments/1/report.md HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[31m[1mGET /api/experiments/1/report/print HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[32mGET /report/1 HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Nov/2026 22:49:50] "[32mGET /exp/1 HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "GET /api/templates HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "GET /api/usage HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "[33mGET /api/experiments/1/report.md HTTP/1.1[0m" 404 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "[33mGET /api/experiments/1/report.docx HTTP/1.1[0m" 404 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "[33mGET /api/experiments/1/report/print HTTP/1.1[0m" 404 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "[33mGET /report/1 HTTP/1.1[0m" 404 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "[32mGET /exp/1 HTTP/1.1[0m" 302 -
+127.0.0.1 - - [18/Nov/2026 22:50:01] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments/6/report.md HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments/6/report.docx HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments/6/report/print HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /report/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments/6/audits HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:50:07] "GET /api/experiments/6/usage HTTP/1.1" 200 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 22:51:26] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:51:27] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:51:27] "GET /api/templates HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:51:27] "GET /api/batch/compare?ids=6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:51:27] "GET /api/experiments/6/report.md HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 22:51:27] "GET /report/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:04:30] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:04:30] "[31m[1mGET /api/experiments HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 23:05:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:05:58] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:05:58] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:05:58] "GET /static/css/pages.css HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "GET /static/js/experiment.js HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:03] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:30] "POST /api/experiments/6/mode HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:30] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:30] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:34] "POST /api/experiments/6/mode HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:34] "GET /api/experiments/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:34] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:37] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:37] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:37] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:37] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "[36mGET /static/js/experiment.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "GET /api/experiments/6/file?path=main.py HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "GET /api/experiments/6/metrics HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:06:42] "GET /api/experiments/6/stream HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:47] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:47] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:47] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:47] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:47] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:48] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:52] "GET /terminal HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:52] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:52] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:52] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:54] "GET /profile HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:07:54] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:54] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:07:54] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:05] "GET /settings HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:05] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:05] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:05] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:27] "POST /api/users/me/token HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:33] "GET /hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:33] "[36mGET /static/css/app.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:33] "[36mGET /static/css/pages.css HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:33] "[36mGET /static/js/app.js HTTP/1.1[0m" 304 -
+127.0.0.1 - - [18/Nov/2026 23:08:33] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:36] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:38] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:43] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:43] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:49] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:54] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:55] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:08:59] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:04] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:04] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:15] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:16] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:21] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:24] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:26] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:32] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:35] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:39] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:47] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:09:47] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:10:06] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:10:07] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:10:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:10:48] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:10:50] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:11:57] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:12:00] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:12:57] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:12:58] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:34] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:35] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:39] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:44] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:44] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:49] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:54] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:55] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:13:59] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:04] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:04] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:09] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:14] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:15] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:24] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:27] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:38] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:41] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:52] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:14:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:15:22] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:15:25] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:15:36] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:15:36] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:16:36] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:16:38] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:16:55] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:16:57] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:05] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:10] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:17] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:25] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:25] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:30] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:39] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:40] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:45] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:45] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:55] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:17:57] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:00] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:05] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:05] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:10] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:17] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:25] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:25] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:30] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:35] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:37] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:42] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:46] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:47] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:58] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:18:58] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:06] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:09] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:17] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:19] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:22] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:22] "[31m[1mGET /api/settings HTTP/1.1[0m" 401 -
+127.0.0.1 - - [18/Nov/2026 23:19:33] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:33] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:39] "GET /api/hosts/activity HTTP/1.1" 200 -
+
+  科研实验助手已启动 → https://127.0.0.1:7788
+
+ * Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on https://127.0.0.1:7788
+[33mPress CTRL+C to quit[0m
+127.0.0.1 - - [18/Nov/2026 23:19:42] "GET /login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "POST /api/auth/login HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/templates HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/usage HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/experiments HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/hosts HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/settings HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /api/batch/compare?ids=6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET /exp/6 HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:19:44] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:20:13] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:20:14] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:20:36] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:20:38] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:36] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:38] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:41] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:46] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:46] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:57] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:21:59] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:07] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:07] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:26] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:29] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:42] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:22:42] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:23:15] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:23:17] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:23:50] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:23:52] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:24:57] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:24:59] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:06] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:07] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:11] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:16] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:19] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:24] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:32] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:40] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:47] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:49] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:52] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:57] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:25:58] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:08] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:09] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:20] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:20] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:37] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:26:39] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:01] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:02] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:06] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:11] "GET /api/hosts/6/processes HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:12] "GET /api/hosts/activity HTTP/1.1" 200 -
+127.0.0.1 - - [18/Nov/2026 23:27:17] "GET /api/hosts/activity HTTP/1.1" 200 -

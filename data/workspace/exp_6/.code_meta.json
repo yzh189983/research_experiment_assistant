@@ -1,0 +1,7 @@
+{
+  "entry": "main.py",
+  "run_cmd": "python main.py",
+  "requirements": "无",
+  "notes": "LLM 未配置，这是占位实验代码，仅用于验证「跑通 → 监控 → 总结」链路。",
+  "fallback": true
+}

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rekit"
+version = "0.1.0"
+description = "科研实验助手：从创新点自动跑到实验报告"
+requires-python = ">=3.9"
+dependencies = [
+    "flask>=3.0",
+    "flask-sock>=0.7",
+    "paramiko>=3.4",
+    "cryptography>=42.0",
+    "python-docx>=1.1",
+    "pypdf>=4.0",
+    "requests>=2.31",
+    "simple-websocket>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
+[project.scripts]
+rekit = "cli:main"
+
+[tool.setuptools]
+py-modules = ["cli"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"
+markers = [
+    "slow: 需要真实服务或 SSH 的测试",
+]
+
+[tool.coverage.run]
+source = ["core"]
+omit = ["tests/*", "data/*"]
