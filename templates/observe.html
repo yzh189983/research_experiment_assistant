@@ -8,10 +8,24 @@
     <div>
       <div class="eyebrow">Read-only · 只读观察</div>
       <h1>{{ exp.title }}</h1>
-      <p class="page-sub">由 {{ owner }} 分享的实验快照。链接带签名，默认 7 天有效；本页不提供 shell 或任何写操作。</p>
+      <p class="page-sub">由 {{ owner }} 分享的实验快照。{% if share %}该链接{% if share.expires_at %}于 {{ share.expires_at | timestamp }} 到期{% endif %}{% if share.max_views %} · 最多 {{ share.max_views }} 次访问（已用 {{ share.views }}）{% endif %}{% if share.redact %} · 已脱敏{% endif %}。{% else %}链接带签名，默认 7 天有效。{% endif %}本页不提供 shell 或写操作。</p>
     </div>
     <span class="badge idle"><i class="dot"></i>只读快照</span>
   </div>
+
+  {% if not pwd_ok %}
+  <div class="card" style="margin-bottom:16px">
+    <div class="sec-head"><div class="sec-title">需要访问密码</div></div>
+    <div class="card-pad">
+      <p class="hint">这个分享链接设置了密码。请输入密码后查看。</p>
+      <form method="get" action="/observe/{{ token }}" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+        <label class="field" style="margin:0;flex:1;min-width:160px"><span>访问密码</span>
+          <input type="password" name="p" autocomplete="off" required></label>
+        <button class="btn primary" type="submit">查看</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
 
   <div class="card" style="margin-bottom:16px">
     <div class="sec-head"><div class="sec-title">创新点</div><span class="tiny muted">{{ exp.status }}</span></div>
@@ -60,8 +74,8 @@
             <td class="mono">#{{ r.id }}</td>
             <td>{{ r.status }}</td>
             <td class="mono tiny">{{ r.git_sha[:8] if r.git_sha else '—' }}{% if r.remote_url %} <a href="{{ r.remote_url }}" target="_blank" rel="noopener" style="color:var(--accent)">↗</a>{% endif %}</td>
-            <td class="mono">{{ r.started_at | dt if r.started_at else '—' }}</td>
-            <td class="mono">{{ r.finished_at | dt if r.finished_at else '—' }}</td>
+            <td class="mono">{{ r.started_at | timestamp if r.started_at else '—' }}</td>
+            <td class="mono">{{ r.finished_at | timestamp if r.finished_at else '—' }}</td>
             <td class="mono faint">{{ (r.log_tail or '').split('\n')[-1][:90] if r.log_tail else '' }}</td>
           </tr>
           {% else %}
@@ -72,6 +86,51 @@
     </div>
   </div>
 
+  {% if share %}
+  <div class="card" style="margin-top:16px" id="comment-card">
+    <div class="sec-head"><div class="sec-title">访客批注</div><span class="tiny muted">{{ comments | length }} 条</span></div>
+    <div class="card-pad">
+      {% if comments %}
+      <div class="comment-list" style="margin-bottom:14px">
+        {% for c in comments %}
+        <div class="comment-item"><span class="mono tiny faint">{{ c.visitor }} · {{ c.ts | timestamp }}</span>
+          <div class="profile-value" style="margin-top:2px">{{ c.content }}</div></div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <form id="comment-form">
+        <label class="field"><span>你的称呼</span>
+          <input type="text" id="c-visitor" placeholder="访客" maxlength="60"></label>
+        <label class="field"><span>批注内容</span>
+          <textarea id="c-content" rows="3" maxlength="2000" placeholder="写下你的意见或问题…" required></textarea></label>
+        <button class="btn primary" type="submit">提交批注</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="hint" style="margin-top:16px">此页面是权限受限的快照视图：无法连接终端、无法编辑方案/代码、无法读取服务器密码或 API Key。</div>
+  {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+{% if share and pwd_ok %}
+<script>
+const shareToken = {{ token | tojson }};
+const sharePwd = {{ (request.args.get('p','')) | tojson }};
+const cmtForm = document.getElementById('comment-form');
+if (cmtForm) cmtForm.onsubmit = async e => {
+  e.preventDefault();
+  const content = document.getElementById('c-content').value.trim();
+  const visitor = document.getElementById('c-visitor').value.trim();
+  if (!content) return;
+  try {
+    await api('/api/share/' + encodeURIComponent(shareToken) + '/comment?p=' + encodeURIComponent(sharePwd),
+              { method: 'POST', body: { content, visitor } });
+    toast('批注已提交'); location.reload();
+  } catch (err) { toast(err.message, true); }
+};
+</script>
+{% endif %}
 {% endblock %}

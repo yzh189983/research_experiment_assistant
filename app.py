@@ -8,7 +8,9 @@ import os
 import queue
 import random
 import re
+import secrets
 import sqlite3
+import requests
 import threading
 import time
 import traceback
@@ -23,7 +25,8 @@ from werkzeug.security import check_password_hash
 
 import config
 from core import (auth, bus, coder, crypto, db, extract, gitlineage, github, llm,
-                  monitor, planner, report, ssh_runner, summarizer, terminal, workspace)
+                  monitor, planner, report, ssh_runner, stats as stats_mod,
+                  summarizer, terminal, workspace)
 from web.blueprints import api_bp
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -425,6 +428,7 @@ def index():
     return render_template("index.html", experiments=exps,
                            hosts=db.list_hosts(), stats=stats,
                            recent_runs=recent, failed_runs=failed,
+                           timeline=db.global_timeline(30),
                            templates=EXPERIMENT_TEMPLATES,
                            llm_ok=llm.is_configured())
 
@@ -446,10 +450,15 @@ def exp_page(eid):
         "code": json.loads(exp["code_json"]) if exp.get("code_json") else None,
         "files": workspace.list_files(eid),
         "latest_run": latest,
+        "diagnosis": json.loads(latest.get("diagnosis_json") or "{}") if latest else {},
+        "review": json.loads(latest.get("review_json") or "{}") if latest else {},
+        "stats": stats_mod.experiment_stats(eid),
         "summary": json.loads(latest["summary_json"]) if (latest and latest.get("summary_json")) else None,
         "runs": db.list_runs(eid),
         "mode": exp.get("mode") or "autonomous",
         "checkpoint": exp.get("checkpoint") or "",
+        "tags": exp.get("tags") or "",
+        "archived": bool(exp.get("archived")),
         "criteria": json.loads(exp.get("criteria_json") or "{}"),
         "criteria_locked": bool(exp.get("criteria_locked")),
         "criteria_history": json.loads(exp.get("criteria_history_json") or "[]"),
@@ -477,24 +486,64 @@ def report_page(eid):
                            process=report.process_summary(data.get("audits")))
 
 
+def _redact_text(s):
+    """脱敏模式：隐藏 IP、用户名路径、HuggingFace 缓存路径。"""
+    if not s:
+        return s
+    s = re.sub(r"\b\d{1,3}(?:\.\d{1,3}){3}\b", "[IP]", str(s))
+    s = re.sub(r"/(?:Users|home)/[^/\s]+", "/[USER]", s)
+    s = re.sub(r"/root/\.cache/[^\s]+", "[CACHE]", s)
+    return s
+
+
 @app.get("/observe/<token>")
 def observe_page(token):
-    """只读观察链接：无需登录，签名有效且未过期即可查看实验快照。"""
-    parsed = auth.verify_observe_token(token)
-    if not parsed:
-        abort(404)
-    uid, eid = parsed
+    """只读观察链接：兼容旧签名 token 与增强分享链接（密码/次数/脱敏）。"""
+    share = None
+    pwd_ok = True
+    if token.startswith("s_"):
+        share = db.get_share_link(token)
+        if not share or share["revoked"]:
+            abort(404)
+        if share["expires_at"] and share["expires_at"] < time.time():
+            abort(404)
+        if share["max_views"] and share["views"] >= share["max_views"]:
+            abort(410)
+        pwd_ok = auth.verify_share_password(request.args.get("p", ""),
+                                             share["salt"], share["password_hash"])
+        uid, eid = share["user_id"], share["experiment_id"]
+    else:
+        parsed = auth.verify_observe_token(token)
+        if not parsed:
+            abort(404)
+        uid, eid = parsed
+
     exp = db.get_experiment(eid, uid=uid)
     if not exp:
         abort(404)
     owner = db.get_user(uid)
     latest = db.latest_run(eid)
+    runs = db.list_runs(eid, uid=uid)
+    redact = bool(share and share["redact"])
+    if redact:
+        exp = dict(exp)
+        exp["innovation"] = _redact_text(exp.get("innovation"))
+        runs = [dict(r, log_tail=_redact_text(r.get("log_tail"))) for r in runs]
+        latest = dict(latest, log_tail=_redact_text(latest.get("log_tail"))) if latest else None
+
+    if share and pwd_ok:
+        db.incr_share_views(share["id"])
+        db.add_audit(eid, "share", "访问分享链接",
+                     {"token": token, "redact": redact},
+                     decision="已查看", uid=uid)
     return render_template("observe.html", exp=exp,
                            owner=owner["username"] if owner else "未知",
-                           runs=db.list_runs(eid, uid=uid),
-                           latest=latest,
+                           runs=runs, latest=latest,
                            summary=json.loads(latest["summary_json"]) if
-                           (latest and latest.get("summary_json")) else None)
+                           (latest and latest.get("summary_json")) else None,
+                           share=share, pwd_ok=pwd_ok, token=token,
+                           comments=db.list_share_comments(eid, uid=uid) if share else [],
+                           redact=redact)
 
 
 def _fmt_num(value):
@@ -636,6 +685,7 @@ def settings_page():
                            api_key_masked=config.mask_secret(cfg["llm"]["api_key"]),
                            has_key=bool(cfg["llm"]["api_key"]),
                            gh_configs=gh_configs,
+                           notify_cfg=cfg.get("notify") or {},
                            users=db.list_users() if g._auth_user["role"] == "admin" else [])
 
 
@@ -743,6 +793,16 @@ def api_batch_compare():
         stats = (summary or {}).get("metrics_stats") or []
         metrics = {m.get("name"): {"last": m.get("last"), "best": m.get("best"),
                                    "step": m.get("last_step")} for m in stats}
+        # 多 run 统计汇总（mean±std / n），让对比不再只看单次值
+        try:
+            from core import stats as stats_mod
+            multi = stats_mod.experiment_stats(eid).get("metrics", {})
+            for name, s in multi.items():
+                metrics.setdefault(name, {})
+                metrics[name].update({"mean": s.get("mean"), "std": s.get("std"),
+                                      "n": s.get("n"), "ci95": s.get("ci95")})
+        except Exception:
+            pass
         rows.append({
             "id": eid, "title": exp["title"], "status": exp["status"],
             "template_id": exp.get("template_id") or "",
@@ -756,6 +816,37 @@ def api_batch_compare():
             if name not in names:
                 names.append(name)
     return jsonify({"rows": rows, "metric_names": names})
+
+
+@api_bp.get("/api/experiments/<int:eid>/stats")
+def api_exp_stats(eid):
+    own_exp_or_404(eid)
+    aggregate = request.args.get("aggregate", "last")
+    from core import stats as stats_mod
+    return jsonify(stats_mod.experiment_stats(eid, aggregate=aggregate))
+
+
+@api_bp.post("/api/stats/compare")
+def api_stats_compare():
+    d = request.get_json(force=True) or {}
+    a, b = d.get("a"), d.get("b")
+    if not isinstance(a, dict) or not isinstance(b, dict):
+        return jsonify({"error": "a / b 需为 {experiment_id, run_ids?} 结构"}), 400
+    eid_a, eid_b = int(a.get("experiment_id")), int(b.get("experiment_id"))
+    own_exp_or_404(eid_a); own_exp_or_404(eid_b)
+    metric = str(d.get("metric") or "").strip()
+    if not metric:
+        return jsonify({"error": "请指定指标名"}), 400
+    runs_a = db.list_runs(eid_a); runs_b = db.list_runs(eid_b)
+    if a.get("run_ids"):
+        keep = {int(x) for x in a["run_ids"]}
+        runs_a = [r for r in runs_a if r["id"] in keep]
+    if b.get("run_ids"):
+        keep = {int(x) for x in b["run_ids"]}
+        runs_b = [r for r in runs_b if r["id"] in keep]
+    from core import stats as stats_mod
+    return jsonify(stats_mod.compare_groups(metric, runs_a, runs_b,
+                                             aggregate=d.get("aggregate", "last")))
 
 
 @api_bp.post("/api/batch/retry-failed")
@@ -814,7 +905,42 @@ def api_batch_retry_failed():
 
 @api_bp.get("/api/experiments")
 def api_list_exp():
-    return jsonify(db.list_experiments())
+    q = request.args.get("q", "").strip()
+    tags = [t.strip() for t in request.args.get("tags", "").split(",") if t.strip()]
+    status = request.args.get("status", "").strip()
+    arch = request.args.get("archived", "")
+    archived = None if arch == "" else (arch.lower() in ("1", "true", "yes"))
+    return jsonify(db.list_experiments(search=q, tags=tags, status=status, archived=archived))
+
+
+@api_bp.post("/api/experiments/<int:eid>/tags")
+def api_set_exp_tags(eid):
+    own_exp_or_404(eid)
+    d = request.get_json(force=True) or {}
+    raw = d.get("tags", "")
+    if isinstance(raw, list):
+        tags = [str(t).strip() for t in raw if str(t).strip()][:20]
+    else:
+        tags = [t.strip() for t in str(raw).split(",") if t.strip()][:20]
+    db.update_experiment(eid, tags=",".join(tags))
+    db.add_audit(eid, "experiment", "更新标签", {"tags": tags})
+    return jsonify({"ok": True, "tags": tags})
+
+
+@api_bp.post("/api/experiments/<int:eid>/archive")
+def api_archive_exp(eid):
+    own_exp_or_404(eid)
+    d = request.get_json(force=True) or {}
+    archived = 1 if d.get("archived") else 0
+    db.update_experiment(eid, archived=archived)
+    db.add_audit(eid, "experiment", "归档实验" if archived else "取消归档", {})
+    return jsonify({"ok": True, "archived": bool(archived)})
+
+
+@api_bp.get("/api/timeline")
+def api_timeline():
+    limit = min(int(request.args.get("limit", 80)), 500)
+    return jsonify(db.global_timeline(limit=limit))
 
 
 def _copilot_gate(exp, expected):
@@ -896,6 +1022,48 @@ def api_save_innovation(eid):
                  decision="已更新")
     db.add_event(eid, None, "已更换创新点文稿，可重新生成方案", kind="stage")
     return jsonify({"ok": True, "innovation": text})
+
+
+@api_bp.post("/api/experiments/<int:eid>/review")
+def api_run_review(eid):
+    own_exp_or_404(eid)
+    from core import review
+    latest = db.latest_run(eid)
+    if not latest:
+        return jsonify({"error": "还没有实验结果可审阅"}), 400
+    summary = json.loads(latest.get("summary_json") or "{}")
+    if not summary:
+        return jsonify({"error": "请先生成实验结论"}), 400
+    result = review.review_summary(eid, latest["id"], summary)
+    if result.get("error"):
+        return jsonify(result), 200
+    return jsonify({"ok": True, "review": result})
+
+
+@api_bp.get("/api/runs/<int:rid>/diagnosis")
+def api_run_diagnosis(rid):
+    run = db.q1("SELECT * FROM runs WHERE id=?", (rid,))
+    if not run:
+        abort(404)
+    own_exp_or_404(run["experiment_id"])
+    cached = run.get("diagnosis_json")
+    if cached:
+        return jsonify(json.loads(cached))
+    from core import diagnose
+    dg = diagnose.diagnose_run(rid)
+    return jsonify(dg or {})
+
+
+@api_bp.post("/api/runs/<int:rid>/diagnosis")
+def api_run_rediagnose(rid):
+    run = db.q1("SELECT * FROM runs WHERE id=?", (rid,))
+    if not run:
+        abort(404)
+    own_exp_or_404(run["experiment_id"])
+    from core import diagnose
+    dg = diagnose.diagnose_run(rid) or {}
+    db.update_run(rid, diagnosis_json=json.dumps(dg, ensure_ascii=False))
+    return jsonify({"ok": True, "diagnosis": dg})
 
 
 @api_bp.get("/api/experiments/<int:eid>/audits")
@@ -1757,6 +1925,91 @@ def api_experiment_push(eid):
                     "warnings": warnings})
 
 
+# ---------------- 分享链接增强 ----------------
+def _share_public(row):
+    return {"id": row["id"], "token": row["token"],
+            "url": "/observe/" + row["token"],
+            "has_password": bool(row["password_hash"]),
+            "expires_at": row["expires_at"], "max_views": row["max_views"],
+            "views": row["views"], "redact": bool(row["redact"]),
+            "revoked": bool(row["revoked"]), "created_at": row["created_at"]}
+
+
+@api_bp.get("/api/experiments/<int:eid>/shares")
+def api_list_shares(eid):
+    own_exp_or_404(eid)
+    return jsonify([_share_public(s) for s in db.list_share_links(eid)])
+
+
+@api_bp.post("/api/experiments/<int:eid>/shares")
+def api_create_share(eid):
+    own_exp_or_404(eid)
+    d = request.get_json(force=True) or {}
+    ttl = d.get("ttl_hours")
+    try:
+        ttl_hours = float(ttl) if ttl not in (None, "") else 168
+        if ttl_hours <= 0 or ttl_hours > 24 * 365:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"error": "有效期需在 0～8760 小时之间"}), 400
+    try:
+        max_views = int(d.get("max_views") or 0)
+        if max_views < 0 or max_views > 100000:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({"error": "访问次数无效"}), 400
+
+    password = str(d.get("password") or "")
+    salt = secrets.token_hex(8) if password else ""
+    pwd_hash = auth.hash_share_password(password, salt) if password else ""
+    token = auth.make_share_token()
+    db.add_share_link(token, eid, password_hash=pwd_hash, salt=salt,
+                      expires_at=time.time() + ttl_hours * 3600,
+                      max_views=max_views, redact=1 if d.get("redact") else 0)
+    db.add_audit(eid, "share", "创建分享链接",
+                 {"ttl_hours": ttl_hours, "password": bool(password),
+                  "max_views": max_views, "redact": bool(d.get("redact"))})
+    return jsonify({"ok": True, "share": _share_public(db.get_share_link(token))})
+
+
+@api_bp.delete("/api/shares/<int:sid>")
+def api_revoke_share(sid):
+    row = db.q1("SELECT * FROM share_links WHERE id=?", (sid,))
+    if not row:
+        return jsonify({"error": "分享链接不存在"}), 404
+    own_exp_or_404(row["experiment_id"])
+    db.revoke_share_link(sid)
+    db.add_audit(row["experiment_id"], "share", "撤销分享链接", {"id": sid})
+    return jsonify({"ok": True})
+
+
+@api_bp.post("/api/share/<token>/comment")
+def api_share_comment(token):
+    """访客批注：凭分享 token 写入，无需登录。"""
+    share = db.get_share_link(token)
+    if not share or share["revoked"]:
+        return jsonify({"error": "链接无效"}), 404
+    if share["expires_at"] and share["expires_at"] < time.time():
+        return jsonify({"error": "链接已过期"}), 410
+    if share["max_views"] and share["views"] >= share["max_views"]:
+        return jsonify({"error": "访问次数已用完"}), 410
+    if not auth.verify_share_password(request.args.get("p", ""),
+                                       share["salt"], share["password_hash"]):
+        return jsonify({"error": "访问密码错误"}), 403
+    d = request.get_json(force=True) or {}
+    content = str(d.get("content") or "").strip()
+    if not content or len(content) > 2000:
+        return jsonify({"error": "批注内容需为 1～2000 字"}), 400
+    visitor = str(d.get("visitor") or "").strip()[:60] or "访客"
+    with config.as_user(share["user_id"]):
+        cid = db.add_share_comment(share["id"], share["experiment_id"],
+                                   content, visitor=visitor)
+        db.add_audit(share["experiment_id"], "share", "访客批注",
+                     {"comment_id": cid, "visitor": visitor, "content": content},
+                     decision="外部来源")
+    return jsonify({"ok": True, "id": cid})
+
+
 # ---------------- 设置 ----------------
 
 @api_bp.get("/api/settings")
@@ -1782,6 +2035,14 @@ def api_save_settings():
             patch["llm"]["temperature"] = float(llm_d["temperature"])
         if "timeout" in llm_d:
             patch["llm"]["timeout"] = int(llm_d["timeout"])
+        for k in ("max_retries", "retry_base_sec", "circuit_break_after"):
+            if k in llm_d:
+                patch["llm"][k] = float(llm_d[k]) if k == "retry_base_sec" else int(llm_d[k])
+        if "stream" in llm_d:
+            patch["llm"]["stream"] = bool(llm_d["stream"])
+        if "fallback_models" in llm_d:
+            fb = llm_d["fallback_models"]
+            patch["llm"]["fallback_models"] = [str(x).strip() for x in fb if str(x).strip()] if isinstance(fb, list) else []
         key = (llm_d.get("api_key") or "").strip()
         if key and "*" not in key:
             patch["llm"]["api_key"] = key
@@ -1793,8 +2054,39 @@ def api_save_settings():
         for k in ("interval_sec", "stall_warn_sec"):
             if k in mon:
                 patch["monitor"][k] = int(mon[k])
+    notify_d = d.get("notify") or {}
+    if notify_d:
+        patch["notify"] = {}
+        for k in ("webhook_url", "quiet_hours"):
+            if k in notify_d:
+                patch["notify"][k] = str(notify_d[k] or "").strip()
+        if "enabled" in notify_d:
+            patch["notify"]["enabled"] = bool(notify_d["enabled"])
+        if "events" in notify_d:
+            ev = notify_d["events"]
+            patch["notify"]["events"] = [str(x) for x in ev] if isinstance(ev, list) else []
     config.save_user_config(g._auth_user["id"], patch)
     return jsonify({"ok": True, "llm_configured": llm.is_configured()})
+
+
+@api_bp.post("/api/notify/test")
+def api_test_notify():
+    d = request.get_json(force=True) or {}
+    url = str(d.get("webhook_url") or "").strip()
+    if not url:
+        cfg = config.load_config().get("notify") or {}
+        url = cfg.get("webhook_url", "")
+    if not url:
+        return jsonify({"ok": False, "error": "请先填写 Webhook 地址"}), 400
+    try:
+        from core import notify
+        payload = notify._payload("finished", "测试通知", "这是一条来自科研实验助手的测试消息。", "")
+        r = requests.post(url, json=payload, timeout=8)
+        if r.status_code >= 400:
+            return jsonify({"ok": False, "error": f"Webhook 返回 HTTP {r.status_code}"}), 200
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
 
 
 @api_bp.post("/api/llm/test")

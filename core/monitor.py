@@ -73,7 +73,7 @@ def _loop_inner(run_id, exp_id, host_id, remote_dir, interval):
 
         client = None
         try:
-            client = ssh_runner.connect(host, timeout=15)
+            client = ssh_runner.get_cached_client(host, timeout=15)
             fail_ticks = 0
             sftp = client.open_sftp()
 
@@ -99,7 +99,7 @@ def _loop_inner(run_id, exp_id, host_id, remote_dir, interval):
                     pass
 
             sftp.close()
-            client.close()
+            # client 由缓存池管理，不在这里关闭；异常分支才 drop
             client = None
 
             if exited:
@@ -128,7 +128,7 @@ def _loop_inner(run_id, exp_id, host_id, remote_dir, interval):
             fail_ticks += 1
             if client:
                 try:
-                    client.close()
+                    ssh_runner.drop_cached_client(host)
                 except Exception:
                     pass
             if fail_ticks == 3:
@@ -170,21 +170,14 @@ def _check_stall(run_id, exp_id, offset, cfg):
 
 
 def _drain(host, remote_dir, offset, exp_id, run_id, sink, recent):
-    client = None
     try:
-        client = ssh_runner.connect(host, timeout=15)
+        client = ssh_runner.get_cached_client(host, timeout=15)
         sftp = client.open_sftp()
         for _ in range(3):
             offset = ssh_runner._stream_log(sftp, remote_dir, "run.log", offset, exp_id, run_id, sink)
         sftp.close()
     except Exception:
-        pass
-    finally:
-        if client:
-            try:
-                client.close()
-            except Exception:
-                pass
+        ssh_runner.drop_cached_client(host)
     if recent:
         ssh_runner.flush_tail(run_id, list(recent))
 
@@ -201,6 +194,30 @@ def _finish(run_id, exp_id, status, message, exit_code=None):
     exp_status = "done" if status == "finished" else "failed"
     db.update_experiment(exp_id, status=exp_status)
     bus.status(exp_id, exp_status, run_id, {"run_status": status})
+
+    # 失败自动诊断（规则签名，立即可用）
+    if status != "finished":
+        try:
+            from core import diagnose
+            dg = diagnose.diagnose_run(run_id)
+            if dg:
+                import json as _json
+                db.update_run(run_id, diagnosis_json=_json.dumps(dg, ensure_ascii=False))
+                db.add_event(exp_id, run_id,
+                             f"失败诊断：{dg['cause']} — {', '.join(dg['fixes'][:2])}",
+                             kind="stage", level="error")
+                bus.note(exp_id, f"诊断：{dg['cause']}", "error", run_id)
+        except Exception:
+            pass
+
+    # Webhook 通知（完成 / 失败）
+    try:
+        from core import notify
+        notify_event = "finished" if status == "finished" else "failed"
+        notify.send(notify_event, exp_id, message=message,
+                    url_path=f"/exp/{exp_id}")
+    except Exception:
+        pass
 
     # 自动总结
     from core import summarizer

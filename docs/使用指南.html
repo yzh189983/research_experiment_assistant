@@ -174,6 +174,7 @@ details[open] summary::before{content:"−"}
       <a href="#advanced">进阶</a>
       <a href="#github">GitHub 推送</a>
       <a href="#i18n">语言 / 可访问性</a>
+      <a href="#stats">统计 / 审稿 / 自动化</a>
       <a href="#cli">命令行</a>
       <a href="#faq">FAQ</a>
       <a href="项目介绍.html" style="color:var(--accent);font-weight:600">← 项目介绍</a>
@@ -453,6 +454,20 @@ python3 -m venv .venv
       <li><b>键盘操作</b>：按 <code>Tab</code> 时先出现「跳到主要内容」链接；所有可点元素有清晰的焦点描边；弹窗按 <code>Esc</code> 可关闭。</li>
       <li><b>读屏友好</b>：纯图标按钮带文字说明，通知会用 <code>aria-live</code> 播报，页面语言属性随中英文切换。</li>
       <li><b>看得清</b>：所有文字与背景的对比度达到 WCAG AA 标准，长时间使用更省力。</li>
+    </ul>
+  </section>
+
+  <!-- 7d 统计 / 审稿 / 自动化 -->
+  <section id="stats">
+    <div class="sec-head"><span class="sec-num">＋</span><h2>统计、审稿与自动化</h2><span class="en">Statistics &amp; Automation</span></div>
+    <p class="lead">这一组功能把「跑完一次」升级为「跑得可信、跑得省心」：多 run 统计让结论有数字支撑，AI 自审帮你找漏洞，失败诊断和 Webhook 通知让你不用一直守着页面。</p>
+    <ul class="steps">
+      <li><b>多 run 统计</b>：同一实验运行多次后，实验页结论的「指标汇总」表会多出「多 run 均值±std」列；批量实验对比也带均值/样本数。两个实验做显著性比较可调用 <code>/api/stats/compare</code>（Welch t + Mann-Whitney U）。样本少于 5 次会提示谨慎解读。</li>
+      <li><b>AI 自审</b>：结论生成后自动追加一轮「审稿人」调用，在结论区下方显示六维评分、主要/次要问题与待补实验；点「AI 自审」按钮可重新审。结果标注「AI 生成，需人工判断」。</li>
+      <li><b>失败诊断</b>：实验失败时，日志区上方出现诊断卡——命中错误签名、给证据行号和修复建议（降 batch / 装依赖 / 改路径等）。</li>
+      <li><b>分享与批注</b>：实验页「分享设置…」可创建带密码、有效期、访问次数、脱敏的只读链接并可撤销；访客在观察页留的批注会汇总回实验页。</li>
+      <li><b>搜索 / 标签 / 通知</b>：首页可即时搜索实验、按状态筛选、看全局时间线；实验页可打标签、归档。设置页「通知告警」填 Webhook（企业微信/钉钉机器人）后，完成/失败/判据未通过会自动推送，可设免打扰时段。</li>
+      <li><b>可靠性</b>：LLM 调用遇 429/5xx/超时会自动重试、切换备用模型，连续失败熔断；SSH 连接复用、大文件上传支持断点续传。</li>
     </ul>
   </section>
 

@@ -15,7 +15,10 @@
   </div>
   <div class="exp-actions">
     <button class="btn sm" id="btn-mode" title="自主模式一键跑到底；副驾驶模式在阶段间等待你的确认">自主模式</button>
-    <a class="btn sm" href="{{ url_for('observe_page', token=observe_token) }}" title="只读分享链接，7 天有效">只读观察</a>
+    <a class="btn sm" id="btn-observe" href="{{ url_for('observe_page', token=observe_token) }}" title="快速只读分享链接，7 天有效">只读观察</a>
+    <button class="btn sm" id="btn-share-settings" title="设置带密码/有效期/批注的分享链接">分享设置…</button>
+    <button class="btn sm" id="btn-tags" title="编辑标签（逗号分隔）">标签</button>
+    <button class="btn sm" id="btn-archive" title="归档实验">归档</button>
     <button class="btn sm" id="btn-replan">重新生成方案</button>
     <button class="btn sm" id="btn-recode">重新生成代码</button>
     <button class="btn sm accent" id="btn-run">运行实验</button>
@@ -74,12 +77,14 @@
         <div class="sec-title"><span class="sec-num" id="num-sum">4</span>实验结论</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn ghost sm" id="btn-summarize" style="display:none">重新总结</button>
+          <button class="btn ghost sm" id="btn-review" style="display:none">AI 自审</button>
           <button class="btn ghost sm" id="btn-export" style="display:none">导出 Markdown</button>
           <button class="btn ghost sm" id="btn-export-docx" style="display:none">导出 Word</button>
           <a class="btn ghost sm" id="btn-export-pdf" style="display:none" target="_blank">打印 / PDF</a>
         </div>
       </div>
       <div id="summary-body"></div>
+      <div id="review-body"></div>
     </section>
 
     <!-- 5 预注册判据 -->
@@ -143,10 +148,36 @@
             <button class="btn ghost sm log-btn" id="btn-stop" style="display:none" title="停止远程进程">停止</button>
           </div>
         </div>
+        <div id="diagnosis-box" class="card" style="display:none;margin:10px 12px 0"></div>
         <div class="logbox" id="logbox"></div>
       </div>
     </div>
   </aside>
+</div>
+
+<div id="share-modal" class="compare-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="share-title">
+  <div class="card" style="width:100%;max-width:620px;max-height:82vh;overflow:auto">
+    <div class="sec-head">
+      <div class="sec-title" id="share-title">分享设置</div>
+      <button class="btn ghost sm" id="share-close" aria-label="关闭分享设置">关闭</button>
+    </div>
+    <div class="card-pad">
+      <p class="hint" style="margin:0 0 14px">创建带控制的只读链接：可设密码、有效期、访问次数与脱敏。访问者能看结论与日志摘要，还可以留批注。</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label class="field"><span>有效期（小时，0=永不过期）</span>
+          <input type="number" id="sh-ttl" value="168" min="0" max="8760"></label>
+        <label class="field"><span>最多访问次数（0=不限）</span>
+          <input type="number" id="sh-views" value="0" min="0"></label>
+        <label class="field"><span>访问密码（留空=无需密码）</span>
+          <input type="text" id="sh-pwd" placeholder="留空则无密码"></label>
+        <label class="field" style="display:flex;align-items:end;gap:8px;padding-bottom:8px">
+          <input type="checkbox" id="sh-redact" style="width:auto"><span style="font-size:11px;color:var(--muted)">脱敏模式（隐藏 IP / 用户路径）</span></label>
+      </div>
+      <button class="btn primary" id="sh-create" style="margin:14px 0">创建分享链接</button>
+      <div id="share-result"></div>
+      <div id="share-list"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -158,4 +189,83 @@ window.__LLM_OK__ = {{ 'true' if llm_ok else 'false' }};
 
 {% block scripts %}
 <script src="/static/js/experiment.js"></script>
+<script>
+(function () {
+  const modal = document.getElementById('share-modal');
+  const eid = window.__EXP__ && window.__EXP__.id;
+  function close() { modal.style.display = 'none'; }
+  document.getElementById('btn-share-settings').onclick = () => { modal.style.display = 'flex'; loadShares(); };
+  document.getElementById('share-close').onclick = close;
+  modal.onclick = e => { if (e.target === modal) close(); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.style.display !== 'none') close(); });
+
+  async function loadShares() {
+    const box = document.getElementById('share-list');
+    if (!box) return;
+    try {
+      const list = await api('/api/experiments/' + eid + '/shares');
+      if (!list.length) { box.innerHTML = '<div class="tiny faint">还没有分享链接。</div>'; return; }
+      box.innerHTML = '<table class="grid-table" style="width:100%"><thead><tr><th>链接</th><th>密码</th><th>到期</th><th>访问</th><th></th></tr></thead><tbody>' +
+        list.map(s => `<tr>
+          <td class="mono tiny"><a href="${esc(s.url)}" target="_blank" rel="noopener" style="color:var(--accent)">打开 ↗</a></td>
+          <td class="tiny">${s.has_password ? '有' : '无'}${s.redact ? ' · 脱敏' : ''}</td>
+          <td class="tiny mono">${s.expires_at ? fmtTime(s.expires_at) : '永不'}</td>
+          <td class="tiny mono">${s.views}${s.max_views ? '/' + s.max_views : ''}</td>
+          <td>${s.revoked ? '<span class="tiny faint">已撤销</span>' : `<button class="btn ghost sm" data-revoke="${s.id}">撤销</button>`}</td>
+        </tr>`).join('') + '</tbody></table>';
+      box.querySelectorAll('[data-revoke]').forEach(b => b.onclick = async () => {
+        if (!confirm('撤销这个分享链接？撤销后立即失效。')) return;
+        try { await api('/api/shares/' + b.dataset.revoke, { method: 'DELETE' }); toast('已撤销'); loadShares(); }
+        catch (e) { toast(e.message, true); }
+      });
+    } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+  }
+
+  const createBtn = document.getElementById('sh-create');
+  if (createBtn) createBtn.onclick = async () => {
+    const body = {
+      ttl_hours: Number(document.getElementById('sh-ttl').value),
+      max_views: Number(document.getElementById('sh-views').value),
+      password: document.getElementById('sh-pwd').value.trim(),
+      redact: document.getElementById('sh-redact').checked
+    };
+    try {
+      const r = await api('/api/experiments/' + eid + '/shares', { method: 'POST', body });
+      const url = location.origin + r.share.url;
+      document.getElementById('share-result').innerHTML =
+        '<div class="hint" style="margin:0 0 14px;word-break:break-all">链接已创建：<a href="' + esc(url) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(url) + '</a>（点开可复制到地址栏分享）</div>';
+      toast('分享链接已创建');
+      loadShares();
+    } catch (e) { toast(e.message, true); }
+  };
+})();
+
+// 标签编辑 / 归档
+(function () {
+  const eid = window.__EXP__ && window.__EXP__.id;
+  const btnTags = document.getElementById('btn-tags');
+  if (btnTags) btnTags.onclick = async () => {
+    const cur = (window.__EXP__ && window.__EXP__.tags) || '';
+    const val = prompt('输入标签（逗号分隔，最多 20 个）：', cur);
+    if (val === null) return;
+    try {
+      const r = await api('/api/experiments/' + eid + '/tags', { method: 'POST', body: { tags: val } });
+      window.__EXP__.tags = r.tags.join(',');
+      toast(r.tags.length ? '标签已更新：' + r.tags.join(', ') : '标签已清空');
+    } catch (e) { toast(e.message, true); }
+  };
+  const btnArch = document.getElementById('btn-archive');
+  if (btnArch) btnArch.onclick = async () => {
+    const archived = !!(window.__EXP__ && window.__EXP__.archived);
+    if (!confirm(archived ? '取消归档这个实验？' : '归档这个实验？归档后默认不在首页显示。')) return;
+    try {
+      const r = await api('/api/experiments/' + eid + '/archive', { method: 'POST', body: { archived: !archived } });
+      window.__EXP__.archived = r.archived ? 1 : 0;
+      btnArch.textContent = r.archived ? '取消归档' : '归档';
+      toast(r.archived ? '已归档' : '已取消归档');
+    } catch (e) { toast(e.message, true); }
+  };
+  if (btnArch && window.__EXP__ && window.__EXP__.archived) btnArch.textContent = '取消归档';
+})();
+</script>
 {% endblock %}

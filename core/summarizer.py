@@ -148,6 +148,16 @@ def summarize(run_id, exp_id, status=None, force=False):
         criteria_locked=bool(exp.get("criteria_locked")),
         plan=plan)
     summary["needs_review"] = bool(summary["verification"]["unverified_numbers"])
+    # 判据未通过时通知
+    try:
+        crit = (summary["verification"].get("criteria") or {})
+        if crit.get("failed"):
+            from core import notify
+            notify.send("criteria_failed", exp_id,
+                        message=f"判据未通过：{', '.join(str(x) for x in crit['failed'])[:200]}",
+                        url_path=f"/exp/{exp_id}")
+    except Exception:
+        pass
     if exp.get("mode") == "copilot":
         db.update_experiment(exp_id, checkpoint="done")
 
@@ -165,6 +175,14 @@ def summarize(run_id, exp_id, status=None, force=False):
         bus.summary(exp_id, summary, run_id)
     except Exception:
         pass
+
+    # AI 自审 / 模拟同行评审（失败不影响主结论）
+    try:
+        from core import review
+        review.review_summary(exp_id, run_id, summary)
+    except Exception:
+        pass
+
     return summary
 
 

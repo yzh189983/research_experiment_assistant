@@ -100,22 +100,57 @@
         <div class="sec-title">最近的实验</div>
         <span class="eyebrow">{{ experiments|length }} 项</span>
       </div>
+      <div class="card-pad" style="padding-bottom:6px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input type="text" id="exp-search" class="log-tool" placeholder="搜索标题 / 创新点 / 标签…" aria-label="搜索实验" style="flex:1;min-width:180px">
+          <select id="exp-status" class="log-tool" aria-label="按状态筛选">
+            <option value="">全部状态</option>
+            <option value="draft">待开始</option><option value="planned">方案就绪</option>
+            <option value="coded">代码就绪</option><option value="running">运行中</option>
+            <option value="done">已完成</option><option value="failed">失败</option>
+          </select>
+          <label class="tiny" style="display:flex;align-items:center;gap:4px;color:var(--muted)">
+            <input type="checkbox" id="exp-archived" style="width:auto"> 显示归档</label>
+        </div>
+      </div>
       {% if experiments %}
-      <div class="exp-list">
+      <div class="exp-list" id="exp-list">
         {% for e in experiments %}
-        <a class="exp-item" href="/exp/{{ e.id }}">
+        <a class="exp-item" href="/exp/{{ e.id }}" data-id="{{ e.id }}" data-status="{{ e.status }}" data-archived="{{ e.archived or 0 }}"
+           data-tags="{{ e.tags or '' }}" data-title="{{ e.title }}">
           <div class="t">
             <b>{{ e.title }}</b>
-            <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行</small>
+            <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行{% if e.tags %} · {{ e.tags }}{% endif %}{% if e.archived %} · 已归档{% endif %}</small>
           </div>
           {{ statusBadge(e.status) | safe }}
         </a>
         {% endfor %}
       </div>
       {% else %}
-      <div class="empty">还没有实验，左边写一个创新点开始</div>
+      <div class="empty" id="exp-empty">还没有实验，左边写一个创新点开始</div>
       {% endif %}
     </div>
+
+    {% if timeline %}
+    <div class="card">
+      <div class="sec-head"><div class="sec-title">全局时间线</div><span class="tiny muted">最近 {{ timeline|length }} 条</span></div>
+      <div class="card-pad" style="padding:0">
+        <table class="grid-table">
+          <thead><tr><th>时间</th><th>实验</th><th>事件</th><th>结果</th></tr></thead>
+          <tbody>
+          {% for t in timeline %}
+            <tr>
+              <td class="mono tiny">{{ t.ts | timestamp }}</td>
+              <td class="tiny"><a href="/exp/{{ t.experiment_id }}" style="color:var(--accent)">{{ t.exp_title }}</a></td>
+              <td class="tiny">{{ t.action }}</td>
+              <td class="tiny faint">{{ (t.decision or '')[:50] }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
 
     {% set batch_exps = experiments | selectattr('template_id') | list %}
     {% if batch_exps|length > 1 %}
@@ -380,5 +415,28 @@ document.getElementById('btn-create').onclick = async () => {
     btn.disabled = false; btn.textContent = '创建实验 →';
   }
 };
+
+// 实验搜索 / 筛选（客户端即时过滤，数据已在页面）
+(function () {
+  const inp = document.getElementById('exp-search');
+  const sel = document.getElementById('exp-status');
+  const arch = document.getElementById('exp-archived');
+  const items = Array.from(document.querySelectorAll('#exp-list .exp-item'));
+  if (!inp) return;
+  function apply() {
+    const q = inp.value.trim().toLowerCase();
+    const st = sel.value;
+    const showArch = arch.checked;
+    items.forEach(el => {
+      const matchQ = !q || (el.dataset.title || '').toLowerCase().includes(q) ||
+                     (el.dataset.tags || '').toLowerCase().includes(q) ||
+                     (el.dataset.id || '').includes(q);
+      const matchSt = !st || el.dataset.status === st;
+      const matchArch = showArch || el.dataset.archived !== '1';
+      el.style.display = (matchQ && matchSt && matchArch) ? '' : 'none';
+    });
+  }
+  inp.oninput = apply; sel.onchange = apply; arch.onchange = apply;
+})();
 </script>
 {% endblock %}

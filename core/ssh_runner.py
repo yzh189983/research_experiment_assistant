@@ -5,12 +5,15 @@
 - 每个 poll 新建一条 SSH 连接（3 秒一次，开销可接受），避免长时间空闲被中断。
 - 日志用 sftp 按 offset 增量读，不会把整个日志反复拉回来。
 """
+import hashlib
 import json
 import os
 import posixpath
+import random
 import re
 import shlex
 import socket
+import threading
 import time
 
 import paramiko
@@ -57,6 +60,123 @@ def connect(host, timeout=20):
     except Exception as e:
         raise SSHError(f"SSH 连接失败：{e}")
     return client
+
+
+# ---------- 连接复用（带 keepalive 与失效检测） ----------
+_client_cache = {}
+_cache_lock = threading.Lock()
+_CACHE_TTL = 240  # 4 分钟复用窗口
+
+
+def _host_key(host):
+    return f"{host['host']}:{host.get('port', 22)}:{host['username']}:{host.get('auth_type', 'password')}"
+
+
+def _alive(client):
+    try:
+        transport = client.get_transport()
+        return bool(transport and transport.is_active())
+    except Exception:
+        return False
+
+
+def get_cached_client(host, timeout=20):
+    """复用同一台主机上的 SSH 连接，减少每轮握手。失效时重建。"""
+    key = _host_key(host)
+    with _cache_lock:
+        entry = _client_cache.get(key)
+        now = time.time()
+        if entry and now - entry["ts"] < _CACHE_TTL and _alive(entry["client"]):
+            entry["ts"] = now
+            return entry["client"]
+        if entry and entry["client"]:
+            try:
+                entry["client"].close()
+            except Exception:
+                pass
+    client = connect_with_retry(host, timeout=timeout)
+    try:
+        transport = client.get_transport()
+        if transport:
+            transport.set_keepalive(30)  # 每 30s 心跳，防止空闲断开
+    except Exception:
+        pass
+    with _cache_lock:
+        _client_cache[key] = {"client": client, "ts": time.time()}
+    return client
+
+
+def drop_cached_client(host):
+    key = _host_key(host)
+    with _cache_lock:
+        entry = _client_cache.pop(key, None)
+    if entry and entry["client"]:
+        try:
+            entry["client"].close()
+        except Exception:
+            pass
+
+
+def clear_client_cache():
+    with _cache_lock:
+        entries = list(_client_cache.values())
+        _client_cache.clear()
+    for entry in entries:
+        try:
+            entry["client"].close()
+        except Exception:
+            pass
+
+
+def connect_with_retry(host, timeout=20, retries=3, base_delay=1.0):
+    """连接失败时指数退避重试；认证失败不重试。"""
+    last = None
+    for attempt in range(retries + 1):
+        try:
+            return connect(host, timeout=timeout)
+        except SSHError as e:
+            last = e
+            if "认证失败" in str(e):
+                raise  # 认证问题重试无意义
+            if attempt < retries:
+                time.sleep(base_delay * (2 ** attempt) + random.uniform(0, 0.3))
+    raise last
+
+
+# ---------- SFTP 断点续传 ----------
+def upload_file(sftp, local_path, remote_path, emit=None, chunk=128 * 1024):
+    """大文件断点续传：先比对远端 .part 大小，从断点继续，最后原子重命名。"""
+    size = os.path.getsize(local_path)
+    part = remote_path + ".part"
+    offset = 0
+    try:
+        offset = int(sftp.stat(part).st_size)
+    except IOError:
+        offset = 0
+    # 远端已完成且大小一致则跳过
+    try:
+        if int(sftp.stat(remote_path).st_size) == size:
+            if emit:
+                emit(f"跳过未变更文件：{os.path.basename(remote_path)}")
+            return
+    except IOError:
+        pass
+    if offset > size:  # 远端脏数据，从头来
+        offset = 0
+    mode = "ab" if offset else "wb"
+    with open(local_path, "rb") as lf, sftp.open(part, mode) as rf:
+        if offset:
+            lf.seek(offset)
+            if emit:
+                emit(f"断点续传 {os.path.basename(remote_path)}：从 {offset} B 继续")
+        while True:
+            data = lf.read(chunk)
+            if not data:
+                break
+            rf.write(data)
+    sftp.rename(part, remote_path)
+    if emit:
+        emit(f"上传 {os.path.basename(remote_path)} ({size} B)")
 
 
 def run(client, cmd, timeout=60, login_shell=True):
@@ -202,7 +322,7 @@ def deploy_and_launch(run_id, host_id, experiment_id, code, seed=None):
     client = None
     try:
         emit(f"连接 {host['username']}@{host['host']}:{host.get('port') or 22}")
-        client = connect(host)
+        client = connect_with_retry(host)
         emit("SSH 连接成功")
 
         rc, _, err = run(client, f"mkdir -p {shlex.quote(remote_dir)}")
@@ -220,8 +340,7 @@ def deploy_and_launch(run_id, host_id, experiment_id, code, seed=None):
             parent = posixpath.dirname(remote_path)
             if parent and parent != remote_dir:
                 run(client, f"mkdir -p {shlex.quote(parent)}")
-            sftp.put(local_path, remote_path)
-            emit(f"上传 {rel} ({os.path.getsize(local_path)} B)")
+            upload_file(sftp, local_path, remote_path, emit=emit)
 
         pybase = host.get("python_bin") or "python3"
         entry = code.get("entry") or "main.py"
