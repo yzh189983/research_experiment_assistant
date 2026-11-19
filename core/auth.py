@@ -254,3 +254,19 @@ def verify_observe_token(token):
         return int(uid_s), int(exp_s)
     except Exception:
         return None
+
+
+# ---------------- 增强分享链接 ----------------
+def make_share_token():
+    """生成不可预测的分享 token（独立入库，可撤销/计数）。"""
+    return "s_" + secrets.token_urlsafe(18)
+
+
+def hash_share_password(password, salt):
+    return hashlib.sha256((salt + str(password)).encode("utf-8")).hexdigest()
+
+
+def verify_share_password(password, salt, password_hash):
+    if not password_hash:
+        return True
+    return hmac.compare_digest(hash_share_password(password or "", salt), password_hash)

@@ -343,6 +343,18 @@ td .dim{color:var(--muted);font-size:12px}
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg></div>
         <h3>可访问性与国际化</h3><p>右上角一键切换中英文（350 条文案映射，动态内容自动翻译）；skip link、焦点描边、Esc 关弹窗、图标 aria-label 让键盘与读屏用户可用；配色对比度全部达到 WCAG AA。</p>
       </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg></div>
+        <h3>统计与 AI 自审</h3><p>多 run 自动算 mean ± std / 95% CI，Welch t 与 Mann-Whitney U 给 p 值；总结后再跑一轮「审稿人」模型，六维打分并列出待补实验，帮结论站得住。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
+        <h3>失败自动诊断</h3><p>失败时从日志尾部与退出码命中 12 类错误签名（CUDA OOM / exit 137 / 缺依赖 / 路径错等），给出证据行号和降 batch、装依赖等修复建议。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg></div>
+        <h3>协作与通知</h3><p>带密码/有效期/脱敏的分享链接与访客批注；实验标签、归档、搜索与全局时间线；完成/失败/判据未通过时 Webhook 推送到企业微信或钉钉。</p>
+      </div>
     </div>
   </section>
 
@@ -489,6 +501,8 @@ td .dim{color:var(--muted);font-size:12px}
           <li><b style="color:var(--accent)">✓ 推送代码到 GitHub（已完成）</b>：加密 Token + 一键推送快照，敏感信息扫描与二次确认，报告 commit 变可点击链接</li>
           <li><b style="color:var(--accent)">✓ 结果核验模块（已完成）</b>：把报告里每个数字回查到日志/指标，标记无来源数字，区分实测与推断</li>
           <li><b style="color:var(--accent)">✓ 人在环 checkpoint（已完成）</b>：自主 / 副驾驶双模式，方案/代码/运行阶段确认与批注回灌</li>
+          <li><b style="color:var(--accent)">✓ 多 run 统计与显著性检验（已完成）</b>：mean ± std / 95% CI，Welch t 与 Mann-Whitney U 给 p 值</li>
+          <li><b style="color:var(--accent)">✓ AI 自审 / 失败诊断（已完成）</b>：六维模拟审稿 + 12 类错误签名诊断卡，结论更稳、排错更快</li>
         </ul>
       </div>
       <div class="rgroup p1">
@@ -498,6 +512,16 @@ td .dim{color:var(--muted);font-size:12px}
           <li><b style="color:var(--accent)">✓ 完整审计日志（已完成）</b>：关键动作不可变记录 + 时间线 + 报告过程摘要，防 p-hacking</li>
           <li><b style="color:var(--accent)">✓ 预注册与判据锁定（已完成）</b>：结构化判据先固定再跑，锁定后修改需写原因，结果逐条判定</li>
           <li><b style="color:var(--accent)">✓ 种子 / 环境固化（已完成）</b>：随机种子、pip freeze、nvidia-smi 随运行一并存档</li>
+          <li><b style="color:var(--accent)">✓ LLM 可靠性与连接复用（已完成）</b>：重试 / fallback / 流式 / 熔断 + JSON 自修；SSH 连接缓存与 SFTP 断点续传</li>
+        </ul>
+      </div>
+      <div class="rgroup p1 road-full">
+        <div class="rank">P1 · 团队协作</div>
+        <h3>分享与自动化</h3>
+        <ul>
+          <li><b style="color:var(--accent)">✓ 分享链接增强（已完成）</b>：密码 / 有效期 / 访问次数 / 脱敏 / 撤销，访客可留批注</li>
+          <li><b style="color:var(--accent)">✓ 搜索 / 标签 / 全局时间线（已完成）</b>：实验打标归档，首页即时搜索筛选，多实验事件合并成时间线</li>
+          <li><b style="color:var(--accent)">✓ 通知告警（已完成）</b>：完成 / 失败 / 判据未通过时 Webhook 推送企业微信 / 钉钉，支持免打扰时段</li>
         </ul>
       </div>
       <div class="rgroup p2 road-full">

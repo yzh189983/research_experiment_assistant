@@ -212,7 +212,9 @@ function renderSummary() {
   $('num-sum').className = 'sec-num done';
   $('num-sum').textContent = '✓';
   $('btn-summarize').style.display = '';
+  $('btn-review').style.display = '';
   $('btn-export').style.display = '';
+  renderReview();
   $('btn-export-docx').style.display = '';
   $('btn-export-pdf').style.display = '';
   $('btn-export-pdf').href = `/report/${EXP_ID}`;
@@ -239,12 +241,15 @@ function renderSummary() {
   const rows = stats.map(m => {
     const dir = (m.change_pct ?? 0) > 0;
     const cls2 = (dir === !!m.higher_better) ? 'up' : 'down';
+    const multi = ((window.__EXP__ || {}).stats || {}).metrics?.[m.name] || {};
+    const str = multi.n ? `${multi.mean} ± ${multi.std} (n=${multi.n})` : '<span class="faint">—</span>';
     return `<tr>
       <td>${esc(m.name)}</td>
       <td>${m.points}</td>
       <td>${m.first}</td>
       <td class="${cls2}">${m.last}</td>
       <td><b>${m.best}</b></td>
+      <td class="tiny">${str}</td>
     </tr>`;
   }).join('');
 
@@ -267,7 +272,7 @@ function renderSummary() {
     ${rows ? `<div class="plan-block" style="padding:0">
       <div class="plan-label" style="padding:16px 20px 6px">指标汇总</div>
       <table class="mt">
-        <thead><tr><th>指标</th><th>点数</th><th>起始</th><th>结束</th><th>最优</th></tr></thead>
+        <thead><tr><th>指标</th><th>点数</th><th>起始</th><th>结束</th><th>最优</th><th>多 run 均值±std</th></tr></thead>
         <tbody>${rows}</tbody>
       </table></div>` : ''}
     <div class="plan-block">
@@ -626,6 +631,45 @@ function renderRun(run) {
     const sha = run.git_sha ? ` · sha=${run.git_sha.slice(0, 8)}` : '';
     el.textContent = `run #${run.id} · 开始于 ${fmtTime(run.started_at)}${sha}`;
   }
+  renderDiagnosis(run);
+}
+
+function renderDiagnosis(run) {
+  const box = $('diagnosis-box');
+  if (!box) return;
+  const dg = (window.__EXP__ && window.__EXP__.diagnosis) || {};
+  if (run.status !== 'failed' && run.status !== 'lost' || !dg.cause) {
+    box.style.display = 'none'; box.innerHTML = ''; return;
+  }
+  box.style.display = '';
+  const fixes = (dg.fixes || []).map(f => `<li>${esc(f)}</li>`).join('');
+  box.innerHTML = `<div class="sec-head"><div class="sec-title">失败诊断 · ${esc(dg.signature || '')}</div>
+      <span class="badge ${dg.severity === 'high' ? 'err' : 'warn'}">${esc(dg.severity || '')}</span></div>
+    <div class="card-pad">
+      <div style="font-size:13.5px"><b>可能原因：</b>${esc(dg.cause)}</div>
+      <div class="tiny faint mono" style="margin:6px 0">第 ${dg.evidence?.line_no || '?'} 行：${esc(dg.evidence?.line || '')}</div>
+      <div class="profile-label">建议动作</div><ul class="tiny" style="margin:4px 0 0 18px;padding:0">${fixes}</ul>
+    </div>`;
+}
+
+function renderReview() {
+  const box = $('review-body');
+  if (!box) return;
+  const rv = (window.__EXP__ && window.__EXP__.review) || {};
+  if (!rv.overall && !rv.major_issues) { box.innerHTML = ''; return; }
+  const score = rv.scores || {};
+  const scoreLine = Object.keys(score).length
+    ? Object.entries(score).map(([k, v]) => `${esc(k)} ${v}/5`).join(' · ') : '';
+  const lis = (arr) => (arr && arr.length)
+    ? `<ul class="tight">${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<span class="faint tiny">无</span>';
+  box.innerHTML = `<div class="plan-block" style="margin-top:4px">
+    <div class="plan-label">AI 自审 · 模拟同行评审 <span class="tiny faint">${esc(rv.overall || '')} ${esc(scoreLine)}</span></div>
+    <div class="tiny faint" style="margin-bottom:8px">${esc(rv.notice || 'AI 生成，需人工判断')}</div>
+    <div class="profile-label">总体意见</div><div style="font-size:13.5px">${esc(rv.verdict || '')}</div>
+    <div class="profile-label" style="margin-top:10px">主要问题</div>${lis(rv.major_issues)}
+    <div class="profile-label" style="margin-top:10px">次要问题</div>${lis(rv.minor_issues)}
+    <div class="profile-label" style="margin-top:10px">建议补的实验</div>${lis(rv.missing_experiments)}
+  </div>`;
 }
 
 function renderLineage() {
@@ -1104,6 +1148,20 @@ function init() {
   $('btn-run').onclick = doRun;
   $('btn-save-code').onclick = () => saveCode();
   $('btn-summarize').onclick = doSummarize;
+  const btnReview = $('btn-review');
+  if (btnReview) btnReview.onclick = async () => {
+    btnReview.disabled = true; btnReview.textContent = '审稿中…';
+    try {
+      const r = await api('/api/experiments/' + EXP.id + '/review', { method: 'POST', body: {} });
+      if (r.error) { toast(r.error, true); }
+      else {
+        window.__EXP__.review = r.review;
+        renderReview();
+        toast('AI 自审完成');
+      }
+    } catch (e) { toast(e.message, true); }
+    finally { btnReview.disabled = false; btnReview.textContent = 'AI 自审'; }
+  };
   $('btn-export').onclick = exportReport;
   $('btn-export-docx').onclick = exportDocx;
   $('btn-toggle-innov').onclick = () => {

@@ -106,6 +106,28 @@
       </div>
     </div>
 
+    <div class="card" id="notify-card">
+      <div class="sec-head"><div class="sec-title">通知告警</div>
+        <span class="badge {{ 'ok' if notify_cfg.enabled else 'idle' }}">{{ '已开启' if notify_cfg.enabled else '未开启' }}</span></div>
+      <div class="card-pad">
+        <div class="hint" style="margin:0 0 12px">实验完成/失败、判据未通过时推送 Webhook（兼容企业微信/钉钉机器人）。通知按账号隔离，失败不影响实验本身。</div>
+        <label class="field" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="nt-enabled" {% if notify_cfg.enabled %}checked{% endif %} style="width:auto">
+          <span>启用通知</span></label>
+        <label class="field"><span>Webhook 地址</span>
+          <input type="text" id="nt-url" value="{{ notify_cfg.webhook_url or '' }}" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."></label>
+        <label class="field"><span>触发事件（逗号分隔）</span>
+          <input type="text" id="nt-events" value="{{ notify_cfg.events|join(',') if notify_cfg.events is string else (notify_cfg.events or [])|join(',') }}" placeholder="finished,failed,criteria_failed"></label>
+        <label class="field"><span>免打扰时段（如 22:00-08:00，留空=不设）</span>
+          <input type="text" id="nt-quiet" value="{{ notify_cfg.quiet_hours or '' }}" placeholder="22:00-08:00"></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn primary sm" id="btn-nt-save">保存通知配置</button>
+          <button class="btn sm" id="btn-nt-test">发送测试消息</button>
+          <span class="tiny" id="nt-result" style="align-self:center"></span>
+        </div>
+      </div>
+    </div>
+
     {% if users %}
     <div class="card">
       <div class="sec-head"><div class="sec-title">账号管理</div>
@@ -248,6 +270,36 @@ if (btnGhTest) btnGhTest.onclick = async () => {
     const r = await api('/api/github/test', { method: 'POST', body: ghBody() });
     if (r.ok) { el.textContent = '✓ 可写：' + r.repo + '（' + r.login + '）'; el.style.color = 'var(--accent)'; }
     else { el.textContent = '✕ ' + r.error; el.style.color = 'var(--err)'; }
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+};
+
+// 通知告警
+function notifyBody() {
+  return {
+    enabled: document.getElementById('nt-enabled').checked,
+    webhook_url: document.getElementById('nt-url').value.trim(),
+    events: document.getElementById('nt-events').value.split(',').map(x => x.trim()).filter(Boolean),
+    quiet_hours: document.getElementById('nt-quiet').value.trim()
+  };
+}
+const btnNtSave = document.getElementById('btn-nt-save');
+if (btnNtSave) btnNtSave.onclick = async () => {
+  const el = document.getElementById('nt-result');
+  el.textContent = '保存中…'; el.style.color = 'var(--muted)';
+  try {
+    await api('/api/settings', { method: 'POST', body: { notify: notifyBody() } });
+    el.textContent = '✓ 已保存'; el.style.color = 'var(--accent)';
+    toast('通知配置已保存');
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+};
+const btnNtTest = document.getElementById('btn-nt-test');
+if (btnNtTest) btnNtTest.onclick = async () => {
+  const el = document.getElementById('nt-result');
+  el.textContent = '发送中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/notify/test', { method: 'POST', body: { webhook_url: notifyBody().webhook_url } });
+    if (r.ok) { el.textContent = '✓ 测试消息已发送'; el.style.color = 'var(--accent)'; }
+    else { el.textContent = '✕ ' + (r.error || '发送失败'); el.style.color = 'var(--err)'; }
   } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
 };
 </script>

@@ -65,7 +65,17 @@ def build(eid, limit_audits=200):
         "runs": runs,
         "latest": latest,
         "verification": (summary or {}).get("verification") or {},
+        "stats": _experiment_stats(eid),
+        "review": json.loads((latest or {}).get("review_json") or "{}") if latest else {},
     }
+
+
+def _experiment_stats(eid):
+    try:
+        from core import stats as stats_mod
+        return stats_mod.experiment_stats(eid)
+    except Exception:
+        return {}
 
 
 def process_summary(audits):
@@ -202,6 +212,17 @@ def markdown(r):
         out.append("")
     else:
         out += ["尚无核验信息（结论生成后自动附带）。", ""]
+
+    st = r.get("stats") or {}
+    if st.get("metrics"):
+        out += ["**多 run 统计汇总**（mean ± std，95% CI）", ""]
+        out += [f"- 完成运行数 n = {st.get('n_runs', 0)}" +
+                ("（" + st["warning"] + "）" if st.get("warning") else "")]
+        for name, m in list(st["metrics"].items())[:12]:
+            if m.get("n"):
+                out.append(f"- {name}：{m['mean']} ± {m['std']}，95% CI ±{m['ci95']}，"
+                           f"范围 [{m['min']}, {m['max']}]，n={m['n']}")
+        out += ["- 说明：统计量为近似计算；不同参数组的显著性比较请用批量对比面板。", ""]
 
     env = r.get("env") or {}
     out += ["## 七、复现实验配置", ""]

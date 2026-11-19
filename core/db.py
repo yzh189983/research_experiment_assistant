@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS experiments (
     criteria_locked_at REAL,
     criteria_history_json TEXT DEFAULT '[]',
     template_id TEXT DEFAULT '',         -- 来源实验模板
+    tags TEXT DEFAULT '',                -- 逗号分隔的标签
+    archived INTEGER DEFAULT 0,          -- 是否归档
     forked_from_experiment_id INTEGER,   -- 派生自哪个实验
     forked_from_run_id INTEGER,          -- 派生自哪次运行（对应 git commit）
     created_at REAL,
@@ -85,7 +87,12 @@ CREATE TABLE IF NOT EXISTS runs (
     summary_json TEXT DEFAULT '',
     git_sha TEXT DEFAULT '',             -- run 前锁定的代码快照 commit
     env_json TEXT DEFAULT '',            -- seed / 依赖 / 硬件环境快照
-    heartbeat_at REAL                    -- 监控线程最近一次心跳，用于判定僵尸任务
+    heartbeat_at REAL,                   -- 监控线程最近一次心跳，用于判定僵尸任务
+    remote_url TEXT DEFAULT '',          -- GitHub 推送后的 commit 链接
+    remote_sha TEXT DEFAULT '',
+    diagnosis_json TEXT DEFAULT '',      -- 失败诊断
+    review_json TEXT DEFAULT '',         -- AI 同行评审
+    stats_json TEXT DEFAULT ''           -- 多 run 统计汇总
 );
 
 CREATE TABLE IF NOT EXISTS git_remotes (
@@ -169,6 +176,35 @@ CREATE TABLE IF NOT EXISTS usage_log (
     request_id TEXT DEFAULT '',
     ts REAL
 );
+
+CREATE TABLE IF NOT EXISTS share_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token TEXT UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    experiment_id INTEGER NOT NULL,
+    password_hash TEXT DEFAULT '',       -- sha256(salt + password)，空表示无密码
+    salt TEXT DEFAULT '',
+    expires_at REAL,
+    max_views INTEGER DEFAULT 0,         -- 0 表示不限次
+    views INTEGER DEFAULT 0,
+    redact INTEGER DEFAULT 0,            -- 脱敏模式
+    revoked INTEGER DEFAULT 0,
+    created_at REAL
+);
+CREATE INDEX IF NOT EXISTS idx_share_token ON share_links(token);
+CREATE INDEX IF NOT EXISTS idx_share_exp ON share_links(experiment_id);
+
+CREATE TABLE IF NOT EXISTS share_comments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    share_id INTEGER,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    experiment_id INTEGER NOT NULL,
+    run_id INTEGER,
+    visitor TEXT DEFAULT '',
+    content TEXT NOT NULL,
+    ts REAL
+);
+CREATE INDEX IF NOT EXISTS idx_share_comments_exp ON share_comments(experiment_id);
 """
 
 # 依赖 user_id 列的索引：必须在老库 ALTER 补列之后再建，否则迁移时会报
@@ -223,13 +259,16 @@ def init_db():
         ("criteria_locked_at", "REAL"),
         ("criteria_history_json", "TEXT DEFAULT '[]'"),
         ("template_id", "TEXT DEFAULT ''"),
+        ("tags", "TEXT DEFAULT ''"),
+        ("archived", "INTEGER DEFAULT 0"),
     )
     for col, ddl in experiment_cols:
         if col not in _columns(conn, "experiments"):
             conn.execute(f"ALTER TABLE experiments ADD COLUMN {col} {ddl}")
     for col, ddl in (("git_sha", "TEXT DEFAULT ''"), ("env_json", "TEXT DEFAULT ''"),
                      ("heartbeat_at", "REAL"), ("remote_url", "TEXT DEFAULT ''"),
-                     ("remote_sha", "TEXT DEFAULT ''")):
+                     ("remote_sha", "TEXT DEFAULT ''"), ("diagnosis_json", "TEXT DEFAULT ''"),
+                     ("review_json", "TEXT DEFAULT ''"), ("stats_json", "TEXT DEFAULT ''")):
         if col not in _columns(conn, "runs"):
             conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {ddl}")
     for table in ("git_remotes",):
@@ -386,6 +425,50 @@ def delete_git_remote(rid, uid=None):
     return ex("DELETE FROM git_remotes WHERE id=? AND user_id=?", (rid, _uid(uid)))
 
 
+# ---------- 分享链接与访客批注 ----------
+def add_share_link(token, eid, uid=None, password_hash="", salt="",
+                   expires_at=None, max_views=0, redact=0):
+    return ex(
+        """INSERT INTO share_links(token,user_id,experiment_id,password_hash,salt,
+           expires_at,max_views,redact,created_at) VALUES(?,?,?,?,?,?,?,?,?)""",
+        (token, _uid(uid), eid, password_hash, salt, expires_at,
+         max_views, redact, now()))
+
+
+def get_share_link(token):
+    row = q1("SELECT * FROM share_links WHERE token=?", (token,))
+    return dict(row) if row else None
+
+
+def list_share_links(eid, uid=None):
+    return [dict(r) for r in q(
+        "SELECT * FROM share_links WHERE experiment_id=? AND user_id=? ORDER BY id DESC",
+        (eid, _uid(uid)))]
+
+
+def incr_share_views(sid):
+    return ex("UPDATE share_links SET views=views+1 WHERE id=?", (sid,))
+
+
+def revoke_share_link(sid, uid=None):
+    return ex("UPDATE share_links SET revoked=1 WHERE id=? AND user_id=?", (sid, _uid(uid)))
+
+
+def add_share_comment(share_id, eid, content, visitor="", run_id=None, uid=None):
+    return ex(
+        """INSERT INTO share_comments(share_id,user_id,experiment_id,run_id,visitor,content,ts)
+           VALUES(?,?,?,?,?,?,?)""",
+        (share_id, _uid(uid), eid, run_id, visitor, content, now()))
+
+
+def list_share_comments(eid, uid=None):
+    return [dict(r) for r in q(
+        """SELECT c.*, s.token AS share_token FROM share_comments c
+           LEFT JOIN share_links s ON s.id=c.share_id
+           WHERE c.experiment_id=? AND c.user_id=? ORDER BY c.id DESC""",
+        (eid, _uid(uid)))]
+
+
 def _host_public(row):
     return {k: row[k] for k in _HOST_PUBLIC_COLS} if row else None
 
@@ -468,9 +551,27 @@ def consume_terminal_ticket(token, uid, host_id):
 
 
 # ---------- experiments ----------
-def list_experiments(uid=None):
+def list_experiments(uid=None, search="", tags=None, status="", archived=None):
+    """列出实验。search 匹配标题/创新点/方案/标签；tags 为需包含的标签列表。"""
+    where, args = ["e.user_id=?"], [_uid(uid)]
+    if archived is None:
+        pass  # 默认全部，调用方自行过滤
+    else:
+        where.append("COALESCE(e.archived,0)=?")
+        args.append(1 if archived else 0)
+    if status:
+        where.append("e.status=?")
+        args.append(status)
+    if tags:
+        for tag in tags:
+            where.append("(',' || COALESCE(e.tags,'') || ',') LIKE ?")
+            args.append(f"%,{tag},%")
+    if search:
+        kw = f"%{search.strip()}%"
+        where.append("(e.title LIKE ? OR e.innovation LIKE ? OR e.plan_json LIKE ? OR COALESCE(e.tags,'') LIKE ?)")
+        args.extend([kw, kw, kw, kw])
     rows = q("""SELECT e.*, (SELECT COUNT(*) FROM runs r WHERE r.experiment_id=e.id) AS run_count
-                FROM experiments e WHERE e.user_id=? ORDER BY e.id DESC""", (_uid(uid),))
+                FROM experiments e WHERE """ + " AND ".join(where) + " ORDER BY e.id DESC", tuple(args))
     out = []
     for r in rows:
         d = dict(r)
@@ -479,6 +580,22 @@ def list_experiments(uid=None):
         d.pop("code_json", None)
         out.append(d)
     return out
+
+
+def global_timeline(limit=80, uid=None, kinds=None):
+    """跨实验合并关键事件：run 锁定 / 完成 / 结论 / 判据变更 / 创建。"""
+    uid = _uid(uid)
+    sql = """SELECT a.experiment_id, a.run_id, a.stage, a.action, a.decision, a.ts,
+                    e.title AS exp_title
+             FROM audit_log a JOIN experiments e ON e.id=a.experiment_id
+             WHERE a.user_id=? AND e.user_id=?"""
+    args = [uid, uid]
+    if kinds:
+        sql += " AND a.action IN (%s)" % ",".join("?" * len(kinds))
+        args.extend(kinds)
+    sql += " ORDER BY a.id DESC LIMIT ?"
+    args.append(limit)
+    return [dict(r) for r in q(sql, tuple(args))]
 
 
 def get_experiment(eid, uid=None):

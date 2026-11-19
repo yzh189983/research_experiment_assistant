@@ -193,6 +193,9 @@ if criteria have been locked, each is also judged pass / fail.
 
 - **Git snapshot lineage**: an automatic commit before every run, with `runs.git_sha` locking the code version; supports diff / restore / fork, and reports carry the commit too.
 - **Push code to GitHub**: configure a fine-grained PAT and a repository on the Settings page (the token is encrypted and isolated per account), then push any run's code snapshot to your own repository from the lineage panel on the experiment page. Suspected secrets are scanned and confirmed before pushing; on success `git_sha` becomes a clickable commit link in reports and the observation page, closing the loop from result to exact code version.
+- **Multi-run statistics & significance**: repeated runs of an experiment are aggregated into mean ± std / 95% CI / n, with Welch t-test and Mann-Whitney U p-values; the batch comparison shows "mean ± std" per metric and reports include a statistics section, with a warning when the sample is too small.
+- **AI self-review / mock peer review**: after the summary is generated, a second "reviewer" LLM call scores six dimensions (hypothesis closure / baseline / ablation / metrics / confounding / conclusion) and lists major issues and experiments to add (marked "AI-generated, human judgment required"); re-review can be triggered on the experiment page.
+- **Automatic failure diagnosis**: on failure, 12 error signatures (CUDA OOM, exit 137, missing dependencies, bad paths, etc.) are matched against the log tail and exit code, producing an evidence line and fix suggestions shown above the log panel.
 - **Result verification**: the "Result Verification" panel on the conclusion page shows evidence sources (metric + step + raw log line), unverified numbers, and measured vs. inferred.
 - **Human-in-the-loop checkpoints**: switch the experiment page to "Copilot mode" and the plan / code / run phases each pause for confirmation; annotations feed into the next phase.
 - **Pre-registered criteria locking**: visually edit structured criteria (metric / operator / threshold); once locked, changes require a reason, and results are automatically judged one by one.
@@ -200,7 +203,10 @@ if criteria have been locked, each is also judged pass / fail.
 - **Environment freezing**: each run generates a seed written to the `SEED` environment variable, and archives `pip freeze` / `nvidia-smi` / Python version with the run.
 - **Report export**: the conclusion area offers Markdown, Word (paper-style three-line tables), and a print page `/report/<id>` (Save as PDF from the browser) — all including verification, criteria judgments, an audit summary, and reproduction settings.
 - **Templates and batch runs**: the homepage ships four templates (train a classifier / LoRA / hyperparameter grid / ablation); the batch panel generates up to 50 experiments at once from a JSON parameter matrix; "Batch Comparison" lines up the latest metrics by parameter combination, and failed items can resume from where they stopped with one click.
-- **Cost and usage**: `usage_log` records the tokens and model of every LLM call; the experiment page shows the ledger and supports budget alerts.
+- **Cost and usage**: `usage_log` records the tokens and model of every LLM call; the experiment page shows the ledger and supports budget alerts. LLM calls use exponential-backoff retries, fallback models, streaming output, and a circuit breaker, with one self-repair attempt when JSON parsing fails.
+- **Enhanced sharing**: create read-only links with a password, expiry, view limit, and redaction mode, revocable at any time; visitors can leave comments (recorded in the audit log and marked as external).
+- **Search / tags / global timeline**: experiments support tags and archiving; the homepage offers instant search over title/idea/tags with status filters, plus a global timeline merging key events across experiments.
+- **Notifications**: Webhook notifications (WeCom / DingTalk bots) on run completion/failure and failed criteria, with an event whitelist and quiet hours, isolated per account.
 - **Interaction details**: "swap document" reuses the extractor for ideas; logs support search / type filtering / repeated-line collapsing; the homepage has a "recent runs" status card with failure alerts; narrow screens fall back to a single column.
 
 ## Metric Reporting Protocol

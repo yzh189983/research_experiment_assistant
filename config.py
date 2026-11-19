@@ -31,6 +31,11 @@ DEFAULTS = {
         "model": "glm-4-plus",
         "temperature": 0.35,
         "timeout": 240,
+        "fallback_models": [],      # 主模型失败时的备用模型列表
+        "max_retries": 3,           # 429 / 5xx / 超时 的指数退避重试次数
+        "retry_base_sec": 1.0,      # 退避基数（1s, 2s, 4s…）
+        "stream": False,            # 是否流式输出（前端逐字显示时开启）
+        "circuit_break_after": 5,   # 连续失败 N 次熔断，避免烧 token
     },
     "monitor": {
         "interval_sec": 3,          # 轮询间隔
@@ -64,6 +69,12 @@ DEFAULTS = {
         "enabled": True,            # 登录鉴权总开关；关掉即回到单用户免登录模式
         "session_days": 14,
         "allow_registration": True, # 是否允许访客在登录页自助注册成员账号
+    },
+    "notify": {
+        "enabled": False,           # 通知总开关
+        "webhook_url": "",          # Webhook 地址（企业微信/钉钉/自定义）
+        "events": ["finished", "failed", "criteria_failed"],  # 触发事件
+        "quiet_hours": "",          # 免打扰时段，如 "22:00-08:00"
     },
 }
 
