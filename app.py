@@ -22,8 +22,8 @@ from flask_sock import Sock
 from werkzeug.security import check_password_hash
 
 import config
-from core import (auth, bus, coder, crypto, db, extract, gitlineage, llm, monitor,
-                  planner, report, ssh_runner, summarizer, terminal, workspace)
+from core import (auth, bus, coder, crypto, db, extract, gitlineage, github, llm,
+                  monitor, planner, report, ssh_runner, summarizer, terminal, workspace)
 from web.blueprints import api_bp
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -628,9 +628,14 @@ def terminal_observe_page(hid):
 def settings_page():
     _set_active("settings")
     cfg = config.load_config()
+    gh_configs = [{"id": r["id"], "repo_full_name": r["repo_full_name"],
+                   "token_hint": r["token_hint"] or "",
+                   "default_branch": r["default_branch"] or "main"}
+                  for r in db.list_git_remotes()]
     return render_template("settings.html", cfg=cfg,
                            api_key_masked=config.mask_secret(cfg["llm"]["api_key"]),
                            has_key=bool(cfg["llm"]["api_key"]),
+                           gh_configs=gh_configs,
                            users=db.list_users() if g._auth_user["role"] == "admin" else [])
 
 
@@ -1617,6 +1622,139 @@ def api_test_host(hid):
         return jsonify({"ok": True, "info": info})
     except Exception as e:
         return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
+
+
+# ---------------- GitHub 集成 ----------------
+def _github_public(row):
+    """脱敏后的配置，Token 明文永不返回前端。"""
+    return {
+        "id": row["id"],
+        "repo_full_name": row["repo_full_name"],
+        "token_hint": row["token_hint"] or "",
+        "default_branch": row["default_branch"] or "main",
+        "provider": row.get("provider") or "github",
+    }
+
+
+@api_bp.get("/api/github/configs")
+def api_github_configs():
+    return jsonify([_github_public(r) for r in db.list_git_remotes()])
+
+
+@api_bp.post("/api/github/configs")
+def api_github_save_config():
+    d = request.get_json(force=True) or {}
+    repo = str(d.get("repo_full_name") or "").strip()
+    token = str(d.get("token") or "").strip()
+    branch = str(d.get("default_branch") or "main").strip() or "main"
+    edit_id = d.get("id")
+    try:
+        gitlineage.validate_repo_full_name(repo)
+        gitlineage.validate_branch(branch)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+
+    existing = db.get_git_remote(edit_id) if edit_id else None
+    if edit_id and not existing:
+        return jsonify({"error": "配置不存在"}), 404
+
+    # 留空 token 时复用原值（前端只拿到密文时同样适用）
+    if not token and existing:
+        token = crypto.decrypt(existing["token_enc"])
+    if not token:
+        return jsonify({"error": "请填写 GitHub Token"}), 400
+
+    try:
+        login, repo = github.check_repo_access(token, repo)
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 400
+
+    enc = crypto.encrypt(token)
+    hint = token[-4:]
+    if existing:
+        db.update_git_remote(edit_id, repo_full_name=repo, token_enc=enc,
+                             token_hint=hint, default_branch=branch)
+        rid = edit_id
+    else:
+        rid = db.add_git_remote(repo, enc, hint, default_branch=branch)
+    return jsonify({"ok": True, "config": _github_public(db.get_git_remote(rid)),
+                    "login": login})
+
+
+@api_bp.post("/api/github/test")
+def api_github_test():
+    d = request.get_json(force=True) or {}
+    repo = str(d.get("repo_full_name") or "").strip()
+    token = str(d.get("token") or "").strip()
+    if not token and d.get("id"):
+        row = db.get_git_remote(d.get("id"))
+        token = crypto.decrypt(row["token_enc"]) if row else ""
+    try:
+        login, repo = github.check_repo_access(token, repo)
+        return jsonify({"ok": True, "login": login, "repo": repo})
+    except RuntimeError as e:
+        return jsonify({"ok": False, "error": str(e)}), 200
+
+
+@api_bp.delete("/api/github/configs/<int:rid>")
+def api_github_delete_config(rid):
+    if not db.get_git_remote(rid):
+        return jsonify({"error": "配置不存在"}), 404
+    db.delete_git_remote(rid)
+    return jsonify({"ok": True})
+
+
+@api_bp.post("/api/experiments/<int:eid>/push")
+def api_experiment_push(eid):
+    own_exp_or_404(eid)
+    d = request.get_json(force=True) or {}
+    rid = d.get("config_id")
+    repo = str(d.get("repo_full_name") or "").strip()
+    branch = str(d.get("default_branch") or "main").strip() or "main"
+    token = str(d.get("token") or "").strip()
+
+    row = db.get_git_remote(rid) if rid else None
+    if not row and repo:
+        row = db.get_git_remote_by_repo(repo)
+    if not row:
+        return jsonify({"error": "请先在设置页配置 GitHub 仓库"}), 400
+
+    repo = row["repo_full_name"]
+    branch = branch or row["default_branch"] or "main"
+    if token:
+        plain = token
+    else:
+        plain = crypto.decrypt(row["token_enc"])
+    if not plain:
+        return jsonify({"error": "Token 解密失败，请重新配置"}), 400
+
+    runs = db.list_runs(eid)
+    run = next((r for r in runs if str(r.get("id")) == str(d.get("run_id"))), None) if d.get("run_id") else None
+    run = run or next((r for r in runs if r.get("git_sha")), None)
+    if not run or not run.get("git_sha"):
+        return jsonify({"error": "该实验还没有代码快照，请先运行一次实验"}), 400
+
+    warnings = gitlineage.scan_workspace(eid)
+    if warnings and not d.get("ack_sensitive"):
+        return jsonify({"error": "代码中疑似包含敏感信息，请确认后再推送",
+                        "warnings": warnings, "need_ack": True}), 200
+
+    try:
+        gitlineage.validate_branch(branch)
+        sha = gitlineage.push_snapshot(eid, repo, plain, branch)
+    except (RuntimeError, ValueError) as e:
+        db.add_audit(eid, "git", "push_failed",
+                     {"repo": repo, "branch": branch, "error": str(e)})
+        return jsonify({"error": str(e)}), 500
+
+    url = gitlineage.remote_commit_url(repo, sha)
+    db.update_run(run["id"], remote_url=url, remote_sha=sha)
+    db.add_audit(eid, "git", "push",
+                 {"repo": repo, "branch": branch, "sha": sha, "url": url},
+                 decision="已推送到 GitHub", run_id=run["id"])
+    bus.note(eid, f"代码快照已推送到 GitHub：{repo}", "info", run["id"])
+    return jsonify({"ok": True, "sha": sha, "url": url, "repo": repo,
+                    "warnings": warnings})
 
 
 # ---------------- 设置 ----------------

@@ -649,11 +649,14 @@ function renderLineage() {
             <td class="mono">#${r.id}</td>
             <td class="tiny faint">${r.started_at ? esc(fmtTime(r.started_at)) : '—'}</td>
             <td>${statusBadge(r.status)}</td>
-            <td class="mono tiny">${r.git_sha ? esc(r.git_sha.slice(0, 8)) : '<span class="faint">未锁定</span>'}</td>
+            <td class="mono tiny">${r.git_sha ? esc(r.git_sha.slice(0, 8)) : '<span class="faint">未锁定</span>'}
+              ${r.remote_url ? `<br><a class="tiny" href="${esc(r.remote_url)}" target="_blank" rel="noopener" style="color:var(--accent)">已推送 ↗</a>` : ''}
+            </td>
             <td>
               ${r.git_sha ? `<button class="btn ghost sm" data-act="diff" data-id="${r.id}">Diff</button>
                               <button class="btn ghost sm" data-act="restore" data-id="${r.id}">恢复</button>
-                              <button class="btn ghost sm" data-act="fork" data-id="${r.id}">Fork</button>` : '<span class="tiny faint">旧运行无快照</span>'}
+                              <button class="btn ghost sm" data-act="fork" data-id="${r.id}">Fork</button>
+                              <button class="btn ghost sm" data-act="push" data-id="${r.id}" title="推送该快照到你的 GitHub 仓库">推送 GitHub</button>` : '<span class="tiny faint">旧运行无快照</span>'}
             </td>
           </tr>`).join('')}
       </tbody>
@@ -665,8 +668,41 @@ function renderLineage() {
       if (btn.dataset.act === 'diff') showRunDiff(rid);
       if (btn.dataset.act === 'restore') doRestore(rid);
       if (btn.dataset.act === 'fork') doForkFromRun(rid);
+      if (btn.dataset.act === 'push') doPushGitHub(rid);
     };
   });
+}
+
+async function doPushGitHub(runId) {
+  let configs = [];
+  try { configs = await api('/api/github/configs'); } catch (e) { toast(e.message, true); return; }
+  if (!configs.length) {
+    if (!confirm('还没有配置 GitHub 仓库。去设置页配置？')) return;
+    location.href = '/settings'; return;
+  }
+  let cfg = configs[0];
+  if (configs.length > 1) {
+    const choice = prompt('输入要推送的仓库序号（逗号前数字）：\n' +
+      configs.map((c, i) => `${i + 1}. ${c.repo_full_name}`).join('\n'), '1');
+    const idx = Number(choice) - 1;
+    if (!configs[idx]) return;
+    cfg = configs[idx];
+  }
+  if (!confirm(`把 run #${runId} 的代码快照推送到 ${cfg.repo_full_name}（分支 ${cfg.default_branch}）？`)) return;
+
+  const body = { config_id: cfg.id, run_id: runId, ack_sensitive: false };
+  try {
+    let r = await api('/api/experiments/' + EXP.id + '/push', { method: 'POST', body });
+    if (r.need_ack) {
+      const list = (r.warnings || []).map(w => `· ${w.path}：${w.kind}`).join('\n');
+      if (!confirm('检测到疑似敏感信息，仍要推送吗？\n' + list)) return;
+      body.ack_sensitive = true;
+      r = await api('/api/experiments/' + EXP.id + '/push', { method: 'POST', body });
+    }
+    toast('已推送：' + r.url);
+    if (typeof reload === 'function') await reload();
+    else location.reload();
+  } catch (e) { toast(e.message, true); }
 }
 
 async function showRunDiff(rid) {

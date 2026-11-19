@@ -335,6 +335,10 @@ td .dim{color:var(--muted);font-size:12px}
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h.01M11 9h.01M15 9h6M7 13h10M7 17h6"/></svg></div>
         <h3>手动脚本扫描</h3><p>SSH 读取远程进程，发现手动跑的 Python 脚本；显示中文路径、PID、父进程、CPU/内存，15 秒短缓存。</p>
       </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg></div>
+        <h3>GitHub 代码推送</h3><p>设置页配置 fine-grained Token（加密、按账号隔离），实验页一键把任意 run 的代码快照推到自己的仓库；推送前扫敏感信息，成功后报告里的 commit 变成可点击链接。</p>
+      </div>
     </div>
   </section>
 
@@ -478,6 +482,7 @@ td .dim{color:var(--muted);font-size:12px}
         <h3>可复现与证据链</h3>
         <ul>
           <li><b style="color:var(--accent)">✓ git 原生实验谱系（已完成）</b>：每次 run 锁定 commit，支持 Diff / 恢复 / Fork，结果可追溯到确切代码版本</li>
+          <li><b style="color:var(--accent)">✓ 推送代码到 GitHub（已完成）</b>：加密 Token + 一键推送快照，敏感信息扫描与二次确认，报告 commit 变可点击链接</li>
           <li><b style="color:var(--accent)">✓ 结果核验模块（已完成）</b>：把报告里每个数字回查到日志/指标，标记无来源数字，区分实测与推断</li>
           <li><b style="color:var(--accent)">✓ 人在环 checkpoint（已完成）</b>：自主 / 副驾驶双模式，方案/代码/运行阶段确认与批注回灌</li>
         </ul>

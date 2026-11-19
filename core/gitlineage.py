@@ -10,18 +10,19 @@ import shutil
 import subprocess
 import time
 
-from core import workspace
+from core import crypto, workspace
 
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d59288fbee4904"
 _SHA_RE = re.compile(r"^[0-9a-f]{7,40}$")
 _SNAPSHOT_FILE = ".rekit_snapshot.json"
+_REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 
 
 def available():
     return shutil.which("git") is not None
 
 
-def _git_raw(cwd, *args, check=True, timeout=30):
+def _git_raw(cwd, *args, check=True, timeout=30, no_credential=False):
     if not available():
         raise RuntimeError("本机未找到 git，无法创建代码快照")
     env = os.environ.copy()
@@ -31,12 +32,18 @@ def _git_raw(cwd, *args, check=True, timeout=30):
         "GIT_COMMITTER_NAME": "Rekit",
         "GIT_COMMITTER_EMAIL": "rekit@local",
     })
+    if no_credential:
+        env["GIT_TERMINAL_PROMPT"] = "0"
+        env["GIT_ASKPASS"] = "true"
+    cmd = ["git", *args]
+    if no_credential:
+        cmd = ["git", "-c", "credential.helper=", *args]
     proc = subprocess.run(
-        ["git", *args], cwd=cwd, env=env, stdout=subprocess.PIPE,
+        cmd, cwd=cwd, env=env, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE, text=True, encoding="utf-8",
         errors="replace", timeout=timeout)
     if check and proc.returncode != 0:
-        raise RuntimeError((proc.stderr or proc.stdout or "git 命令失败").strip())
+        raise RuntimeError(crypto.redact((proc.stderr or proc.stdout or "git 命令失败").strip()))
     return proc.stdout
 
 
@@ -168,3 +175,109 @@ def clone_for_fork(src_eid, dst_eid, sha, branch):
         ensure_repo(dst_eid)
     _git(dst, "checkout", "-q", "-b", branch, sha)
     return dst
+
+
+# ---------- GitHub remote / push ----------
+_SENSITIVE_PATTERNS = (
+    ("API Key", re.compile(r"(?i)\b(?:sk-[A-Za-z0-9_\-]{12,}|api[_-]?key\s*[:=]\s*\S{6,})")),
+    ("密码", re.compile(r"(?i)\b(?:password|passwd|passphrase)\s*[:=]\s*\S{4,}")),
+    ("Bearer Token", re.compile(r"(?i)bearer\s+[A-Za-z0-9._\-]{16,}")),
+    ("内网地址", re.compile(r"\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})\b")),
+    ("绝对路径", re.compile(r"(?:^|[=\s(\"'])/(?:Users|home|root|mnt|data)/[^\s\"'()]+")),
+)
+
+
+def validate_repo_full_name(value):
+    """校验 owner/repo 格式，防止注入到 URL 或命令。"""
+    value = str(value or "").strip().strip("/")
+    if not _REPO_RE.fullmatch(value):
+        raise ValueError("仓库名格式应为 owner/repo（字母、数字、_ . -）")
+    if any(seg in (".", "..") for seg in value.split("/")):
+        raise ValueError("仓库名格式应为 owner/repo")
+    return value
+
+
+def validate_branch(value):
+    value = str(value or "main").strip() or "main"
+    if not re.fullmatch(r"[A-Za-z0-9_.\-]{1,100}", value) or value.startswith(("-", ".")):
+        raise ValueError("无效的分支名")
+    return value
+
+
+def scan_sensitive(files, eid=None):
+    """扫描代码文件内容，返回可能泄露的敏感信息警告列表。
+
+    files 可为 workspace.list_files() 的元信息；传入 eid 时会自行读取文件内容。
+    """
+    warnings = []
+    seen = set()
+    for f in files or []:
+        if not isinstance(f, dict):
+            continue
+        path = str(f.get("path") or "")
+        content = f.get("content")
+        if content is None and eid is not None:
+            try:
+                content = workspace.read_file(eid, path)
+            except Exception:
+                content = ""
+        for label, pattern in _SENSITIVE_PATTERNS:
+            if pattern.search(str(content or "")):
+                key = (path, label)
+                if key not in seen:
+                    warnings.append({"path": path, "kind": label})
+                    seen.add(key)
+    return warnings
+
+
+def scan_workspace(eid):
+    return scan_sensitive(workspace.list_files(eid), eid=eid)
+
+
+def _remote_arg(repo_full_name, token):
+    """构造一次性带 token 的 HTTPS URL；token 不写入 .git/config。"""
+    repo = validate_repo_full_name(repo_full_name)
+    token = str(token or "").strip()
+    if not token:
+        raise RuntimeError("GitHub Token 为空")
+    crypto.remember_secret(token)
+    safe = token.replace("@", "%40").replace("/", "%2F")
+    return f"https://x-access-token:{safe}@github.com/{repo}.git"
+
+
+def set_remote(eid, repo_full_name, token):
+    """给实验仓库设置 origin（带 token 的 URL，仅存于本次命令，不落盘）。"""
+    d = ensure_repo(eid)
+    url = _remote_arg(repo_full_name, token)
+    _git(d, "remote", "remove", "origin", check=False)
+    _git(d, "remote", "add", "origin", url)
+    return d
+
+
+def remove_remote(eid):
+    d = ensure_repo(eid)
+    _git(d, "remote", "remove", "origin", check=False)
+
+
+def push_snapshot(eid, repo_full_name, token, branch="main"):
+    """把当前 HEAD 推送到指定 GitHub 仓库的分支，返回 commit SHA。
+
+    使用一次性 URL 传 token，禁用系统凭据助手；出错信息经 redact 脱敏。
+    """
+    d = ensure_repo(eid)
+    url = _remote_arg(repo_full_name, token)
+    branch = validate_branch(branch)
+    try:
+        # 直接以 URL 推送，token 不经 .git/config 落盘
+        _git(d, "-c", "http.version=HTTP/1.1", "push", "--quiet", url,
+             f"HEAD:refs/heads/{branch}", timeout=60, no_credential=True)
+        sha = _git(d, "rev-parse", "HEAD")
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("推送超时：连接 GitHub 失败，请稍后重试")
+    return sha
+
+
+def remote_commit_url(repo_full_name, sha):
+    repo = validate_repo_full_name(repo_full_name)
+    sha = _sha(sha)
+    return f"https://github.com/{repo}/commit/{sha}"

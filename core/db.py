@@ -88,6 +88,18 @@ CREATE TABLE IF NOT EXISTS runs (
     heartbeat_at REAL                    -- 监控线程最近一次心跳，用于判定僵尸任务
 );
 
+CREATE TABLE IF NOT EXISTS git_remotes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    provider TEXT DEFAULT 'github',
+    repo_full_name TEXT NOT NULL,          -- owner/repo
+    token_enc TEXT DEFAULT '',             -- crypto.encrypt 加密后的 PAT
+    token_hint TEXT DEFAULT '',            -- 尾 4 位，仅用于展示
+    default_branch TEXT DEFAULT 'main',
+    created_at REAL,
+    updated_at REAL
+);
+
 CREATE TABLE IF NOT EXISTS metrics (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     run_id INTEGER NOT NULL,
@@ -216,9 +228,13 @@ def init_db():
         if col not in _columns(conn, "experiments"):
             conn.execute(f"ALTER TABLE experiments ADD COLUMN {col} {ddl}")
     for col, ddl in (("git_sha", "TEXT DEFAULT ''"), ("env_json", "TEXT DEFAULT ''"),
-                     ("heartbeat_at", "REAL")):
+                     ("heartbeat_at", "REAL"), ("remote_url", "TEXT DEFAULT ''"),
+                     ("remote_sha", "TEXT DEFAULT ''")):
         if col not in _columns(conn, "runs"):
             conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {ddl}")
+    for table in ("git_remotes",):
+        if "user_id" not in _columns(conn, table):
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1")
     conn.commit()
     for sql in USER_INDEXES:
         conn.execute(sql)
@@ -323,6 +339,51 @@ def delete_user(uid):
 # ---------- hosts ----------
 _HOST_PUBLIC_COLS = ("id", "user_id", "name", "host", "port", "username", "auth_type",
                      "workdir", "python_bin", "gpu", "created_at")
+
+
+# ---------- github remote credentials ----------
+def list_git_remotes(uid=None):
+    return [dict(r) for r in q(
+        "SELECT * FROM git_remotes WHERE user_id=? ORDER BY id DESC", (_uid(uid),))]
+
+
+def get_git_remote(rid, uid=None):
+    row = q1("SELECT * FROM git_remotes WHERE id=? AND user_id=?", (rid, _uid(uid)))
+    return dict(row) if row else None
+
+
+def get_git_remote_by_repo(repo_full_name, uid=None):
+    row = q1("SELECT * FROM git_remotes WHERE repo_full_name=? AND user_id=?",
+             (repo_full_name, _uid(uid)))
+    return dict(row) if row else None
+
+
+def add_git_remote(repo_full_name, token_enc, token_hint, uid=None,
+                   provider="github", default_branch="main"):
+    return ex(
+        """INSERT INTO git_remotes(user_id,provider,repo_full_name,token_enc,token_hint,
+           default_branch,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)""",
+        (_uid(uid), provider, repo_full_name, token_enc, token_hint,
+         default_branch, now(), now()))
+
+
+def update_git_remote(rid, uid=None, **fields):
+    allowed = ("repo_full_name", "token_enc", "token_hint", "default_branch")
+    sets, args = [], []
+    for k, v in fields.items():
+        if k in allowed:
+            sets.append(f"{k}=?")
+            args.append(v)
+    if not sets:
+        return 0
+    sets.append("updated_at=?")
+    args.append(now())
+    args.extend((rid, _uid(uid)))
+    return ex(f"UPDATE git_remotes SET {','.join(sets)} WHERE id=? AND user_id=?", tuple(args))
+
+
+def delete_git_remote(rid, uid=None):
+    return ex("DELETE FROM git_remotes WHERE id=? AND user_id=?", (rid, _uid(uid)))
 
 
 def _host_public(row):

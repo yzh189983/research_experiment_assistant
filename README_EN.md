@@ -192,6 +192,7 @@ if criteria have been locked, each is also judged pass / fail.
 ## Research Credibility and Collaboration
 
 - **Git snapshot lineage**: an automatic commit before every run, with `runs.git_sha` locking the code version; supports diff / restore / fork, and reports carry the commit too.
+- **Push code to GitHub**: configure a fine-grained PAT and a repository on the Settings page (the token is encrypted and isolated per account), then push any run's code snapshot to your own repository from the lineage panel on the experiment page. Suspected secrets are scanned and confirmed before pushing; on success `git_sha` becomes a clickable commit link in reports and the observation page, closing the loop from result to exact code version.
 - **Result verification**: the "Result Verification" panel on the conclusion page shows evidence sources (metric + step + raw log line), unverified numbers, and measured vs. inferred.
 - **Human-in-the-loop checkpoints**: switch the experiment page to "Copilot mode" and the plan / code / run phases each pause for confirmation; annotations feed into the next phase.
 - **Pre-registered criteria locking**: visually edit structured criteria (metric / operator / threshold); once locked, changes require a reason, and results are automatically judged one by one.

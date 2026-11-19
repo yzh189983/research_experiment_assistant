@@ -18,6 +18,18 @@ def _load(value, default):
         return default
 
 
+def _commit_label(run, markdown=False):
+    """commit 短 SHA；推送过则附 GitHub 链接。"""
+    run = run or {}
+    sha = _fmt(run.get("git_sha"))
+    url = run.get("remote_url") or ""
+    if not sha:
+        return "—"
+    if not url:
+        return sha
+    return f"[{sha}]({url})" if markdown else f"{sha}（{url}）"
+
+
 def build(eid, limit_audits=200):
     """构建完整报告数据字典（调用方已校验归属）。"""
     exp = db.get_experiment(eid)
@@ -196,7 +208,7 @@ def markdown(r):
     out += [f"- 随机种子（seed）：{_fmt(env.get('seed'))}",
             f"- Python：{_fmt(env.get('python'))}",
             f"- 主机：{_fmt(env.get('host'))}",
-            f"- 代码快照 commit：{_fmt((r.get('latest') or {}).get('git_sha'))}",
+            f"- 代码快照 commit：{_commit_label(r.get('latest'), markdown=True)}",
             f"- 采集时间：{db_time(env.get('captured_at'))}"]
     if env.get("pip_freeze"):
         out += ["", "**精确依赖（pip freeze）**", "", "```", env["pip_freeze"][:6000], "```"]
@@ -315,7 +327,7 @@ def docx_bytes(r):
     for line in (f"随机种子 seed：{_fmt(env.get('seed'))}",
                  f"Python：{_fmt(env.get('python'))}",
                  f"主机：{_fmt(env.get('host'))}",
-                 f"代码快照 commit：{_fmt((r.get('latest') or {}).get('git_sha'))}"):
+                 f"代码快照 commit：{_commit_label(r.get('latest'))}"):
         doc.add_paragraph(line, style="List Bullet")
     if env.get("pip_freeze"):
         doc.add_paragraph("精确依赖（pip freeze）：")
