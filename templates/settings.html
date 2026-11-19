@@ -73,6 +73,39 @@
       </div>
     </div>
 
+    <div class="card" id="gh-card">
+      <div class="sec-head"><div class="sec-title">GitHub 集成</div>
+        <span class="badge {{ 'ok' if gh_configs else 'idle' }}">{{ gh_configs|length }} 个仓库</span></div>
+      <div class="card-pad">
+        <div class="hint" style="margin:0 0 12px">用 <b>fine-grained PAT</b>（只给选定仓库 Contents: read and write）。Token 加密存储，明文不会回传页面。用于把实验代码快照推送到你自己的仓库。</div>
+        <label class="field"><span>仓库（owner/repo）</span>
+          <input type="text" id="gh-repo" placeholder="例如 yzh189983/my-experiments"></label>
+        <label class="field"><span>GitHub Token</span>
+          <input type="password" id="gh-token" placeholder="{{ '留空则保持原 Token' if gh_configs else 'github_pat_...' }}"></label>
+        <label class="field"><span>默认分支</span>
+          <input type="text" id="gh-branch" value="main"></label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <button class="btn primary sm" id="btn-gh-save">保存配置</button>
+          <button class="btn sm" id="btn-gh-test">测试连接</button>
+          <span class="tiny" id="gh-result" style="align-self:center"></span>
+        </div>
+        {% if gh_configs %}
+        <table class="mt" style="width:100%">
+          <thead><tr><th>仓库</th><th>Token</th><th style="width:70px"></th></tr></thead>
+          <tbody>
+          {% for c in gh_configs %}
+            <tr data-gh-row="{{ c.id }}" data-gh-repo="{{ c.repo_full_name }}" data-gh-branch="{{ c.default_branch }}">
+              <td class="mono tiny">{{ c.repo_full_name }}</td>
+              <td class="tiny faint">••••{{ c.token_hint }}</td>
+              <td><button class="btn sm danger" data-del-gh="{{ c.id }}">删除</button></td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <div class="tiny faint" style="margin-top:8px">点仓库行可载入到上方表单编辑。</div>
+        {% endif %}
+      </div>
+    </div>
+
     {% if users %}
     <div class="card">
       <div class="sec-head"><div class="sec-title">账号管理</div>
@@ -163,5 +196,59 @@ document.querySelectorAll('[data-del-user]').forEach(btn => {
     } catch (e) { toast(e.message, true); }
   };
 });
+
+// GitHub 集成
+let ghEditId = null;
+const ghRowEls = document.querySelectorAll('[data-gh-row]');
+ghRowEls.forEach(row => {
+  row.style.cursor = 'pointer';
+  row.onclick = e => {
+    if (e.target.closest('[data-del-gh]')) return;
+    ghEditId = Number(row.dataset.ghRow);
+    document.getElementById('gh-repo').value = row.dataset.ghRepo;
+    document.getElementById('gh-branch').value = row.dataset.ghBranch;
+    document.getElementById('gh-token').placeholder = '留空则保持原 Token';
+    document.getElementById('gh-result').textContent = '已载入，修改后点保存';
+  };
+});
+document.querySelectorAll('[data-del-gh]').forEach(btn => {
+  btn.onclick = async e => {
+    e.stopPropagation();
+    if (!confirm('删除这个 GitHub 配置？')) return;
+    try {
+      await api('/api/github/configs/' + btn.dataset.delGh, { method: 'DELETE' });
+      toast('配置已删除'); location.reload();
+    } catch (err) { toast(err.message, true); }
+  };
+});
+function ghBody() {
+  return {
+    id: ghEditId || undefined,
+    repo_full_name: document.getElementById('gh-repo').value.trim(),
+    token: document.getElementById('gh-token').value.trim(),
+    default_branch: document.getElementById('gh-branch').value.trim() || 'main',
+  };
+}
+const btnGhSave = document.getElementById('btn-gh-save');
+if (btnGhSave) btnGhSave.onclick = async () => {
+  const el = document.getElementById('gh-result');
+  el.textContent = '保存中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/github/configs', { method: 'POST', body: ghBody() });
+    el.textContent = '✓ 已保存：' + r.config.repo_full_name; el.style.color = 'var(--accent)';
+    toast('GitHub 配置已保存');
+    setTimeout(() => location.reload(), 500);
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+};
+const btnGhTest = document.getElementById('btn-gh-test');
+if (btnGhTest) btnGhTest.onclick = async () => {
+  const el = document.getElementById('gh-result');
+  el.textContent = '测试中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/github/test', { method: 'POST', body: ghBody() });
+    if (r.ok) { el.textContent = '✓ 可写：' + r.repo + '（' + r.login + '）'; el.style.color = 'var(--accent)'; }
+    else { el.textContent = '✕ ' + r.error; el.style.color = 'var(--err)'; }
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+};
 </script>
 {% endblock %}

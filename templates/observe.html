@@ -59,7 +59,7 @@
           <tr>
             <td class="mono">#{{ r.id }}</td>
             <td>{{ r.status }}</td>
-            <td class="mono tiny">{{ r.git_sha[:8] if r.git_sha else '—' }}</td>
+            <td class="mono tiny">{{ r.git_sha[:8] if r.git_sha else '—' }}{% if r.remote_url %} <a href="{{ r.remote_url }}" target="_blank" rel="noopener" style="color:var(--accent)">↗</a>{% endif %}</td>
             <td class="mono">{{ r.started_at | dt if r.started_at else '—' }}</td>
             <td class="mono">{{ r.finished_at | dt if r.finished_at else '—' }}</td>
             <td class="mono faint">{{ (r.log_tail or '').split('\n')[-1][:90] if r.log_tail else '' }}</td>

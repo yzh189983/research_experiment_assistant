@@ -152,7 +152,7 @@
     <li>随机种子（seed）：{{ env.get('seed','—') }}</li>
     <li>Python：{{ env.get('python','—') }}</li>
     <li>主机：{{ env.get('host','—') }}</li>
-    <li>代码快照 commit：{{ (r.latest or {}).get('git_sha','—') }}</li>
+    <li>代码快照 commit：{{ (r.latest or {}).get('git_sha','—') }}{% if (r.latest or {}).get('remote_url') %} · <a href="{{ (r.latest or {}).get('remote_url') }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}</li>
     <li>采集时间：{{ env.get('captured_at')|timestamp }}</li>
   </ul>
   {% if env.get('pip_freeze') %}<h3>精确依赖（pip freeze）</h3><pre>{{ env.pip_freeze[:6000] }}</pre>{% endif %}

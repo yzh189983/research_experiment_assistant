@@ -172,6 +172,7 @@ details[open] summary::before{content:"−"}
       <a href="#setup">配置</a>
       <a href="#run">运行监控</a>
       <a href="#advanced">进阶</a>
+      <a href="#github">GitHub 推送</a>
       <a href="#cli">命令行</a>
       <a href="#faq">FAQ</a>
       <a href="项目介绍.html" style="color:var(--accent);font-weight:600">← 项目介绍</a>
@@ -397,6 +398,7 @@ python3 -m venv .venv
       <div class="mini-card"><h4>审计轨迹</h4><p>谁在何时改了方案、代码、判据、创新点、模式，全部不可变记录。报告导出自动附一段实验过程摘要，防 p-hacking。</p></div>
       <div class="mini-card"><h4>成本与用量</h4><p>记录每次 LLM 调用的 token 与成本，在详情页看账本并设预算，超预算告警。<code>/api/usage</code> 提供全局汇总。</p></div>
       <div class="mini-card"><h4>只读观察分享</h4><p>详情页「只读观察」生成 7 天有效链接，他人能看实验与报告但拿不到终端 shell；终端也支持只读观察模式。</p></div>
+      <div class="mini-card"><h4>推送代码到 GitHub</h4><p>配置加密 Token 后，把任意 run 的代码快照一键推到自己的仓库；报告里的 commit 变成可点击链接。</p></div>
     </div>
 
     <h3 class="sub-h">7.1 副驾驶模式怎么用</h3>
@@ -413,6 +415,32 @@ python3 -m venv .venv
       <li>点「保存并锁定」。实验开始后再改会要求填写变更原因，旧判据与原因写入历史。</li>
       <li>实验结束后，结论和报告里会按锁定判据逐条显示判定结果。</li>
     </ol>
+  </section>
+
+  <!-- 7b GitHub 推送 -->
+  <section id="github">
+    <div class="sec-head"><span class="sec-num">＋</span><h2>推送代码到 GitHub</h2><span class="en">GitHub Push</span></div>
+    <p class="lead">每次运行都会在本地锁定一个代码 commit。这个功能让你可以把任意一次 run 的快照推到自己的 GitHub 仓库，报告里的 commit 随之变成可点击链接——结果、代码版本、论文引用三者闭环。</p>
+
+    <h3 class="sub-h">第一步：在设置页配置仓库与 Token</h3>
+    <ol class="steps">
+      <li>到 GitHub → Settings → Developer settings → Personal access tokens → <b>Fine-grained tokens</b>，新建一个 Token，只授予目标仓库的 <code>Contents: read and write</code>（只读会推送失败报 403）。</li>
+      <li>打开本工具的「设置 → GitHub 集成」，填「仓库（owner/repo）」、Token 和默认分支（默认 <code>main</code>），点「测试连接」确认显示“可写”。</li>
+      <li>点「保存配置」。Token 用主密钥加密落盘、按账号隔离，页面只显示尾 4 位，明文不会回传前端。</li>
+    </ol>
+
+    <h3 class="sub-h">第二步：在实验页推送</h3>
+    <ol class="steps">
+      <li>打开实验详情页的「Git 快照谱系」表格，找到想推送的 run（需先运行过一次，已有 commit）。</li>
+      <li>点该行「推送 GitHub」按钮，选择仓库（配置了多个时）并确认分支。</li>
+      <li>若代码里检测到疑似 API Key / 密码 / 内网地址，会弹出清单让你确认后才推送。</li>
+      <li>成功后该行出现「已推送 ↗」链接；导出 Markdown / Word / 打印报告，或在只读观察页，commit 都带上了 GitHub 链接。</li>
+    </ol>
+
+    <div class="warn-box">
+      <div class="lbl">安全提示 / SAFETY</div>
+      <p>建议用<b>私有仓库</b>起步，Token 只给单个仓库的最小权限；推送前务必确认代码里没有硬编码的数据路径、API Key 或服务器 IP。网络不通时推送会超时失败，可稍后重试，不会静默丢失。Token 一旦在别处泄露，请及时在 GitHub 上 Rotate。</p>
+    </div>
   </section>
 
   <!-- 8 报告与批量 -->
@@ -492,6 +520,10 @@ python3 -m venv .venv
       <details>
         <summary>远程中文文件名显示成转义字符？</summary>
         <div class="faq-body"><p>这是远端 <code>LANG</code> 为空导致的。网页终端连接时会探测并选择 UTF-8 locale 自动注入（sshd 不支持 AcceptEnv 时退回会话内 export），一般无需手动处理。</p></div>
+      </details>
+      <details>
+        <summary>推送 GitHub 时报 403 / 没写权限？</summary>
+        <div class="faq-body"><p>Fine-grained Token 需要目标仓库的 <code>Contents: read and write</code>；只给只读会报“Write access ... not granted”。在 GitHub 上编辑 Token 权限后，回设置页重新保存即可。另外连不上 github.com:443 时会超时失败，稍后重试即可，不会静默丢失。</p></div>
       </details>
       <details>
         <summary>实验失败了，怎么排查？</summary>
