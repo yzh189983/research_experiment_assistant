@@ -131,15 +131,15 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;flex-wrap:wrap">
           <span class="tiny faint">运行日志</span>
           <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
-            <input type="text" id="log-search" class="log-tool" placeholder="搜索日志…" title="按关键字过滤日志行">
-            <select id="log-filter" class="log-tool" title="按类型筛选">
+            <input type="text" id="log-search" class="log-tool" placeholder="搜索日志…" title="按关键字过滤日志行" aria-label="搜索日志">
+            <select id="log-filter" class="log-tool" title="按类型筛选" aria-label="按类型筛选日志">
               <option value="all">全部</option>
               <option value="metric">仅指标</option>
               <option value="error">仅错误</option>
               <option value="stage">仅阶段</option>
             </select>
             <button class="btn ghost sm log-btn" id="btn-log-fold" title="折叠连续的重复行">折叠</button>
-            <button class="btn ghost sm log-btn" id="btn-scroll" title="跳到最新">↓</button>
+            <button class="btn ghost sm log-btn" id="btn-scroll" title="跳到最新" aria-label="跳到最新日志">↓</button>
             <button class="btn ghost sm log-btn" id="btn-stop" style="display:none" title="停止远程进程">停止</button>
           </div>
         </div>

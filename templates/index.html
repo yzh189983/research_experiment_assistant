@@ -36,7 +36,7 @@
       <div class="file-chip" id="file-chip" hidden>
         <span class="mono" id="file-name"></span>
         <span class="faint" id="file-meta"></span>
-        <button type="button" class="x" id="btn-clear-file" title="清掉文件内容">×</button>
+        <button type="button" class="x" id="btn-clear-file" title="清掉文件内容" aria-label="清掉文件内容">×</button>
       </div>
       <input type="file" id="file-input" hidden
              accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
@@ -160,11 +160,11 @@
   </div>
 </div>
 
-<div id="compare-modal" class="compare-modal" style="display:none">
+<div id="compare-modal" class="compare-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="cmp-title">
   <div class="card" style="width:100%;max-width:820px;max-height:82vh;overflow:auto">
     <div class="sec-head">
-      <div class="sec-title">批量实验对比</div>
-      <button class="btn ghost sm" id="cmp-close">关闭</button>
+      <div class="sec-title" id="cmp-title">批量实验对比</div>
+      <button class="btn ghost sm" id="cmp-close" aria-label="关闭对比弹窗">关闭</button>
     </div>
     <div id="cmp-body" style="padding:14px 20px"></div>
     <div style="padding:12px 20px;border-top:1px solid var(--rule);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -335,8 +335,15 @@ document.getElementById('btn-compare').onclick = async () => {
   }
 };
 
-document.getElementById('cmp-close').onclick = () => { cmpModal.style.display = 'none'; };
-cmpModal.onclick = e => { if (e.target === cmpModal) cmpModal.style.display = 'none'; };
+function closeCompare() {
+  cmpModal.style.display = 'none';
+  document.getElementById('btn-compare').focus();
+}
+document.getElementById('cmp-close').onclick = closeCompare;
+cmpModal.onclick = e => { if (e.target === cmpModal) closeCompare(); };
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && cmpModal.style.display !== 'none') closeCompare();
+});
 
 document.getElementById('cmp-retry').onclick = async () => {
   const hostId = Number(document.getElementById('cmp-host').value);

@@ -313,3 +313,8 @@ python tests/terminal_test.py 4
 - `Cmd/Ctrl + P` 直接打印：自动隐掉导航、按钮和终端，只留正文
 
 样式集中在两个文件：`static/css/app.css`（配色、排版、按钮、表单）+ `static/css/pages.css`（各页面版式）。
+
+**可访问性与国际化**：
+- 界面右上角「文/A」按钮一键切换中文 / 英文，偏好记住在浏览器本地；英文模式覆盖导航、标题、按钮、状态徽章、日志与动态提示（350 条整句映射，动态内容自动翻译）
+- 键盘可达：skip link 跳到正文、统一的 `:focus-visible` 焦点描边、弹窗支持 Esc 关闭、图标按钮带 `aria-label`、toast 用 `aria-live` 播报
+- 配色对比度全部达到 WCAG AA（≥4.5:1），照顾长期使用与视力不佳的用户

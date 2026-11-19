@@ -1137,3 +1137,9 @@ function init() {
 }
 
 init();
+
+// 语言切换后重绘动态生成的徽章/谱系文案（服务端数据不变）
+window.addEventListener('i18n:change', () => {
+  if (typeof renderRun === 'function' && S.run) renderRun(S.run);
+  if (typeof renderLineage === 'function') renderLineage();
+});
