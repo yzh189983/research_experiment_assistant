@@ -1,0 +1,15 @@
+# Python 缓存
+__pycache__/
+*.py[cod]
+
+# 运行时数据（数据库、凭据、证书、日志、实验工作区）
+data/
+
+# 虚拟环境 / 本地环境
+.venv/
+venv/
+.env
+
+# 编辑器 / 系统
+.DS_Store
+*.swp

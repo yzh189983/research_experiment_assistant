@@ -42,24 +42,19 @@ function fmtDuration(sec) {
   return `${s}s`;
 }
 
-// 状态徽章
-const STATUS_MAP = {
-  draft:    ['idle', '待开始'],
-  planned:  ['idle', '方案就绪'],
-  coded:    ['idle', '代码就绪'],
-  running:  ['run', '运行中'],
-  uploading:['run', '上传中'],
-  setup:    ['run', '配置环境'],
-  pending:  ['run', '等待中'],
-  done:     ['ok', '已完成'],
-  finished: ['ok', '已完成'],
-  failed:   ['err', '失败'],
-  lost:     ['err', '失联'],
-  stopped:  ['warn', '已停止'],
+// 状态徽章（文案走 i18n 字典，中文为默认）
+const STATUS_CLASS = {
+  draft: 'idle', planned: 'idle', coded: 'idle',
+  running: 'run', uploading: 'run', setup: 'run', pending: 'run',
+  done: 'ok', finished: 'ok', failed: 'err', lost: 'err', stopped: 'warn',
 };
+function statusLabel(st) {
+  const t = (window.I18n && I18n.t) || ((k, f) => f);
+  return t('status.' + (st || 'unknown'), st || t('status.unknown', '未知'));
+}
 function statusBadge(st) {
-  const [cls, label] = STATUS_MAP[st] || ['idle', st || '未知'];
-  return `<span class="badge ${cls}"><i class="dot"></i>${esc(label)}</span>`;
+  const cls = STATUS_CLASS[st] || 'idle';
+  return `<span class="badge ${cls}"><i class="dot"></i>${esc(statusLabel(st))}</span>`;
 }
 
 // 极简 canvas 折线图

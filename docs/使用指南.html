@@ -173,6 +173,7 @@ details[open] summary::before{content:"−"}
       <a href="#run">运行监控</a>
       <a href="#advanced">进阶</a>
       <a href="#github">GitHub 推送</a>
+      <a href="#i18n">语言 / 可访问性</a>
       <a href="#cli">命令行</a>
       <a href="#faq">FAQ</a>
       <a href="项目介绍.html" style="color:var(--accent);font-weight:600">← 项目介绍</a>
@@ -441,6 +442,18 @@ python3 -m venv .venv
       <div class="lbl">安全提示 / SAFETY</div>
       <p>建议用<b>私有仓库</b>起步，Token 只给单个仓库的最小权限；推送前务必确认代码里没有硬编码的数据路径、API Key 或服务器 IP。网络不通时推送会超时失败，可稍后重试，不会静默丢失。Token 一旦在别处泄露，请及时在 GitHub 上 Rotate。</p>
     </div>
+  </section>
+
+  <!-- 7c 语言与可访问性 -->
+  <section id="i18n">
+    <div class="sec-head"><span class="sec-num">＋</span><h2>语言与可访问性</h2><span class="en">Language & Accessibility</span></div>
+    <p class="lead">界面右上角有一个「文/A」按钮，点一下即可在中文和英文之间切换；选择会记在浏览器本地，下次打开保持。英文模式覆盖导航、标题、按钮、状态徽章、日志以及动态弹出的提示，新生成的表格内容也会自动翻译。</p>
+    <ul class="steps">
+      <li><b>切换语言</b>：点右上角「文/A」，整页会刷新并切到另一种语言（切回中文时整页恢复为中文）。</li>
+      <li><b>键盘操作</b>：按 <code>Tab</code> 时先出现「跳到主要内容」链接；所有可点元素有清晰的焦点描边；弹窗按 <code>Esc</code> 可关闭。</li>
+      <li><b>读屏友好</b>：纯图标按钮带文字说明，通知会用 <code>aria-live</code> 播报，页面语言属性随中英文切换。</li>
+      <li><b>看得清</b>：所有文字与背景的对比度达到 WCAG AA 标准，长时间使用更省力。</li>
+    </ul>
   </section>
 
   <!-- 8 报告与批量 -->

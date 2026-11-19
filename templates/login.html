@@ -28,10 +28,12 @@
 </style>
 </head>
 <body>
-<div class="auth-wrap">
+<a class="skip-link" href="#login-main" data-i18n="a11y.skip">跳到主要内容</a>
+<button type="button" class="lang-toggle auth-lang" data-i18n-toggle aria-label="切换语言 / Switch language">文/A</button>
+<main class="auth-wrap" id="login-main" tabindex="-1">
   <div class="auth-card">
     <div class="auth-top">
-      <div class="auth-mark"><span class="brand-mark"></span>科研实验助手 <small style="color:var(--faint)">rekit</small></div>
+      <div class="auth-mark"><span class="brand-mark" aria-hidden="true"></span><span data-i18n="brand.name">科研实验助手</span> <small style="color:var(--faint)">rekit</small></div>
       <h1>登录工作台</h1>
       <p>从创新点到实验报告，本地私有运行。</p>
     </div>
@@ -50,14 +52,16 @@
           <label><input type="checkbox" name="remember" value="1"> 记住我</label>
         </div>
         <input type="hidden" name="next" value="{{ next }}">
-        <button class="btn primary auth-submit" type="submit">登录</button>
+        <button class="btn primary auth-submit" type="submit" data-i18n="auth.login">登录</button>
       </form>
     </div>
     <div class="auth-foot">
-      {% if can_register %}<a href="{{ url_for('register_page', next=next) }}">还没有账号？注册账号 →</a>
+      {% if can_register %}<a href="{{ url_for('register_page', next=next) }}" data-i18n="auth.registerLink">还没有账号？注册账号 →</a>
       {% else %}账号由管理员分配，命令行用 <code>rekit login</code> 登录{% endif %}
     </div>
   </div>
-</div>
+</main>
+<script src="/static/js/i18n.map.js"></script>
+<script src="/static/js/i18n.js"></script>
 </body>
 </html>

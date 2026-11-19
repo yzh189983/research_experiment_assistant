@@ -14,7 +14,7 @@
   --text:#1A1A18;
   --ink:#111110;
   --muted:#5C5C55;
-  --faint:#8C8C83;
+  --faint:#6B6B62;
 
   /* 发丝线 */
   --rule:#DEDCD3;
@@ -272,4 +272,32 @@ textarea{resize:vertical; line-height:1.75; font-size:13.5px}
   table.mt td{border-color:#c8c6bd}
   table.mt tbody tr:last-child td{border-color:#000}
   a{text-decoration:none; color:inherit}
+}
+
+/* ---------- 可访问性：跳转链接 / 焦点 / 语言切换 ---------- */
+.skip-link{
+  position:absolute; left:-9999px; top:0; z-index:100;
+  padding:8px 14px; background:var(--ink); color:#fff; text-decoration:none;
+  border-radius:0 0 var(--radius) 0;
+}
+.skip-link:focus{left:0; outline:2px solid var(--accent); outline-offset:2px}
+
+/* 所有可交互元素统一可见焦点，键盘用户不迷路 */
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [tabindex]:focus-visible{
+  outline:2px solid var(--accent); outline-offset:2px;
+}
+#main-content:focus{outline:none}
+
+.lang-toggle{
+  height:26px; padding:0 8px; margin-right:10px;
+  border:1px solid var(--border); border-radius:var(--radius);
+  background:var(--paper); color:var(--muted);
+  font-family:var(--mono); font-size:11px; cursor:pointer;
+}
+.lang-toggle:hover{background:var(--surface-2); color:var(--ink); border-color:var(--border-strong)}
+.auth-lang{position:fixed; top:14px; right:16px; z-index:5}
+
+@media print{
+  .skip-link,.lang-toggle{display:none !important}
 }

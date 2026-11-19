@@ -9,34 +9,38 @@
 {% block head %}{% endblock %}
 </head>
 <body>
+<a class="skip-link" href="#main-content" data-i18n="a11y.skip">跳到主要内容</a>
 <header class="nav">
-  <a class="brand" href="/">
-    <span class="brand-mark"></span>
-    <span>科研实验助手</span>
+  <a class="brand" href="/" aria-label="rekit home">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span data-i18n="brand.name">科研实验助手</span>
     <small>rekit</small>
   </a>
-  <nav class="nav-links">
-    <a href="/" class="{{ 'on' if active=='exp' }}">实验</a>
-    <a href="/hosts" class="{{ 'on' if active=='hosts' }}">服务器</a>
-    <a href="/terminal" class="{{ 'on' if active=='terminal' }}">终端</a>
-    <a href="/profile" class="{{ 'on' if active=='profile' }}">个人主页</a>
-    <a href="/settings" class="{{ 'on' if active=='settings' }}">设置</a>
+  <nav class="nav-links" aria-label="Primary">
+    <a href="/" class="{{ 'on' if active=='exp' }}" data-i18n="nav.experiments" {% if active=='exp' %}aria-current="page"{% endif %}>实验</a>
+    <a href="/hosts" class="{{ 'on' if active=='hosts' }}" data-i18n="nav.hosts" {% if active=='hosts' %}aria-current="page"{% endif %}>服务器</a>
+    <a href="/terminal" class="{{ 'on' if active=='terminal' }}" data-i18n="nav.terminal" {% if active=='terminal' %}aria-current="page"{% endif %}>终端</a>
+    <a href="/profile" class="{{ 'on' if active=='profile' }}" data-i18n="nav.profile" {% if active=='profile' %}aria-current="page"{% endif %}>个人主页</a>
+    <a href="/settings" class="{{ 'on' if active=='settings' }}" data-i18n="nav.settings" {% if active=='settings' %}aria-current="page"{% endif %}>设置</a>
   </nav>
   <div class="nav-user">
-    <a class="nav-user-name" href="/profile" title="打开个人主页">{{ current_user.username if current_user else '' }}</a>
-    <form method="post" action="/logout" style="display:inline"><button class="nav-logout" type="submit" title="退出登录">退出</button></form>
+    <button type="button" class="lang-toggle" data-i18n-toggle aria-label="切换语言 / Switch language" title="切换语言 / Switch language">文/A</button>
+    <a class="nav-user-name" href="/profile" data-i18n-title="nav.profile" title="打开个人主页">{{ current_user.username if current_user else '' }}</a>
+    <form method="post" action="/logout" style="display:inline"><button class="nav-logout" type="submit" data-i18n="nav.logout" data-i18n-title="nav.logout" title="退出登录">退出</button></form>
   </div>
 </header>
-<main class="wrap">
+<main class="wrap" id="main-content" tabindex="-1">
 {% block body %}{% endblock %}
 </main>
 {% if active != 'terminal' %}
 <footer class="foot">
-  <span>科研实验助手 · rekit</span>
-  <span>本地运行 · 仅监听 127.0.0.1 · 数据存于 data/</span>
+  <span data-i18n="brand.name">科研实验助手</span> · rekit
+  <span data-i18n="footer.local">本地运行 · 仅监听 127.0.0.1 · 数据存于 data/</span>
 </footer>
 {% endif %}
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script src="/static/js/i18n.map.js"></script>
+<script src="/static/js/i18n.js"></script>
 <script src="/static/js/app.js"></script>
 {% block scripts %}{% endblock %}
 </body>

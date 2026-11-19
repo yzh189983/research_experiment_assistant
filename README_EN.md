@@ -309,3 +309,8 @@ The visual tone follows academic journal typesetting, not a SaaS dashboard: whit
 - `Cmd/Ctrl + P` prints directly: navigation, buttons, and the terminal are hidden automatically, leaving only the content
 
 Styles live in two files: `static/css/app.css` (colors, typography, buttons, forms) and `static/css/pages.css` (per-page layouts).
+
+**Accessibility and i18n**:
+- The "文/A" button in the top-right toggles Chinese / English; the preference is remembered locally. English covers navigation, headings, buttons, status badges, logs and dynamic notices (350 phrase mappings, with dynamically inserted content translated automatically)
+- Keyboard friendly: skip-to-content link, consistent `:focus-visible` outlines, Esc to close dialogs, `aria-label` on icon buttons, and `aria-live` announcements for toasts
+- All color combinations meet WCAG AA (≥4.5:1), for long-time use and users with low vision

@@ -51,15 +51,17 @@
 </style>
 </head>
 <body>
-<div class="bar">
-  <h1>实验报告 · No.{{ r.id }}</h1>
-  <a href="/exp/{{ r.id }}">← 返回实验</a>
+<a class="skip-link" href="#report-main" data-i18n="a11y.skip">跳到主要内容</a>
+<nav class="bar" aria-label="Report actions">
+  <h1><span data-i18n="report.title">实验报告</span> · No.{{ r.id }}</h1>
+  <a href="/exp/{{ r.id }}" data-i18n="report.back">← 返回实验</a>
   <a href="/api/experiments/{{ r.id }}/report.md">Markdown</a>
   <a href="/api/experiments/{{ r.id }}/report.docx">Word</a>
-  <button class="primary" onclick="window.print()">打印 / 另存为 PDF</button>
-</div>
+  <button class="primary" onclick="window.print()" data-i18n="report.print">打印 / 另存为 PDF</button>
+  <button type="button" class="lang-toggle" data-i18n-toggle aria-label="切换语言 / Switch language">文/A</button>
+</nav>
 
-<article class="paper">
+<article class="paper" id="report-main" tabindex="-1" role="main">
   <h1>{{ r.title }}</h1>
   <div class="sub">
     {% set s = r.summary or {} %}
@@ -164,6 +166,8 @@
   <h2>九、实验过程摘要（审计轨迹）</h2>
   <pre>{{ process }}</pre>
 </article>
+<script src="/static/js/i18n.map.js"></script>
+<script src="/static/js/i18n.js"></script>
 <script>
 window.addEventListener('load',function(){ /* 打印页无需额外脚本 */ });
 </script>
