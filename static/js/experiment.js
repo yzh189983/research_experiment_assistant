@@ -88,6 +88,65 @@ function renderAITrust() {
   box.innerHTML = badges;
 }
 
+const KAKA_TIER_LABEL = {
+  verified: '实测支持', supported: '日志/代码支持', inferred: 'AI 推断',
+  external: '外部知识', unverified: '待验证'
+};
+
+async function renderKaka() {
+  try {
+    const ws = await api(`/api/experiments/${EXP_ID}/kaka`);
+    $('kaka-stage').textContent = `卡卡：当前阶段 · ${ws.stage_label}`;
+    $('kaka-run').textContent = ws.latest_run
+      ? `run #${ws.latest_run.id} · ${statusLabel(ws.latest_run.status)}` : '尚无运行';
+    const tier = (ws.monitor || {}).tier || 'unverified';
+    const tierEl = $('kaka-tier');
+    tierEl.textContent = KAKA_TIER_LABEL[tier] || '待验证';
+    tierEl.className = 'badge ' + (tier === 'verified' ? 'ok' : tier === 'inferred' ? 'run'
+      : tier === 'unverified' ? 'warn' : 'idle');
+    $('kaka-monitor').textContent = (ws.monitor || {}).message || '';
+    $('kaka-blockers').innerHTML = (ws.blockers || []).map(b =>
+      `<span class="badge warn">${esc(b)}</span>`).join('');
+    $('kaka-actions').innerHTML = (ws.next_actions || []).map(a =>
+      `<button type="button" data-kaka-action="${esc(a.key)}">${esc(a.label)}</button>`).join('') +
+      '<button type="button" class="primary" data-kaka-action="ask">问卡卡…</button>';
+  } catch (e) {
+    $('kaka-monitor').textContent = '卡卡暂时读不到实验记录：' + e.message;
+  }
+}
+
+function setupKakaActions() {
+  const box = $('kaka-actions');
+  if (!box) return;
+  box.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-kaka-action]');
+    if (!btn) return;
+    const key = btn.dataset.kakaAction;
+    if (key === 'ask') {
+      document.dispatchEvent(new CustomEvent('kaka:open'));
+      return;
+    }
+    if (key === 'criteria') {
+      (document.getElementById('criteria-card') || document.querySelector('[data-work-card="criteria"]'))
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (key === 'refresh') { await renderKaka(); return; }
+    if (key === 'plan' || key === 'code') {
+      const old = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = key === 'plan' ? '写方案中…' : '写脚本中…';
+      toast(key === 'plan' ? '已开始写实验方案，完成后会自动刷新' : '已开始写实验脚本，完成后会自动刷新');
+      try {
+        if (key === 'plan') await doPlan(); else await doCode();
+      } catch (err) { toast(err.message, true); }
+      setTimeout(renderKaka, 1500);
+      return;
+    }
+    if (key === 'summary') { toast('正在总结结果…'); await doSummarize(); await renderKaka(); return; }
+  });
+}
+
 function setPreview(id, tag, text) {
   const el = $(id);
   if (!el) return;
@@ -166,8 +225,13 @@ function renderPlan() {
     `<span class="chip acc" title="${esc(m.desc)}">${esc(m.name)}${m.higher_better ? ' ↑' : ' ↓'}</span>`).join('');
   const datasets = (p.datasets || []).map(d =>
     `<span class="chip" title="${esc(d.note)}">${esc(d.name)}</span>`).join('');
-  const list = (arr) => arr && arr.length
-    ? `<ul class="tight">${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '<span class="faint">—</span>';
+  const list = (arr) => {
+    const items = Array.isArray(arr) ? arr : (arr ? [arr] : []);
+    return items.length
+      ? `<ul class="tight">${items.map(x =>
+          `<li>${esc(typeof x === 'object' && x !== null ? (x.name || x.title || JSON.stringify(x)) : x)}</li>`
+        ).join('')}</ul>` : '<span class="faint">—</span>';
+  };
 
   const impl = p.implementation || {};
   const vars = p.variables || {};
@@ -190,8 +254,8 @@ function renderPlan() {
     <div class="plan-block">
       <div class="plan-label">对照与消融</div>
       <dl class="kv">
-        <dt>基线</dt><dd>${(p.baselines || []).map(esc).join('、') || '—'}</dd>
-        <dt>消融</dt><dd>${(p.ablations || []).map(esc).join('、') || '—'}</dd>
+        <dt>基线</dt><dd>${(Array.isArray(p.baselines) ? p.baselines : (p.baselines ? [p.baselines] : [])).map(esc).join('、') || '—'}</dd>
+        <dt>消融</dt><dd>${(Array.isArray(p.ablations) ? p.ablations : (p.ablations ? [p.ablations] : [])).map(esc).join('、') || '—'}</dd>
         <dt>自变量</dt><dd>${esc(vars.independent || '—')}</dd>
         <dt>因变量</dt><dd>${esc(vars.dependent || '—')}</dd>
         <dt>控制变量</dt><dd>${esc(vars.controlled || '—')}</dd>
@@ -1051,7 +1115,7 @@ async function reload() {
   renderPlan(); renderCode(); renderSummary();
   renderRun(S.run); renderLineage();
   renderMode(); renderCriteria(); renderAudits(); renderUsage();
-  renderAITrust();
+  renderAITrust(); renderKaka();
   setStatus(d.status);
   updatePreviews();
   $('btn-replan').disabled = false;
@@ -1099,11 +1163,15 @@ function handle(d) {
     case 'status':
       if (d.run_id) loadRunInfo(d.run_id);
       setStatus(d.status);
+      renderKaka();
+      document.dispatchEvent(new CustomEvent('kaka:alert'));
       break;
     case 'summary':
       EXP.summary = d.data;
       renderSummary();
       loadMetrics();
+      renderKaka();
+      document.dispatchEvent(new CustomEvent('kaka:alert'));
       break;
     case 'job':
       onJob(d);
@@ -1258,7 +1326,7 @@ function init() {
   renderMode(); renderCriteria(); renderAudits(); renderUsage();
   renderAITrust();
   setStatus(EXP.status);
-  setupWorkCards();
+  setupWorkCards(); setupKakaActions(); renderKaka();
   updatePreviews();
 
   if (S.run && S.run.log_tail) {

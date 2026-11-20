@@ -122,12 +122,15 @@ def _models(c):
 
 
 def chat(messages, system=None, json_mode=False, temperature=None, max_tokens=8000,
-         stream=False, on_delta=None):
+         stream=False, on_delta=None, cfg_override=None):
     """调用 LLM。支持重试/fallback/流式。
 
+    cfg_override 可临时覆盖 llm 配置（如卡卡专用模型），不改动用户设置。
     stream=True 时逐块把 delta 交给 on_delta(text) 回调，返回完整文本。
     """
     c = _cfg()
+    if cfg_override:
+        c = dict(c, **{k: v for k, v in cfg_override.items() if v not in (None, "")})
     if not c.get("api_key"):
         raise LLMError("还没有配置 LLM API Key。请到「设置」填写 base_url / api_key / model。")
     if stream and on_delta is None:
@@ -297,8 +300,7 @@ def chat_json(messages, system=None, **kw):
               "请只输出修正后的合法 JSON 对象，不要解释、不要代码块。" % str(first_err)[:300])},
         ]
         try:
-            fixed = chat(repair_msgs, system=system, json_mode=True,
-                         max_tokens=kw.get("max_tokens", 8000))
+            fixed = chat(repair_msgs, system=system, json_mode=True, **kw)
             return extract_json(fixed)
         except Exception:
             raise first_err

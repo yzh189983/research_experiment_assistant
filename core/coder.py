@@ -72,6 +72,8 @@ def generate_code(plan, python_bin="python3", gpu=False, feedback=None):
         prompt += f"\n\n研究者的修改意见（必须采纳）：\n{feedback}"
 
     raw = llm.chat([{"role": "user", "content": prompt}], system=SYSTEM, temperature=0.2)
+    if not (raw or "").strip():
+        raise llm.LLMError("模型没有返回代码内容，通常是方案信息太少；请先在「实验方案」里补充指标、基线和实现细节")
     data = llm.extract_json(raw)
     return _normalize(data, plan)
 

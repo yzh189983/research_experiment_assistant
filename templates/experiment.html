@@ -38,6 +38,21 @@
 
 <div id="checkpoint-banner" class="checkpoint-banner" style="display:none"></div>
 
+<section class="card kaka-workbench" id="sec-kaka">
+  <div class="kaka-mini" aria-hidden="true"></div>
+  <div class="kaka-wb-main">
+    <div class="kaka-wb-top">
+      <span class="kaka-wb-stage" id="kaka-stage">卡卡正在了解这个实验…</span>
+      <span class="badge idle" id="kaka-tier">待确认</span>
+      <span class="tiny faint" id="kaka-run"></span>
+    </div>
+    <div class="kaka-wb-monitor" id="kaka-monitor">正在读取实验记录与最近运行情况。</div>
+    <div class="kaka-wb-blockers" id="kaka-blockers"></div>
+    <div class="kaka-wb-actions" id="kaka-actions"></div>
+    <div class="kaka-wb-reply" id="kaka-reply"></div>
+  </div>
+</section>
+
 <nav class="stage-nav" aria-label="实验流程导航">
   <a class="stage-link" href="#sec-idea" data-work-link="idea"><span>01</span>创新点</a>
   <a class="stage-link" href="#sec-plan" data-work-link="plan"><span>02</span>实验方案</a>
@@ -117,7 +132,7 @@
     <section class="card work-card" id="sec-summary" data-work-card="summary">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num" id="num-sum">4</span>实验结论</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="sec-actions">
           <button class="btn ghost sm" id="btn-summarize" style="display:none">重新总结</button>
           <button class="btn ghost sm" id="btn-review" style="display:none">AI 自审</button>
           <button class="btn ghost sm" id="btn-export" style="display:none">导出 Markdown</button>

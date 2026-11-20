@@ -25,7 +25,7 @@ from werkzeug.security import check_password_hash
 
 import config
 from core import (ai_eval, ai_tools, auth, bus, coder, crypto, db, extract,
-                  gitlineage, github, llm, monitor, planner, report, ssh_runner,
+                  gitlineage, github, kaka, llm, monitor, planner, report, ssh_runner,
                   stats as stats_mod, summarizer, terminal, workspace)
 from web.blueprints import api_bp
 
@@ -275,6 +275,10 @@ def _job_code(exp_id, feedback=None, host_id=None):
         if "API Key" in str(e) or "还没配置" in str(e):
             code = coder.fallback_code(plan)
             bus.note(exp_id, "LLM 未配置，已生成占位实验代码（可手动替换）", "warn")
+        elif "返回为空" in str(e) or "结构不完整" in str(e):
+            # 方案太简单 / 模型偶发空返回：仍给一份可跑的占位代码，避免按钮“没反应”
+            code = coder.fallback_code(plan)
+            bus.note(exp_id, f"{e}；已生成占位代码，可补全方案后点「重新生成代码」", "warn")
         else:
             raise
     _record_llm_usage("code", exp_id)
@@ -781,6 +785,9 @@ def settings_page():
                            notify_cfg=cfg.get("notify") or {},
                            ai_eval_runs=ai_eval.latest(uid=uid, limit=5),
                            ai_tool_audit_count=len(db.list_ai_tool_audit(uid=uid, limit=50)),
+                           kaka_cfg=cfg.get("kaka") or {},
+                           kaka_effective=kaka._llm_cfg(),
+                           kaka_ready=kaka._llm_ready(),
                            users=db.list_users() if g._auth_user["role"] == "admin" else [])
 
 
@@ -2312,6 +2319,38 @@ def api_save_settings():
         for k in ("interval_sec", "stall_warn_sec"):
             if k in mon:
                 patch["monitor"][k] = int(mon[k])
+    kaka_d = d.get("kaka") or {}
+    if kaka_d:
+        cur_kaka = (config.load_config().get("kaka") or {})
+        patch["kaka"] = {}
+        for k in ("model", "base_url"):
+            if k in kaka_d:
+                patch["kaka"][k] = str(kaka_d[k] or "").strip()
+        if "api_key" in kaka_d:
+            key = str(kaka_d["api_key"] or "").strip()
+            if key and "*" not in key:
+                patch["kaka"]["api_key"] = key
+            elif not key:
+                patch["kaka"]["api_key"] = cur_kaka.get("api_key", "")
+        if "temperature" in kaka_d:
+            patch["kaka"]["temperature"] = float(kaka_d["temperature"])
+        if "max_tokens" in kaka_d:
+            patch["kaka"]["max_tokens"] = int(kaka_d["max_tokens"])
+        if "enabled" in kaka_d:
+            patch["kaka"]["enabled"] = bool(kaka_d["enabled"])
+    ds_d = d.get("dataset_search") or {}
+    if ds_d:
+        patch["dataset_search"] = {}
+        if "enabled" in ds_d:
+            patch["dataset_search"]["enabled"] = bool(ds_d["enabled"])
+        if "prefer_top_venues" in ds_d:
+            patch["dataset_search"]["prefer_top_venues"] = bool(ds_d["prefer_top_venues"])
+        if "sources" in ds_d:
+            src = ds_d["sources"]
+            patch["dataset_search"]["sources"] = [str(x) for x in src] if isinstance(src, list) else []
+        for k in ("timeout", "max_papers", "max_links", "year_from", "year_to"):
+            if k in ds_d:
+                patch["dataset_search"][k] = float(ds_d[k]) if k == "timeout" else int(ds_d[k])
     notify_d = d.get("notify") or {}
     if notify_d:
         patch["notify"] = {}
@@ -2324,7 +2363,8 @@ def api_save_settings():
             ev = notify_d["events"]
             patch["notify"]["events"] = [str(x) for x in ev] if isinstance(ev, list) else []
     config.save_user_config(g._auth_user["id"], patch)
-    return jsonify({"ok": True, "llm_configured": llm.is_configured()})
+    return jsonify({"ok": True, "llm_configured": llm.is_configured(),
+                    "kaka_ready": kaka._llm_ready()})
 
 
 @api_bp.post("/api/notify/test")
@@ -2352,6 +2392,46 @@ def api_test_llm():
     try:
         r = llm.chat([{"role": "user", "content": "只回复两个字：可用"}], max_tokens=16, temperature=0)
         return jsonify({"ok": True, "reply": r.strip()[:50]})
+    except Exception as e:
+        return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
+
+
+@api_bp.post("/api/kaka/ask")
+def api_kaka_global_ask():
+    """全局卡卡入口：可问任何问题，实验信息只作轻量参考。"""
+    d = request.get_json(force=True) or {}
+    return jsonify(kaka.ask_global(g._auth_user["id"], d.get("question")))
+
+
+@api_bp.post("/api/kaka/chat")
+def api_kaka_chat():
+    d = request.get_json(force=True) or {}
+    return jsonify(kaka.chat(g._auth_user["id"], d.get("message"), d.get("scope") or "global"))
+
+
+@api_bp.get("/api/kaka/history")
+def api_kaka_history():
+    scope = request.args.get("scope") or "global"
+    return jsonify({"items": kaka.history(g._auth_user["id"], scope,
+                                          limit=int(request.args.get("limit") or 50))})
+
+
+@api_bp.delete("/api/kaka/history")
+def api_kaka_history_clear():
+    scope = request.args.get("scope") or "global"
+    return jsonify(kaka.clear_history(g._auth_user["id"], scope))
+
+
+@api_bp.post("/api/kaka/test")
+def api_test_kaka():
+    cfg = kaka._llm_cfg()
+    if not cfg.get("api_key"):
+        return jsonify({"ok": False, "error": "卡卡没有可用 Key：填写卡卡专用 Key，或留空跟随主模型"})
+    try:
+        r = llm.chat([{"role": "user", "content": "只回复两个字：可用"}],
+                     system="你是科研助手卡卡，现在测试连通性。",
+                     cfg_override=cfg, max_tokens=256, temperature=0)
+        return jsonify({"ok": True, "reply": r.strip()[:50], "model": cfg["model"]})
     except Exception as e:
         return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
 
@@ -2391,6 +2471,134 @@ def api_ai_tools_call():
 @api_bp.get("/api/ai/tools/audit")
 def api_ai_tools_audit():
     return jsonify({"items": db.list_ai_tool_audit(uid=g._auth_user["id"], limit=50)})
+
+
+# ---------------- 卡卡智能体：实验副驾 / 项目群聊 / 数据集 ----------------
+@api_bp.get("/api/experiments/<int:eid>/kaka")
+def api_kaka_workspace(eid):
+    own_exp_or_404(eid)
+    ws = kaka.workspace(eid, uid=g._auth_user["id"])
+    if not ws:
+        abort(404)
+    return jsonify(ws)
+
+
+@api_bp.post("/api/experiments/<int:eid>/kaka/ask")
+def api_kaka_ask(eid):
+    own_exp_or_404(eid)
+    d = request.get_json(force=True) or {}
+    return jsonify(kaka.ask(g._auth_user["id"], d.get("question"), eid=eid))
+
+
+@api_bp.post("/api/experiments/<int:eid>/kaka/prepare")
+def api_kaka_prepare(eid):
+    own_exp_or_404(eid, "write")
+    d = request.get_json(force=True) or {}
+    feedback = str(d.get("feedback") or "")[:2000]
+    result = kaka.prepare_script(eid, uid=g._auth_user["id"], feedback=feedback)
+    if result.get("error"):
+        return jsonify(result), 403
+    # 复用现有生成任务：方案未就绪时先写方案，再写脚本
+    if "plan" in result["steps"]:
+        bg(eid, "plan", _job_plan, feedback or None)
+    bg(eid, "code", _job_code, feedback or None)
+    return jsonify(result)
+
+
+@api_bp.post("/api/experiments/<int:eid>/kaka/summarize")
+def api_kaka_summarize(eid):
+    own_exp_or_404(eid, "write")
+    d = request.get_json(force=True) or {}
+    rid = int(d.get("run_id") or 0) or None
+    result = kaka.summarize_result(eid, rid, uid=g._auth_user["id"])
+    return jsonify(result), (200 if result.get("ok") else 400)
+
+
+@api_bp.get("/api/projects/<int:pid>/messages")
+def api_project_messages(pid):
+    own_project_or_404(pid)
+    return jsonify({"items": db.list_project_messages(pid, uid=g._auth_user["id"],
+                                                      limit=int(request.args.get("limit") or 100))})
+
+
+@api_bp.post("/api/projects/<int:pid>/messages")
+def api_project_message_add(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(force=True) or {}
+    content = str(d.get("content") or "").strip()
+    if not content:
+        return jsonify({"error": "消息不能为空"}), 400
+    mid = db.add_project_message(pid, "user", content[:2000],
+                                 {"exp_id": int(d.get("exp_id") or 0)}, uid=g._auth_user["id"])
+    return jsonify({"ok": True, "id": mid})
+
+
+@api_bp.post("/api/projects/<int:pid>/kaka/ask")
+def api_project_kaka_ask(pid):
+    own_project_or_404(pid)
+    d = request.get_json(force=True) or {}
+    eid = int(d.get("experiment_id") or 0) or None
+    result = kaka.ask(g._auth_user["id"], d.get("question"), eid=eid, pid=pid)
+    db.add_project_message(pid, "kaka", str(result.get("answer") or "")[:2000],
+                           {"tier": result.get("tier"), "experiment_id": eid},
+                           uid=g._auth_user["id"])
+    return jsonify(result)
+
+
+@api_bp.get("/api/projects/<int:pid>/datasets")
+def api_project_datasets(pid):
+    own_project_or_404(pid)
+    return jsonify({"items": db.list_project_datasets(pid, uid=g._auth_user["id"])})
+
+
+@api_bp.post("/api/projects/<int:pid>/datasets")
+def api_project_dataset_add(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(force=True) or {}
+    did = db.add_project_dataset(
+        pid, d.get("name"), uid=g._auth_user["id"], version=str(d.get("version") or ""),
+        paper=str(d.get("paper") or ""), evidence=str(d.get("evidence") or ""),
+        url=str(d.get("url") or ""), url_type=str(d.get("url_type") or ""),
+        license_name=str(d.get("license") or ""), status=str(d.get("status") or "candidate"))
+    if not did:
+        return jsonify({"error": "数据集名称不能为空"}), 400
+    return jsonify({"ok": True, "id": did})
+
+
+@api_bp.post("/api/projects/<int:pid>/datasets/collect")
+def api_project_datasets_collect(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(force=True) or {}
+    result = kaka.collect_datasets(
+        pid, d.get("query"), d.get("papers"), uid=g._auth_user["id"],
+        year_from=int(d.get("year_from") or 0) or None,
+        year_to=int(d.get("year_to") or 0) or None)
+    return jsonify(result), (200 if result.get("ok") else 403)
+
+
+@api_bp.post("/api/projects/<int:pid>/datasets/adopt")
+def api_project_datasets_adopt(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(force=True) or {}
+    return jsonify(kaka.adopt_datasets(pid, d.get("candidates"), uid=g._auth_user["id"]))
+
+
+@api_bp.put("/api/projects/<int:pid>/datasets/<int:did>")
+def api_project_dataset_update(pid, did):
+    own_project_or_404(pid, "write")
+    d = request.get_json(force=True) or {}
+    allowed = {k: d[k] for k in ("name", "version", "paper", "evidence", "url", "url_type",
+                                 "license", "status") if k in d}
+    if not db.update_project_dataset(did, pid, allowed, uid=g._auth_user["id"]):
+        return jsonify({"error": "没有可更新的字段或数据集不存在"}), 400
+    return jsonify({"ok": True})
+
+
+@api_bp.delete("/api/projects/<int:pid>/datasets/<int:did>")
+def api_project_dataset_delete(pid, did):
+    own_project_or_404(pid, "write")
+    db.delete_project_dataset(did, pid, uid=g._auth_user["id"])
+    return jsonify({"ok": True})
 
 
 # ---------------- 用户管理（管理员） ----------------
@@ -2558,6 +2766,8 @@ def _reap_stale_runs(loop=True):
         time.sleep(interval)
         try:
             for r in db.stale_running_runs(heartbeat_timeout=timeout):
+                if (r.get("remote_dir") or "").startswith("~/demo_run"):
+                    continue    # 演示数据：没有真实远程进程，跳过失联巡检
                 if monitor.is_watching(r["id"]):
                     continue    # 监控线程还在，只是心跳写失败，放过
                 uid = r.get("user_id") or 1

@@ -710,3 +710,219 @@ table.mt tbody tr:hover{background:#FBFBF7}
   .tl-dot{left:-18px}
   .logbox{height:260px}
 }
+
+/* ---------- 卡卡助手：可爱动态形象 ---------- */
+.kaka-buddy{
+  position:fixed; right:22px; bottom:22px; width:62px; height:62px;
+  border:0; background:transparent; padding:0; cursor:pointer; z-index:90;
+  transition:transform .18s ease;
+}
+.kaka-buddy:hover{transform:translateY(-3px)}
+.kaka-buddy.active .kaka-face{border-color:var(--accent)}
+.kaka-antenna{
+  position:absolute; top:4px; width:2px; height:12px;
+  background:#1E3A32; transform-origin:bottom center;
+}
+.kaka-antenna::after{
+  content:""; position:absolute; top:-5px; left:-3px;
+  width:8px; height:8px; border-radius:50%; background:var(--accent);
+}
+.kaka-antenna-l{left:22px; animation:kaka-antenna 2.6s ease-in-out infinite}
+.kaka-antenna-r{right:22px; animation:kaka-antenna 2.6s ease-in-out .5s infinite reverse}
+.kaka-face{
+  position:absolute; left:7px; top:13px; width:48px; height:44px;
+  border:1.5px solid #1E3A32; border-radius:48% 48% 44% 44%;
+  background:linear-gradient(155deg,#FAF7EA,#EAE3CC);
+  display:block; animation:kaka-float 3.2s ease-in-out infinite;
+}
+.kaka-eye{
+  position:absolute; top:15px; width:5px; height:7px; border-radius:50%;
+  background:#1E3A32; animation:kaka-blink 4.2s infinite;
+  transform:translate(var(--kx,0px), var(--ky,0px));
+  transition:transform .08s linear;
+}
+.kaka-eye-l{left:13px}
+.kaka-eye-r{right:13px}
+.kaka-blush{
+  position:absolute; top:25px; width:8px; height:4px; border-radius:50%;
+  background:#E7A9A0; opacity:.75;
+}
+.kaka-blush-l{left:6px}
+.kaka-blush-r{right:6px}
+.kaka-mouth{
+  position:absolute; left:50%; top:27px; width:11px; height:6px;
+  margin-left:-5.5px; border-bottom:1.5px solid #1E3A32;
+  border-radius:0 0 11px 11px;
+}
+.kaka-bubble{
+  position:absolute; right:70px; bottom:18px; white-space:nowrap;
+  background:#fff; border:1px solid var(--rule); padding:6px 10px;
+  font-size:11px; color:var(--muted); opacity:0; transform:translateX(6px);
+  transition:opacity .2s, transform .2s; pointer-events:none;
+}
+.kaka-buddy.speaking .kaka-bubble{opacity:1; transform:none}
+.kaka-buddy.nod .kaka-face{animation:kaka-nod .7s ease}
+@keyframes kaka-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes kaka-blink{
+  0%,92%,96%,100%{transform:translate(var(--kx,0px), var(--ky,0px)) scaleY(1)}
+  94%{transform:translate(var(--kx,0px), var(--ky,0px)) scaleY(.12)}
+}
+@keyframes kaka-antenna{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+@keyframes kaka-nod{
+  0%,100%{transform:translateY(0) rotate(0)}
+  35%{transform:translateY(3px) rotate(-6deg)}
+  65%{transform:translateY(1px) rotate(6deg)}
+}
+.kaka-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.28); z-index:95;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.kaka-overlay.open{opacity:1; pointer-events:auto}
+.kaka-pop{
+  position:fixed; top:0; right:0; bottom:0; width:390px; max-width:100vw;
+  background:#fff; border-left:1px solid var(--rule); z-index:96;
+  display:flex; flex-direction:column; font-size:12.5px;
+  transform:translateX(100%); transition:transform .25s ease;
+}
+.kaka-pop.open{transform:none}
+.kaka-pop-head{
+  display:flex; align-items:center; gap:8px; padding:12px 14px;
+  border-bottom:1px solid var(--rule); background:var(--surface-2);
+}
+.kaka-pop-dot{width:7px; height:7px; border-radius:50%; background:var(--accent)}
+.kaka-clear{
+  margin-left:auto; border:0; background:transparent; color:var(--muted);
+  font-size:11px; cursor:pointer; padding:2px 4px;
+}
+.kaka-clear:hover{color:var(--accent)}
+.kaka-pop-close{
+  border:0; background:transparent; cursor:pointer;
+  font-size:18px; line-height:1; color:var(--muted); padding:0 2px;
+}
+.kaka-chat-log{
+  flex:1; overflow:auto; padding:14px 16px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.kaka-intro{
+  font-size:12px; color:var(--muted); line-height:1.8;
+  padding:10px 12px; background:var(--surface-2); border-left:2px solid var(--accent);
+}
+.kaka-msg{
+  max-width:88%; padding:9px 12px; font-size:12.5px; line-height:1.75;
+  white-space:pre-wrap; word-break:break-word;
+}
+.kaka-msg.user{align-self:flex-end; background:var(--accent); color:#fff}
+.kaka-msg.assistant{
+  align-self:flex-start; background:var(--surface-2);
+  color:var(--text); border:1px solid var(--rule);
+}
+.kaka-thinking{font-size:11.5px; color:var(--muted); align-self:flex-start}
+.kaka-pop-ask{
+  display:flex; gap:8px; padding:12px;
+  border-top:1px solid var(--rule); align-items:flex-end;
+}
+.kaka-pop-ask textarea{
+  flex:1; min-width:0; resize:none; border:1px solid var(--rule);
+  padding:8px 10px; font-size:12.5px; min-height:44px; max-height:120px;
+  background:#fff; color:var(--text);
+}
+.kaka-pop-ask button{
+  border:1px solid var(--accent); background:var(--accent); color:#fff;
+  padding:0 14px; height:44px; cursor:pointer;
+}
+
+/* ---------- 实验页：卡卡工作台 ---------- */
+.kaka-workbench{
+  display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start;
+  margin-bottom:16px; border-color:var(--accent);
+}
+.kaka-mini{
+  width:44px; height:40px; border:1.5px solid var(--accent); border-radius:48% 48% 44% 44%;
+  background:linear-gradient(155deg,#FAF7EA,#EAE3CC); position:relative; flex-shrink:0;
+}
+.kaka-mini::before,.kaka-mini::after{
+  content:""; position:absolute; top:15px; width:4px; height:6px;
+  border-radius:50%; background:#1E3A32;
+  transform:translate(var(--kx,0px), var(--ky,0px));
+  transition:transform .08s linear;
+}
+.kaka-mini::before{left:12px}
+.kaka-mini::after{right:12px}
+.kaka-wb-main{min-width:0}
+.kaka-wb-top{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.kaka-wb-stage{
+  font-family:var(--serif); font-size:16px; font-weight:600; color:var(--accent);
+}
+.kaka-wb-monitor{
+  margin-top:8px; font-size:12.5px; color:var(--muted); line-height:1.8;
+  padding:8px 11px; background:var(--surface-2); border-left:2px solid var(--accent);
+}
+.kaka-wb-blockers{margin-top:8px; display:flex; gap:6px; flex-wrap:wrap}
+.kaka-wb-actions{margin-top:10px; display:flex; gap:7px; flex-wrap:wrap}
+.kaka-wb-actions button{
+  border:1px solid var(--rule); background:#fff; color:var(--text);
+  padding:6px 10px; font-size:11.5px; cursor:pointer;
+}
+.kaka-wb-actions button:hover{border-color:var(--accent); color:var(--accent)}
+.kaka-wb-actions button.primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+.kaka-wb-reply{margin-top:8px; font-size:12px; color:var(--muted); line-height:1.7}
+
+/* ---------- 项目页：群聊与数据集 ---------- */
+.kaka-chat{display:flex; flex-direction:column; gap:0; max-height:460px; overflow:auto}
+.chat-msg{padding:11px 0; border-bottom:1px solid var(--rule); display:flex; gap:10px}
+.chat-msg:last-child{border-bottom:0}
+.chat-who{
+  width:34px; height:28px; flex-shrink:0; border:1px solid var(--rule);
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-family:var(--mono); color:var(--muted);
+}
+.chat-msg.kaka .chat-who{border-color:var(--accent); color:var(--accent)}
+.chat-body{min-width:0; flex:1}
+.chat-body .chat-meta{font-size:10px; color:var(--faint); font-family:var(--mono); margin-bottom:4px}
+.chat-body .chat-text{font-size:12.5px; color:var(--text); line-height:1.7; white-space:pre-wrap; word-break:break-word}
+.chat-compose{display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--rule)}
+.chat-compose input{
+  flex:1; min-width:0; border:1px solid var(--rule); padding:8px 10px; font-size:12.5px;
+}
+.chat-compose button{border:1px solid var(--accent); background:var(--accent); color:#fff; padding:0 16px; cursor:pointer}
+/* @ 提及补全菜单 */
+.chat-compose-wrap{position:relative}
+.mention-menu{
+  position:absolute; left:0; bottom:calc(100% + 4px); z-index:40;
+  width:min(360px, 100%); max-height:260px; overflow:auto;
+  background:var(--paper); border:1px solid var(--border-strong);
+  box-shadow:0 8px 22px rgba(0,0,0,.10); padding:4px;
+}
+.mention-head{
+  font-size:10px; color:var(--faint); font-family:var(--mono);
+  padding:5px 8px 7px; letter-spacing:.03em;
+}
+.mention-item{
+  display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+  border:0; background:transparent; padding:7px 8px; cursor:pointer;
+  font:inherit; font-size:12.5px; color:var(--text);
+}
+.mention-item:hover,.mention-item.on{background:var(--accent-soft)}
+.mention-avatar{
+  width:24px; height:24px; flex:0 0 24px; display:flex; align-items:center; justify-content:center;
+  border:1px solid var(--rule); font-size:11px; color:var(--muted); background:var(--surface-2);
+}
+.mention-avatar.bot{border-color:var(--accent); color:var(--accent)}
+.mention-name{font-weight:600}
+.mention-role{margin-left:auto; font-size:10px; color:var(--faint); font-family:var(--mono)}
+.ds-table{width:100%; border-collapse:collapse}
+.ds-table th,.ds-table td{
+  padding:9px 10px; border-bottom:1px solid var(--rule); text-align:left;
+  font-size:11.5px; vertical-align:top;
+}
+.ds-table th{color:var(--faint); font-weight:500; font-family:var(--mono); letter-spacing:.04em}
+.ds-table a{color:var(--accent)}
+.ds-collect{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start}
+.ds-collect input[type=text]{flex:1; min-width:220px; border:1px solid var(--rule); padding:8px 10px; font-size:12.5px}
+.ds-candidate{margin-top:12px; padding:10px 12px; border:1px dashed var(--rule); font-size:12px; line-height:1.75}
+
+@media(max-width:720px){
+  .kaka-buddy{right:14px; bottom:14px}
+  .kaka-pop{width:100vw}
+  .kaka-workbench{grid-template-columns:1fr}
+}

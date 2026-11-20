@@ -40,6 +40,36 @@
 </footer>
 {% endif %}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<button id="kaka-buddy" class="kaka-buddy" type="button" aria-label="打开卡卡助手" aria-expanded="false" title="卡卡 · 科研副驾">
+  <span class="kaka-antenna kaka-antenna-l" aria-hidden="true"></span>
+  <span class="kaka-antenna kaka-antenna-r" aria-hidden="true"></span>
+  <span class="kaka-face" aria-hidden="true">
+    <span class="kaka-eye kaka-eye-l"></span>
+    <span class="kaka-eye kaka-eye-r"></span>
+    <span class="kaka-blush kaka-blush-l"></span>
+    <span class="kaka-blush kaka-blush-r"></span>
+    <span class="kaka-mouth"></span>
+  </span>
+  <span class="kaka-bubble" id="kaka-bubble" aria-hidden="true">嗨，我是卡卡</span>
+</button>
+<div id="kaka-overlay" class="kaka-overlay" aria-hidden="true"></div>
+<aside id="kaka-pop" class="kaka-pop" aria-label="卡卡对话" aria-hidden="true">
+  <div class="kaka-pop-head">
+    <span class="kaka-pop-dot"></span>
+    <b>卡卡 · 科研副驾</b>
+    <button type="button" id="kaka-clear" class="kaka-clear" title="清空对话">清空</button>
+    <button type="button" id="kaka-pop-close" class="kaka-pop-close" aria-label="关闭">×</button>
+  </div>
+  <div class="kaka-chat-log" id="kaka-chat-log">
+    <div class="kaka-intro">你好，我是卡卡，你的科研副驾。实验设计、写代码、查资料、整理数据集，或者随便聊聊，都可以问我。</div>
+  </div>
+  <div class="kaka-pop-ask">
+    <textarea id="kaka-pop-input" rows="2" placeholder="问卡卡…（Enter 发送，Shift+Enter 换行）" aria-label="问卡卡"></textarea>
+    <button type="button" id="kaka-pop-send">发送</button>
+  </div>
+</aside>
+
 <script src="/static/js/i18n.map.js"></script>
 <script src="/static/js/i18n.js"></script>
 <script src="/static/js/app.js"></script>
