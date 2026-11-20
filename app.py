@@ -24,9 +24,9 @@ from flask_sock import Sock
 from werkzeug.security import check_password_hash
 
 import config
-from core import (auth, bus, coder, crypto, db, extract, gitlineage, github, llm,
-                  monitor, planner, report, ssh_runner, stats as stats_mod,
-                  summarizer, terminal, workspace)
+from core import (ai_eval, ai_tools, auth, bus, coder, crypto, db, extract,
+                  gitlineage, github, llm, monitor, planner, report, ssh_runner,
+                  stats as stats_mod, summarizer, terminal, workspace)
 from web.blueprints import api_bp
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -90,7 +90,10 @@ def _load_user():
     else:
         config.set_current_uid(None)
         # API 统一拦截：避免逐条路由漏加装饰器
-        if request.path.startswith("/api/") and request.path not in _API_PUBLIC:
+        public_share_comment = (request.path.startswith("/api/share/")
+                                and request.path.endswith("/comment"))
+        if (request.path.startswith("/api/") and request.path not in _API_PUBLIC
+                and not public_share_comment):
             return jsonify({"error": "未登录或登录已失效，请先执行 rekit login"}), 401
 
 
@@ -115,22 +118,36 @@ def _set_active(name):
     g.active_page = name
 
 
-def own_exp_or_404(eid):
-    """校验实验归属：db.get_experiment 已按当前用户过滤，取不到即 404。
+def own_exp_or_404(eid, action="read"):
+    """校验实验可见性与项目角色权限。
 
-    所有按 eid/rid 访问的 API 都必须先过这一关，
-    否则用户 A 可以直接读写用户 B 的实验（工作区按 eid 存文件）。
+    db.get_experiment 已按“本人或项目成员”过滤；这里再按动作检查
+    viewer / editor / owner 的最小角色，避免越权修改、运行或删除。
     """
     exp = db.get_experiment(eid)
     if not exp:
         abort(404)
+    if not db.role_allows(db.experiment_role(exp), action):
+        abort(403)
     return exp
 
 
-def own_run_or_404(rid):
+def own_project_or_404(pid, action="read"):
+    project = db.get_project(pid)
+    if not project:
+        abort(404)
+    if not db.role_allows(db.get_project_role(pid), action):
+        abort(403)
+    return project
+
+
+def own_run_or_404(rid, action="read"):
     run = db.get_run(rid)
     if not run:
         abort(404)
+    exp = db.get_experiment(run["experiment_id"])
+    if exp and not db.role_allows(db.experiment_role(exp), action):
+        abort(403)
     return run
 
 
@@ -151,6 +168,14 @@ def _not_found(e):
     if request.path.startswith("/api/"):
         return jsonify({"error": "资源不存在或无权限访问"}), 404
     return e
+
+
+@app.errorhandler(403)
+def _forbidden(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"error": "当前项目角色无权执行此操作"}), 403
+    return e
+
 
 # 服务端渲染状态徽章（与 static/js/app.js 的 statusBadge 保持一致）
 _STATUS_MAP = {
@@ -221,6 +246,12 @@ def _job_plan(exp_id, feedback=None):
     _record_llm_usage("plan", exp_id)
     db.update_experiment(exp_id, plan_json=json.dumps(plan, ensure_ascii=False),
                          status="planned", title=exp["title"])
+    try:
+        from core import ai_trust
+        ai_trust.record_output(exp_id, None, "plan", plan,
+                               {"experiment_id": exp_id}, uid=exp.get("user_id"))
+    except Exception:
+        pass
     db.add_audit(exp_id, "plan", "生成方案",
                  {"before": exp.get("plan_json") or "", "after": plan.get("title") or "",
                   "feedback": feedback or ""}, decision="已生成")
@@ -250,6 +281,14 @@ def _job_code(exp_id, feedback=None, host_id=None):
     old_files = [f.get("path") for f in json.loads(exp.get("code_json") or "{}").get("files", [])]
     workspace.write_files(exp_id, code)
     db.update_experiment(exp_id, code_json=json.dumps(code, ensure_ascii=False), status="coded")
+    try:
+        from core import ai_trust
+        ai_trust.record_output(exp_id, None, "code",
+                               {"files": [f["path"] for f in code.get("files", [])],
+                                "entry": code.get("entry", ""), "notes": code.get("notes", "")},
+                               {"experiment_id": exp_id}, uid=exp.get("user_id"))
+    except Exception:
+        pass
     db.add_audit(exp_id, "code", "生成代码",
                  {"before_files": old_files,
                   "after_files": [f.get("path") for f in code.get("files", [])],
@@ -430,7 +469,41 @@ def index():
                            recent_runs=recent, failed_runs=failed,
                            timeline=db.global_timeline(30),
                            templates=EXPERIMENT_TEMPLATES,
+                           projects=db.list_projects(),
                            llm_ok=llm.is_configured())
+
+
+@app.route("/projects")
+@auth.login_required
+def projects_page():
+    _set_active("projects")
+    show_archived = request.args.get("archived") == "1"
+    projects = db.list_projects(include_archived=show_archived)
+    enriched = []
+    for p in projects:
+        d = dict(p)
+        d["members"] = db.list_project_members(p["id"])
+        d["experiments"] = db.list_experiments(project_id=p["id"],
+                                                include_archived_projects=True)
+        enriched.append(d)
+    return render_template("projects.html", projects=enriched,
+                           show_archived=show_archived, all_users=db.list_users())
+
+
+@app.route("/project/<int:pid>")
+@auth.login_required
+def project_detail_page(pid):
+    _set_active("projects")
+    own_project_or_404(pid)
+    project = db.get_project(pid)
+    return render_template(
+        "project.html",
+        project=project,
+        role=db.get_project_role(pid),
+        members=db.list_project_members(pid),
+        experiments=db.list_experiments(project_id=pid, include_archived_projects=True),
+        projects=db.list_projects(),
+        all_users=db.list_users())
 
 
 @app.route("/exp/<int:eid>")
@@ -440,8 +513,12 @@ def exp_page(eid):
     exp = db.get_experiment(eid)
     if not exp:
         return redirect(url_for("index"))
+    perm = db.experiment_permissions(exp)
+    project = db.get_project(exp.get("project_id") or 0)
     latest = db.latest_run(eid)
     boot = {
+        "permissions": perm,
+        "project": {"id": project["id"], "name": project["name"]} if project else None,
         "id": eid,
         "title": exp["title"],
         "innovation": exp["innovation"],
@@ -463,12 +540,14 @@ def exp_page(eid):
         "criteria_locked": bool(exp.get("criteria_locked")),
         "criteria_history": json.loads(exp.get("criteria_history_json") or "[]"),
         "audits": db.list_audits(eid, 100),
+        "ai_outputs": db.list_ai_outputs(experiment_id=eid, uid=g._auth_user["id"], limit=80),
         "usage": db.usage_summary(eid),
         "server_now": db.now(),
     }
     observe_token = auth.make_observe_token(g._auth_user["id"], eid)
     return render_template("experiment.html", exp=exp, hosts=db.list_hosts(),
                            llm_ok=llm.is_configured(), boot=boot,
+                           perm=perm, project=project,
                            observe_token=observe_token)
 
 
@@ -512,11 +591,24 @@ def observe_page(token):
         pwd_ok = auth.verify_share_password(request.args.get("p", ""),
                                              share["salt"], share["password_hash"])
         uid, eid = share["user_id"], share["experiment_id"]
+        pid = share.get("project_id") or 0
     else:
         parsed = auth.verify_observe_token(token)
         if not parsed:
             abort(404)
         uid, eid = parsed
+        pid = 0
+
+    if pid:
+        project = db.get_project(pid)
+        if not project:
+            abort(404)
+        if pwd_ok:
+            db.incr_share_views(share["id"])
+        experiments = db.list_experiments(project_id=pid, include_archived_projects=True)
+        return render_template("project_observe.html", project=project,
+                               experiments=experiments, share=share, pwd_ok=pwd_ok,
+                               token=token, redact=bool(share and share["redact"]))
 
     exp = db.get_experiment(eid, uid=uid)
     if not exp:
@@ -681,11 +773,14 @@ def settings_page():
                    "token_hint": r["token_hint"] or "",
                    "default_branch": r["default_branch"] or "main"}
                   for r in db.list_git_remotes()]
+    uid = g._auth_user["id"]
     return render_template("settings.html", cfg=cfg,
                            api_key_masked=config.mask_secret(cfg["llm"]["api_key"]),
                            has_key=bool(cfg["llm"]["api_key"]),
                            gh_configs=gh_configs,
                            notify_cfg=cfg.get("notify") or {},
+                           ai_eval_runs=ai_eval.latest(uid=uid, limit=5),
+                           ai_tool_audit_count=len(db.list_ai_tool_audit(uid=uid, limit=50)),
                            users=db.list_users() if g._auth_user["role"] == "admin" else [])
 
 
@@ -712,8 +807,20 @@ def api_create_exp():
     innovation = (d.get("innovation") or "").strip()
     if len(innovation) < 10:
         return jsonify({"error": "创新点描述太短，至少写 10 个字"}), 400
-    eid = db.create_experiment(title, innovation, template_id=(d.get("template_id") or "").strip())
-    db.add_audit(eid, "experiment", "创建实验", {"title": title, "template_id": d.get("template_id") or ""},
+    try:
+        pid = int(d.get("project_id") or 0)
+    except (TypeError, ValueError):
+        pid = 0
+    pid = pid or db.ensure_personal_project(g._auth_user["id"])
+    if not db.role_allows(db.get_project_role(pid), "write"):
+        return jsonify({"error": "当前项目角色无权创建实验"}), 403
+    eid = db.create_experiment(title, innovation,
+                               template_id=(d.get("template_id") or "").strip(),
+                               project_id=pid)
+    if not eid:
+        return jsonify({"error": "当前项目角色无权创建实验"}), 403
+    db.add_audit(eid, "experiment", "创建实验", {"title": title, "template_id": d.get("template_id") or "",
+                                                "project_id": pid},
                  decision="已创建")
     db.add_event(eid, None, "实验已创建", kind="stage")
     return jsonify({"id": eid})
@@ -750,12 +857,20 @@ def api_batch_exp():
     combos = _expand_params(d.get("params"))[:50]
     if not combos:
         return jsonify({"error": "没有可创建的参数组合"}), 400
+    try:
+        pid = int(d.get("project_id") or 0)
+    except (TypeError, ValueError):
+        pid = 0
+    pid = pid or db.ensure_personal_project(g._auth_user["id"])
+    if not db.role_allows(db.get_project_role(pid), "write"):
+        return jsonify({"error": "当前项目角色无权创建实验"}), 403
     prefix = (d.get("title_prefix") or (template["name"] if template else "批量实验")).strip()
     ids = []
     for idx, params in enumerate(combos, 1):
         text = base + "\n本次参数：" + json.dumps(params, ensure_ascii=False, sort_keys=True)
         eid = db.create_experiment(f"{prefix} #{idx}", text,
-                                   template_id=(template or {}).get("id", ""))
+                                   template_id=(template or {}).get("id", ""),
+                                   project_id=pid)
         db.update_experiment(eid, plan_json=json.dumps(
             {"parameter_grid": params, "batch_index": idx, "batch_size": len(combos)},
             ensure_ascii=False))
@@ -781,7 +896,7 @@ def api_batch_compare():
         return jsonify({"error": "请提供要对比的实验 id"}), 400
     rows = []
     for eid in ids:
-        exp = own_exp_or_404(eid)
+        exp = own_exp_or_404(eid, "read")
         plan = json.loads(exp.get("plan_json") or "{}")
         latest = db.latest_run(eid)
         summary = None
@@ -820,7 +935,7 @@ def api_batch_compare():
 
 @api_bp.get("/api/experiments/<int:eid>/stats")
 def api_exp_stats(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     aggregate = request.args.get("aggregate", "last")
     from core import stats as stats_mod
     return jsonify(stats_mod.experiment_stats(eid, aggregate=aggregate))
@@ -833,7 +948,7 @@ def api_stats_compare():
     if not isinstance(a, dict) or not isinstance(b, dict):
         return jsonify({"error": "a / b 需为 {experiment_id, run_ids?} 结构"}), 400
     eid_a, eid_b = int(a.get("experiment_id")), int(b.get("experiment_id"))
-    own_exp_or_404(eid_a); own_exp_or_404(eid_b)
+    own_exp_or_404(eid_a, "read"); own_exp_or_404(eid_b, "read")
     metric = str(d.get("metric") or "").strip()
     if not metric:
         return jsonify({"error": "请指定指标名"}), 400
@@ -866,7 +981,7 @@ def api_batch_retry_failed():
 
     started, skipped = [], []
     for eid in ids:
-        exp = own_exp_or_404(eid)
+        exp = own_exp_or_404(eid, "run")
         latest = db.latest_run(eid)
         if not latest or latest["status"] not in ("failed", "lost", "stopped"):
             skipped.append({"id": eid, "reason": "无需重试"})
@@ -910,12 +1025,112 @@ def api_list_exp():
     status = request.args.get("status", "").strip()
     arch = request.args.get("archived", "")
     archived = None if arch == "" else (arch.lower() in ("1", "true", "yes"))
-    return jsonify(db.list_experiments(search=q, tags=tags, status=status, archived=archived))
+    project_id = request.args.get("project_id", type=int)
+    inc_arch_project = request.args.get("include_archived_projects", "") in ("1", "true", "yes")
+    return jsonify(db.list_experiments(search=q, tags=tags, status=status, archived=archived,
+                                       project_id=project_id,
+                                       include_archived_projects=inc_arch_project))
+
+
+# ---------------- 项目 / 工作区与角色 ----------------
+@api_bp.get("/api/projects")
+def api_list_projects():
+    include = request.args.get("archived", "") in ("1", "true", "yes")
+    return jsonify(db.list_projects(include_archived=include))
+
+
+@api_bp.post("/api/projects")
+def api_create_project():
+    d = request.get_json(force=True) or {}
+    name = str(d.get("name") or "").strip()
+    if not name or len(name) > 80:
+        return jsonify({"error": "项目名称需为 1～80 字"}), 400
+    pid = db.create_project(name, str(d.get("description") or "")[:300])
+    return jsonify({"ok": True, "id": pid})
+
+
+@api_bp.get("/api/projects/<int:pid>")
+def api_get_project(pid):
+    project = own_project_or_404(pid)
+    return jsonify({
+        "project": project,
+        "members": db.list_project_members(pid),
+        "experiments": db.list_experiments(project_id=pid, include_archived_projects=True),
+        "shares": [_share_public(s) for s in db.list_project_share_links(pid)],
+    })
+
+
+@api_bp.post("/api/projects/<int:pid>/members")
+def api_set_project_member(pid):
+    own_project_or_404(pid, "manage")
+    d = request.get_json(force=True) or {}
+    user = db.get_user_by_name(str(d.get("username") or "").strip())
+    if not user:
+        return jsonify({"error": "找不到这个用户名"}), 404
+    role = str(d.get("role") or "viewer").strip().lower()
+    if role not in db.ROLE_RANK:
+        return jsonify({"error": "角色只能是 owner / editor / viewer"}), 400
+    if not db.set_project_member(pid, user["id"], role):
+        return jsonify({"error": "无法更新成员角色"}), 400
+    return jsonify({"ok": True, "members": db.list_project_members(pid)})
+
+
+@api_bp.delete("/api/projects/<int:pid>/members/<int:target_uid>")
+def api_remove_project_member(pid, target_uid):
+    own_project_or_404(pid, "manage")
+    if not db.remove_project_member(pid, target_uid):
+        return jsonify({"error": "项目拥有者不能被移除，或成员不存在"}), 400
+    return jsonify({"ok": True, "members": db.list_project_members(pid)})
+
+
+@api_bp.post("/api/projects/<int:pid>/archive")
+def api_archive_project(pid):
+    own_project_or_404(pid, "manage")
+    d = request.get_json(force=True) or {}
+    archived = bool(d.get("archived"))
+    if not db.archive_project(pid, archived):
+        return jsonify({"error": "无法归档项目"}), 400
+    return jsonify({"ok": True, "archived": archived})
+
+
+@api_bp.put("/api/projects/<int:pid>")
+def api_update_project(pid):
+    own_project_or_404(pid, "manage")
+    d = request.get_json(force=True) or {}
+    name = str(d.get("name") or "").strip()
+    description = str(d.get("description") or "")
+    if not db.update_project(pid, name, description):
+        return jsonify({"error": "项目名称需为 1～80 字"}), 400
+    return jsonify({"ok": True, "project": db.get_project(pid)})
+
+
+@api_bp.delete("/api/projects/<int:pid>")
+def api_delete_project(pid):
+    own_project_or_404(pid, "manage")
+    project = db.get_project(pid)
+    if project and project.get("kind") == "personal":
+        return jsonify({"error": "个人工作区不能删除"}), 400
+    if not db.delete_project(pid):
+        return jsonify({"error": "无法删除项目"}), 400
+    return jsonify({"ok": True})
+
+
+@api_bp.post("/api/experiments/<int:eid>/project")
+def api_move_experiment(eid):
+    own_exp_or_404(eid, "delete")
+    d = request.get_json(force=True) or {}
+    pid = int(d.get("project_id") or 0)
+    if not pid:
+        pid = db.ensure_personal_project(g._auth_user["id"])
+    own_project_or_404(pid, "write")
+    if not db.set_experiment_project(eid, pid):
+        return jsonify({"error": "无法移动实验到该项目"}), 400
+    return jsonify({"ok": True, "project_id": pid})
 
 
 @api_bp.post("/api/experiments/<int:eid>/tags")
 def api_set_exp_tags(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     raw = d.get("tags", "")
     if isinstance(raw, list):
@@ -929,7 +1144,7 @@ def api_set_exp_tags(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/archive")
 def api_archive_exp(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     archived = 1 if d.get("archived") else 0
     db.update_experiment(eid, archived=archived)
@@ -954,7 +1169,7 @@ def _copilot_gate(exp, expected):
 
 @api_bp.post("/api/experiments/<int:eid>/mode")
 def api_set_mode(eid):
-    exp = own_exp_or_404(eid)
+    exp = own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     mode = d.get("mode")
     if mode not in ("autonomous", "copilot"):
@@ -973,7 +1188,7 @@ def api_set_mode(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/criteria")
 def api_save_criteria(eid):
-    exp = own_exp_or_404(eid)
+    exp = own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     criteria = d.get("criteria")
     if isinstance(criteria, str):
@@ -1010,7 +1225,7 @@ def api_save_criteria(eid):
 @api_bp.post("/api/experiments/<int:eid>/innovation")
 def api_save_innovation(eid):
     """换一份文稿：把新抽取的创新点写回实验并记录审计。"""
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     text = str(d.get("innovation") or "").strip()
     if len(text) < 10:
@@ -1026,7 +1241,7 @@ def api_save_innovation(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/review")
 def api_run_review(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     from core import review
     latest = db.latest_run(eid)
     if not latest:
@@ -1045,7 +1260,7 @@ def api_run_diagnosis(rid):
     run = db.q1("SELECT * FROM runs WHERE id=?", (rid,))
     if not run:
         abort(404)
-    own_exp_or_404(run["experiment_id"])
+    own_exp_or_404(run["experiment_id"], "read")
     cached = run.get("diagnosis_json")
     if cached:
         return jsonify(json.loads(cached))
@@ -1059,7 +1274,7 @@ def api_run_rediagnose(rid):
     run = db.q1("SELECT * FROM runs WHERE id=?", (rid,))
     if not run:
         abort(404)
-    own_exp_or_404(run["experiment_id"])
+    own_exp_or_404(run["experiment_id"], "write")
     from core import diagnose
     dg = diagnose.diagnose_run(rid) or {}
     db.update_run(rid, diagnosis_json=json.dumps(dg, ensure_ascii=False))
@@ -1068,13 +1283,13 @@ def api_run_rediagnose(rid):
 
 @api_bp.get("/api/experiments/<int:eid>/audits")
 def api_audits(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     return jsonify(db.list_audits(eid, 200))
 
 
 @api_bp.get("/api/experiments/<int:eid>/usage")
 def api_exp_usage(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     return jsonify(db.usage_summary(eid))
 
 
@@ -1085,7 +1300,7 @@ def api_usage():
 
 @api_bp.get("/api/experiments/<int:eid>")
 def api_get_exp(eid):
-    exp = own_exp_or_404(eid)
+    exp = own_exp_or_404(eid, "read")
     out = dict(exp)
     out["plan"] = json.loads(exp.get("plan_json") or "null")
     out["code"] = json.loads(exp.get("code_json") or "null")
@@ -1097,6 +1312,7 @@ def api_get_exp(eid):
     out["criteria"] = json.loads(exp.get("criteria_json") or "{}")
     out["criteria_history"] = json.loads(exp.get("criteria_history_json") or "[]")
     out["audits"] = db.list_audits(eid, 100)
+    out["ai_outputs"] = db.list_ai_outputs(experiment_id=eid, uid=g._auth_user["id"], limit=80)
     out["usage"] = db.usage_summary(eid)
     # 最近事件，供命令行判断任务是否失败
     evs = db.events_after(eid, 0, 500)[-25:]
@@ -1107,7 +1323,7 @@ def api_get_exp(eid):
 
 @api_bp.delete("/api/experiments/<int:eid>")
 def api_del_exp(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "delete")
     workspace.cleanup(eid)
     db.delete_experiment(eid)
     return jsonify({"ok": True})
@@ -1115,7 +1331,7 @@ def api_del_exp(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/plan")
 def api_plan(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True) if request.data else {}
     bg(eid, "plan", _job_plan, d.get("feedback"))
     return jsonify({"ok": True, "job": "plan"})
@@ -1123,7 +1339,7 @@ def api_plan(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/code")
 def api_code(eid):
-    exp = own_exp_or_404(eid)
+    exp = own_exp_or_404(eid, "write")
     blocked = _copilot_gate(exp, "code")
     if blocked:
         return jsonify({"error": blocked}), 409
@@ -1140,7 +1356,7 @@ def api_code(eid):
 
 @api_bp.post("/api/experiments/<int:eid>/run")
 def api_run(eid):
-    exp = own_exp_or_404(eid)
+    exp = own_exp_or_404(eid, "run")
     blocked = _copilot_gate(exp, "run")
     if blocked:
         return jsonify({"error": blocked}), 409
@@ -1186,20 +1402,20 @@ def api_run(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/files")
 def api_files(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     return jsonify(workspace.list_files(eid))
 
 
 @api_bp.get("/api/experiments/<int:eid>/file")
 def api_read_file(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     p = request.args.get("path", "")
     return jsonify({"path": p, "content": workspace.read_file(eid, p)})
 
 
 @api_bp.post("/api/experiments/<int:eid>/file")
 def api_save_file(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True)
     path = d["path"]
     before = workspace.read_file(eid, path)
@@ -1216,7 +1432,7 @@ def api_save_file(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/metrics")
 def api_metrics(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     run_id = request.args.get("run_id", type=int)
     if not run_id:
         r = db.latest_run(eid)
@@ -1231,7 +1447,7 @@ def api_metrics(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/runs")
 def api_runs(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     return jsonify(db.list_runs(eid))
 
 
@@ -1264,7 +1480,7 @@ def api_run_diff(rid):
 @api_bp.post("/api/runs/<int:rid>/restore")
 def api_run_restore(rid):
     """把某次运行的代码快照恢复到当前实验工作区。"""
-    run = own_run_or_404(rid)
+    run = own_run_or_404(rid, "write")
     if not run.get("git_sha"):
         return jsonify({"error": "这次运行没有锁定 git 代码快照"}), 400
     eid = run["experiment_id"]
@@ -1311,7 +1527,7 @@ def api_run_fork(rid):
 
 @api_bp.post("/api/runs/<int:rid>/summarize")
 def api_summarize(rid):
-    run = own_run_or_404(rid)
+    run = own_run_or_404(rid, "write")
     try:
         s = summarizer.summarize(rid, run["experiment_id"], force=True)
         return jsonify(s)
@@ -1321,7 +1537,7 @@ def api_summarize(rid):
 
 @api_bp.post("/api/runs/<int:rid>/stop")
 def api_stop(rid):
-    run = own_run_or_404(rid)
+    run = own_run_or_404(rid, "run")
     host = db.get_host(run["host_id"], include_secrets=True)
     if not host:
         abort(404)
@@ -1347,7 +1563,7 @@ def _report_or_404(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/report.md")
 def api_report_md(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     data = _report_or_404(eid)
     body = report.markdown(data)
     resp = Response(body, mimetype="text/markdown; charset=utf-8")
@@ -1358,7 +1574,7 @@ def api_report_md(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/report.docx")
 def api_report_docx(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     data = _report_or_404(eid)
     try:
         content = report.docx_bytes(data)
@@ -1373,7 +1589,7 @@ def api_report_docx(eid):
 @api_bp.get("/api/experiments/<int:eid>/report/print")
 def api_report_print_data(eid):
     """打印页用的结构化数据（含核验/审计/复现配置）。"""
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     return jsonify(_report_or_404(eid))
 
 
@@ -1381,7 +1597,7 @@ def api_report_print_data(eid):
 
 @api_bp.get("/api/experiments/<int:eid>/stream")
 def api_stream(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "read")
     # 浏览器重连会自动带 Last-Event-ID；从事件日志补发，重启也不丢
     last_id = request.headers.get("Last-Event-ID", "").strip()
     last_id = int(last_id) if last_id.isdigit() else 0
@@ -1874,7 +2090,7 @@ def api_github_delete_config(rid):
 
 @api_bp.post("/api/experiments/<int:eid>/push")
 def api_experiment_push(eid):
-    own_exp_or_404(eid)
+    own_exp_or_404(eid, "write")
     d = request.get_json(force=True) or {}
     rid = d.get("config_id")
     repo = str(d.get("repo_full_name") or "").strip()
@@ -1929,46 +2145,82 @@ def api_experiment_push(eid):
 def _share_public(row):
     return {"id": row["id"], "token": row["token"],
             "url": "/observe/" + row["token"],
+            "kind": "project" if row.get("project_id") else "experiment",
+            "project_id": row.get("project_id") or 0,
             "has_password": bool(row["password_hash"]),
             "expires_at": row["expires_at"], "max_views": row["max_views"],
             "views": row["views"], "redact": bool(row["redact"]),
             "revoked": bool(row["revoked"]), "created_at": row["created_at"]}
 
 
-@api_bp.get("/api/experiments/<int:eid>/shares")
-def api_list_shares(eid):
-    own_exp_or_404(eid)
-    return jsonify([_share_public(s) for s in db.list_share_links(eid)])
-
-
-@api_bp.post("/api/experiments/<int:eid>/shares")
-def api_create_share(eid):
-    own_exp_or_404(eid)
-    d = request.get_json(force=True) or {}
-    ttl = d.get("ttl_hours")
+def _share_params(d):
     try:
-        ttl_hours = float(ttl) if ttl not in (None, "") else 168
+        ttl_hours = float(d.get("ttl_hours")) if d.get("ttl_hours") not in (None, "") else 168
         if ttl_hours <= 0 or ttl_hours > 24 * 365:
-            raise ValueError
+            raise ValueError("有效期需在 0～8760 小时之间")
     except (TypeError, ValueError):
-        return jsonify({"error": "有效期需在 0～8760 小时之间"}), 400
+        raise ValueError("有效期需在 0～8760 小时之间")
     try:
         max_views = int(d.get("max_views") or 0)
         if max_views < 0 or max_views > 100000:
             raise ValueError
     except (TypeError, ValueError):
-        return jsonify({"error": "访问次数无效"}), 400
-
+        raise ValueError("访问次数无效")
     password = str(d.get("password") or "")
     salt = secrets.token_hex(8) if password else ""
-    pwd_hash = auth.hash_share_password(password, salt) if password else ""
+    return {
+        "password_hash": auth.hash_share_password(password, salt) if password else "",
+        "salt": salt,
+        "expires_at": time.time() + ttl_hours * 3600,
+        "max_views": max_views,
+        "redact": 1 if d.get("redact") else 0,
+        "ttl_hours": ttl_hours,
+        "password": bool(password),
+    }
+
+
+@api_bp.get("/api/experiments/<int:eid>/shares")
+def api_list_shares(eid):
+    own_exp_or_404(eid, "share")
+    return jsonify([_share_public(s) for s in db.list_share_links(eid)])
+
+
+@api_bp.post("/api/experiments/<int:eid>/shares")
+def api_create_share(eid):
+    own_exp_or_404(eid, "share")
+    d = request.get_json(force=True) or {}
+    try:
+        p = _share_params(d)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
     token = auth.make_share_token()
-    db.add_share_link(token, eid, password_hash=pwd_hash, salt=salt,
-                      expires_at=time.time() + ttl_hours * 3600,
-                      max_views=max_views, redact=1 if d.get("redact") else 0)
+    db.add_share_link(token, eid, password_hash=p["password_hash"], salt=p["salt"],
+                      expires_at=p["expires_at"], max_views=p["max_views"],
+                      redact=p["redact"])
     db.add_audit(eid, "share", "创建分享链接",
-                 {"ttl_hours": ttl_hours, "password": bool(password),
-                  "max_views": max_views, "redact": bool(d.get("redact"))})
+                 {"ttl_hours": p["ttl_hours"], "password": p["password"],
+                  "max_views": p["max_views"], "redact": bool(p["redact"])})
+    return jsonify({"ok": True, "share": _share_public(db.get_share_link(token))})
+
+
+@api_bp.get("/api/projects/<int:pid>/shares")
+def api_list_project_shares(pid):
+    own_project_or_404(pid, "share")
+    return jsonify([_share_public(s) for s in db.list_project_share_links(pid)])
+
+
+@api_bp.post("/api/projects/<int:pid>/shares")
+def api_create_project_share(pid):
+    own_project_or_404(pid, "share")
+    d = request.get_json(force=True) or {}
+    try:
+        p = _share_params(d)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+    token = auth.make_share_token()
+    db.add_share_link(token, 0, project_id=pid, password_hash=p["password_hash"],
+                      salt=p["salt"], expires_at=p["expires_at"],
+                      max_views=p["max_views"], redact=p["redact"])
     return jsonify({"ok": True, "share": _share_public(db.get_share_link(token))})
 
 
@@ -1977,7 +2229,11 @@ def api_revoke_share(sid):
     row = db.q1("SELECT * FROM share_links WHERE id=?", (sid,))
     if not row:
         return jsonify({"error": "分享链接不存在"}), 404
-    own_exp_or_404(row["experiment_id"])
+    if row.get("project_id"):
+        own_project_or_404(row["project_id"], "share")
+        db.revoke_share_link(sid)
+        return jsonify({"ok": True})
+    own_exp_or_404(row["experiment_id"], "share")
     db.revoke_share_link(sid)
     db.add_audit(row["experiment_id"], "share", "撤销分享链接", {"id": sid})
     return jsonify({"ok": True})
@@ -1989,6 +2245,8 @@ def api_share_comment(token):
     share = db.get_share_link(token)
     if not share or share["revoked"]:
         return jsonify({"error": "链接无效"}), 404
+    if share.get("project_id"):
+        return jsonify({"error": "项目视图暂不支持访客批注，请使用单实验分享链接"}), 400
     if share["expires_at"] and share["expires_at"] < time.time():
         return jsonify({"error": "链接已过期"}), 410
     if share["max_views"] and share["views"] >= share["max_views"]:
@@ -2096,6 +2354,43 @@ def api_test_llm():
         return jsonify({"ok": True, "reply": r.strip()[:50]})
     except Exception as e:
         return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
+
+
+# ---------------- AI 可信 / 评测 / 工具沙箱 ----------------
+
+@api_bp.get("/api/ai/eval")
+def api_ai_eval_status():
+    uid = g._auth_user["id"]
+    return jsonify({
+        "cases": len(db.list_ai_eval_cases(uid=uid)),
+        "runs": ai_eval.latest(uid=uid, limit=10),
+    })
+
+
+@api_bp.post("/api/ai/eval/run")
+def api_ai_eval_run():
+    uid = g._auth_user["id"]
+    return jsonify(ai_eval.run(uid=uid))
+
+
+@api_bp.get("/api/ai/tools")
+def api_ai_tools_list():
+    return jsonify({"tools": ai_tools.describe()})
+
+
+@api_bp.post("/api/ai/tools/call")
+def api_ai_tools_call():
+    d = request.get_json(force=True) or {}
+    name = str(d.get("tool") or "")
+    result = ai_tools.call(
+        g._auth_user["id"], name,
+        args=d.get("args") or {}, confirm=bool(d.get("confirm")))
+    return jsonify(result), (200 if result.get("ok") or result.get("needs_confirm") else 400)
+
+
+@api_bp.get("/api/ai/tools/audit")
+def api_ai_tools_audit():
+    return jsonify({"items": db.list_ai_tool_audit(uid=g._auth_user["id"], limit=50)})
 
 
 # ---------------- 用户管理（管理员） ----------------

@@ -348,6 +348,14 @@ td .dim{color:var(--muted);font-size:12px}
         <h3>统计与 AI 自审</h3><p>多 run 自动算 mean ± std / 95% CI，Welch t 与 Mann-Whitney U 给 p 值；总结后再跑一轮「审稿人」模型，六维打分并列出待补实验，帮结论站得住。</p>
       </div>
       <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l8 4v5c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V7l8-4z"/></svg></div>
+        <h3>AI 可信与安全</h3><p>方案/代码/总结/审稿/诊断自动分五档可信级别并绑定逐句证据；内置 5 个回归样例可一键评测；7 个白名单工具，写操作二次确认且全程审计。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg></div>
+        <h3>缩略卡片工作台</h3><p>首页、项目、实验、设置与个人主页都收成缩略卡片：默认只显示摘要，点开看详情，支持展开全部/收起全部，信息密度更低。</p>
+      </div>
+      <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></div>
         <h3>失败自动诊断</h3><p>失败时从日志尾部与退出码命中 12 类错误签名（CUDA OOM / exit 137 / 缺依赖 / 路径错等），给出证据行号和降 batch、装依赖等修复建议。</p>
       </div>
@@ -378,6 +386,7 @@ td .dim{color:var(--muted);font-size:12px}
               <li>当前密码校验后才允许修改</li>
               <li>CLI token 摘要存储，可随时轮换</li>
               <li>所有业务数据按用户隔离</li>
+              <li>业务数据进一步归属项目 / 工作区，支持成员角色协作</li>
             </ul>
           </div>
           <div class="mock">
@@ -503,6 +512,7 @@ td .dim{color:var(--muted);font-size:12px}
           <li><b style="color:var(--accent)">✓ 人在环 checkpoint（已完成）</b>：自主 / 副驾驶双模式，方案/代码/运行阶段确认与批注回灌</li>
           <li><b style="color:var(--accent)">✓ 多 run 统计与显著性检验（已完成）</b>：mean ± std / 95% CI，Welch t 与 Mann-Whitney U 给 p 值</li>
           <li><b style="color:var(--accent)">✓ AI 自审 / 失败诊断（已完成）</b>：六维模拟审稿 + 12 类错误签名诊断卡，结论更稳、排错更快</li>
+          <li><b style="color:var(--accent)">✓ AI P0 可信底座（已完成）</b>：五档可信分级 + 逐句证据、5 个回归样例、7 个白名单工具与二次确认审计</li>
         </ul>
       </div>
       <div class="rgroup p1">
@@ -517,8 +527,9 @@ td .dim{color:var(--muted);font-size:12px}
       </div>
       <div class="rgroup p1 road-full">
         <div class="rank">P1 · 团队协作</div>
-        <h3>分享与自动化</h3>
+        <h3>分享与协作</h3>
         <ul>
+          <li><b style="color:var(--accent)">✓ 项目 / 工作区与细粒度角色（已完成）</b>：卡片式项目台（概览 / 成员 / 实验 / 分享），支持编辑归档删除、实验移动、owner / editor / viewer 最小权限与项目只读视图</li>
           <li><b style="color:var(--accent)">✓ 分享链接增强（已完成）</b>：密码 / 有效期 / 访问次数 / 脱敏 / 撤销，访客可留批注</li>
           <li><b style="color:var(--accent)">✓ 搜索 / 标签 / 全局时间线（已完成）</b>：实验打标归档，首页即时搜索筛选，多实验事件合并成时间线</li>
           <li><b style="color:var(--accent)">✓ 通知告警（已完成）</b>：完成 / 失败 / 判据未通过时 Webhook 推送企业微信 / 钉钉，支持免打扰时段</li>

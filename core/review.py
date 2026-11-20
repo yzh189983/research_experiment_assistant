@@ -64,6 +64,14 @@ def review_summary(exp_id, run_id, summary):
             **raw,
         }
         db.update_run(run_id, review_json=json.dumps(result, ensure_ascii=False))
+        try:
+            from core import ai_trust
+            evidence = ai_trust.build_evidence_from_summary(summary, None, exp)
+            evidence["review_source"] = "summary + verification"
+            ai_trust.record_output(exp_id, run_id, "review", result, evidence,
+                                   uid=exp.get("user_id"))
+        except Exception:
+            pass
         db.add_audit(exp_id, "review", "AI 自审",
                      {"overall": result.get("overall"),
                       "major_issues": len(result.get("major_issues") or [])},

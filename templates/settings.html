@@ -3,153 +3,292 @@
 {% block title %}设置 · 科研实验助手{% endblock %}
 
 {% block body %}
-<div class="page-narrow">
+<div class="settings-shell">
   <div class="page-head">
     <div>
       <div class="eyebrow">Configuration · 设置</div>
       <h1>设置</h1>
-      <p class="page-sub">配置按账号隔离，你改的 Key 只对你自己生效，存在 <span class="mono">data/users/&lt;你的id&gt;/config.json</span>，不用动代码。</p>
+      <p class="page-sub">配置按账号隔离，Key 只在本机对你生效，不用动代码。</p>
     </div>
   </div>
 
-  <div class="settings-grid">
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">大模型</div>
-        <span class="badge {{ 'ok' if has_key else 'err' }}">{{ '已配置' if has_key else '未配置' }}</span></div>
-      <div class="card-pad">
-        <label class="field"><span>接口地址（OpenAI 兼容）</span>
-          <input type="text" id="s-url" value="{{ cfg.llm.base_url }}"></label>
-        <div class="mono-list">
-          <div><span>智谱</span><code>https://open.bigmodel.cn/api/paas/v4</code></div>
-          <div><span>DeepSeek</span><code>https://api.deepseek.com/v1</code></div>
-          <div><span>Qwen</span><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code></div>
-        </div>
-        <label class="field"><span>模型名</span>
-          <input type="text" id="s-model" value="{{ cfg.llm.model }}"></label>
-        <label class="field"><span>API Key</span>
-          <input type="password" id="s-key" placeholder="{{ api_key_masked or '填写你的 API Key' }}"></label>
-        <div class="hint" style="margin:-8px 0 12px">留空则保持原值不变。Key 只存在本机、仅对你这个账号生效。</div>
-        <label class="field"><span>温度</span>
-          <input type="number" id="s-temp" step="0.05" min="0" max="2" value="{{ cfg.llm.temperature }}"></label>
-        <div style="display:flex;gap:10px">
-          <button class="btn primary" id="btn-save">保存</button>
-          <button class="btn" id="btn-test">测试连通性</button>
-          <span class="tiny" id="test-result" style="align-self:center"></span>
-        </div>
+  <div class="settings-summary">
+    <div class="settings-summary-tile"><i>LLM</i><b class="{{ 'ok-text' if has_key else 'warn-text' }}">{{ '已配置' if has_key else '未配置' }}</b><span>{{ cfg.llm.model }}</span></div>
+    <div class="settings-summary-tile"><i>监控</i><b>{{ cfg.monitor.interval_sec }}s</b><span>轮询间隔</span></div>
+    <div class="settings-summary-tile"><i>GitHub</i><b>{{ gh_configs|length }}</b><span>仓库配置</span></div>
+    <div class="settings-summary-tile"><i>通知</i><b class="{{ 'ok-text' if notify_cfg.enabled else '' }}">{{ '已开启' if notify_cfg.enabled else '未开启' }}</b><span>Webhook</span></div>
+    <div class="settings-summary-tile"><i>AI 评测</i><b class="{{ 'ok-text' if ai_eval_runs and ai_eval_runs[0].total and ai_eval_runs[0].passed == ai_eval_runs[0].total else '' }}">{{ (ai_eval_runs[0].passed|string ~ '/' ~ ai_eval_runs[0].total|string) if ai_eval_runs else '未运行' }}</b><span>回归通过率</span></div>
+    <div class="settings-summary-tile"><i>AI 沙箱</i><b>{{ ai_tool_audit_count }}</b><span>工具调用记录</span></div>
+    {% if users %}<div class="settings-summary-tile"><i>账号</i><b>{{ users|length }}</b><span>平台账号</span></div>{% endif %}
+  </div>
+
+  <div class="work-toolbar">
+    <span class="tiny faint">设置项已收起为缩略卡，点开后再修改。</span>
+    <button class="btn ghost sm" id="btn-settings-expand">展开全部</button>
+    <button class="btn ghost sm" id="btn-settings-collapse">收起全部</button>
+  </div>
+
+  <div class="work-grid">
+
+    <section class="card work-card" data-work-card="llm">
+      <div class="sec-head">
+        <div class="sec-title">大模型</div>
+        <button class="work-toggle" data-work-toggle="llm" aria-expanded="false">配置 →</button>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">监控</div></div>
-      <div class="card-pad">
-        <label class="field"><span>轮询间隔（秒）</span>
-          <input type="number" id="s-interval" min="1" max="60" value="{{ cfg.monitor.interval_sec }}"></label>
-        <div class="hint" style="margin:-8px 0 14px">越小越实时，但 SSH 连接会更频繁。建议 3–5 秒。</div>
-        <label class="field"><span>卡死提醒阈值（秒）</span>
-          <input type="number" id="s-stall" min="60" value="{{ cfg.monitor.stall_warn_sec }}"></label>
-        <div class="hint" style="margin:-8px 0 14px">日志超过这个时间没有增长，会在日志里提示可能卡住。</div>
-
-        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
-          <div class="tiny muted" style="line-height:1.8">
-            <b>指标上报协议</b><br>
-            生成的代码会在训练过程中打印<br>
-            <span class="mono" style="color:var(--accent)">@@METRIC name=loss value=0.23 step=10</span><br>
-            监控端据此画曲线。你手写的代码也遵守这个格式，一样能被监控。
+      <div class="work-preview">
+        <span class="preview-tag">LLM</span>
+        {{ '已配置' if has_key else '未配置' }} · {{ cfg.llm.model }} · 温度 {{ cfg.llm.temperature }}
+      </div>
+      <div class="work-body" data-work-body="llm" style="display:none">
+        <div class="card-pad">
+          <label class="field"><span>接口地址（OpenAI 兼容）</span>
+            <input type="text" id="s-url" value="{{ cfg.llm.base_url }}"></label>
+          <div class="mono-list">
+            <div><span>智谱</span><code>https://open.bigmodel.cn/api/paas/v4</code></div>
+            <div><span>DeepSeek</span><code>https://api.deepseek.com/v1</code></div>
+            <div><span>Qwen</span><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code></div>
+          </div>
+          <label class="field"><span>模型名</span>
+            <input type="text" id="s-model" value="{{ cfg.llm.model }}"></label>
+          <label class="field"><span>API Key</span>
+            <input type="password" id="s-key" placeholder="{{ api_key_masked or '填写你的 API Key' }}"></label>
+          <div class="hint" style="margin:-8px 0 12px">留空则保持原值不变。Key 只存在本机、仅对你这个账号生效。</div>
+          <label class="field"><span>温度</span>
+            <input type="number" id="s-temp" step="0.05" min="0" max="2" value="{{ cfg.llm.temperature }}"></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn primary" id="btn-save">保存</button>
+            <button class="btn" id="btn-test">测试连通性</button>
+            <span class="tiny" id="test-result" style="align-self:center"></span>
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="settings-grid" style="margin-top:16px">
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">命令行登录令牌</div></div>
-      <div class="card-pad">
-        <div class="hint" style="margin:0 0 12px">命令行用 <span class="mono">rekit login</span> 登录后会存令牌；也可以在这里生成后手动设置环境变量 <span class="mono">REKIT_TOKEN</span>。令牌等同于你的账号密码，别外泄。</div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <button class="btn" id="btn-token">生成新令牌</button>
-          <code class="mono" id="token-out" style="color:var(--accent);word-break:break-all"></code>
+    <section class="card work-card" data-work-card="monitor">
+      <div class="sec-head">
+        <div class="sec-title">监控</div>
+        <button class="work-toggle" data-work-toggle="monitor" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">MONITOR</span>
+        轮询 {{ cfg.monitor.interval_sec }} 秒 · 卡死提醒 {{ cfg.monitor.stall_warn_sec }} 秒
+      </div>
+      <div class="work-body" data-work-body="monitor" style="display:none">
+        <div class="card-pad">
+          <label class="field"><span>轮询间隔（秒）</span>
+            <input type="number" id="s-interval" min="1" max="60" value="{{ cfg.monitor.interval_sec }}"></label>
+          <div class="hint" style="margin:-8px 0 14px">越小越实时，但 SSH 连接会更频繁。建议 3–5 秒。</div>
+          <label class="field"><span>卡死提醒阈值（秒）</span>
+            <input type="number" id="s-stall" min="60" value="{{ cfg.monitor.stall_warn_sec }}"></label>
+          <div class="hint" style="margin:-8px 0 14px">日志超过这个时间没有增长，会在日志里提示可能卡住。</div>
+          <div style="border-top:1px solid var(--rule);padding-top:14px;margin-top:4px">
+            <div class="tiny faint" style="line-height:1.8">
+              <b>指标上报协议</b><br>
+              生成的代码会在训练过程中打印<br>
+              <span class="mono" style="color:var(--accent)">@@METRIC name=loss value=0.23 step=10</span><br>
+              监控端据此画曲线。你手写的代码也遵守这个格式，一样能被监控。
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <div class="card" id="gh-card">
-      <div class="sec-head"><div class="sec-title">GitHub 集成</div>
-        <span class="badge {{ 'ok' if gh_configs else 'idle' }}">{{ gh_configs|length }} 个仓库</span></div>
-      <div class="card-pad">
-        <div class="hint" style="margin:0 0 12px">用 <b>fine-grained PAT</b>（只给选定仓库 Contents: read and write）。Token 加密存储，明文不会回传页面。用于把实验代码快照推送到你自己的仓库。</div>
-        <label class="field"><span>仓库（owner/repo）</span>
-          <input type="text" id="gh-repo" placeholder="例如 yzh189983/my-experiments"></label>
-        <label class="field"><span>GitHub Token</span>
-          <input type="password" id="gh-token" placeholder="{{ '留空则保持原 Token' if gh_configs else 'github_pat_...' }}"></label>
-        <label class="field"><span>默认分支</span>
-          <input type="text" id="gh-branch" value="main"></label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-          <button class="btn primary sm" id="btn-gh-save">保存配置</button>
-          <button class="btn sm" id="btn-gh-test">测试连接</button>
-          <span class="tiny" id="gh-result" style="align-self:center"></span>
-        </div>
-        {% if gh_configs %}
-        <table class="mt" style="width:100%">
-          <thead><tr><th>仓库</th><th>Token</th><th style="width:70px"></th></tr></thead>
-          <tbody>
-          {% for c in gh_configs %}
-            <tr data-gh-row="{{ c.id }}" data-gh-repo="{{ c.repo_full_name }}" data-gh-branch="{{ c.default_branch }}">
-              <td class="mono tiny">{{ c.repo_full_name }}</td>
-              <td class="tiny faint">••••{{ c.token_hint }}</td>
-              <td><button class="btn sm danger" data-del-gh="{{ c.id }}">删除</button></td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        <div class="tiny faint" style="margin-top:8px">点仓库行可载入到上方表单编辑。</div>
-        {% endif %}
+    <section class="card work-card" data-work-card="token">
+      <div class="sec-head">
+        <div class="sec-title">命令行登录令牌</div>
+        <button class="work-toggle" data-work-toggle="token" aria-expanded="false">生成 →</button>
       </div>
-    </div>
-
-    <div class="card" id="notify-card">
-      <div class="sec-head"><div class="sec-title">通知告警</div>
-        <span class="badge {{ 'ok' if notify_cfg.enabled else 'idle' }}">{{ '已开启' if notify_cfg.enabled else '未开启' }}</span></div>
-      <div class="card-pad">
-        <div class="hint" style="margin:0 0 12px">实验完成/失败、判据未通过时推送 Webhook（兼容企业微信/钉钉机器人）。通知按账号隔离，失败不影响实验本身。</div>
-        <label class="field" style="display:flex;align-items:center;gap:8px">
-          <input type="checkbox" id="nt-enabled" {% if notify_cfg.enabled %}checked{% endif %} style="width:auto">
-          <span>启用通知</span></label>
-        <label class="field"><span>Webhook 地址</span>
-          <input type="text" id="nt-url" value="{{ notify_cfg.webhook_url or '' }}" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."></label>
-        <label class="field"><span>触发事件（逗号分隔）</span>
-          <input type="text" id="nt-events" value="{{ notify_cfg.events|join(',') if notify_cfg.events is string else (notify_cfg.events or [])|join(',') }}" placeholder="finished,failed,criteria_failed"></label>
-        <label class="field"><span>免打扰时段（如 22:00-08:00，留空=不设）</span>
-          <input type="text" id="nt-quiet" value="{{ notify_cfg.quiet_hours or '' }}" placeholder="22:00-08:00"></label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn primary sm" id="btn-nt-save">保存通知配置</button>
-          <button class="btn sm" id="btn-nt-test">发送测试消息</button>
-          <span class="tiny" id="nt-result" style="align-self:center"></span>
+      <div class="work-preview">
+        <span class="preview-tag">CLI</span>
+        生成后设置环境变量 <span class="mono">REKIT_TOKEN</span>，旧令牌立即失效。
+      </div>
+      <div class="work-body" data-work-body="token" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">命令行用 <span class="mono">rekit login</span> 登录后会存令牌；也可以在这里生成后手动设置环境变量。令牌等同于账号密码，别外泄。</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <button class="btn" id="btn-token">生成新令牌</button>
+            <code class="mono" id="token-out" style="color:var(--accent);word-break:break-all"></code>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
+
+    <section class="card work-card" data-work-card="github">
+      <div class="sec-head">
+        <div class="sec-title">GitHub 集成</div>
+        <span class="badge {{ 'ok' if gh_configs else 'idle' }}">{{ gh_configs|length }} 个仓库</span>
+        <button class="work-toggle" data-work-toggle="github" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">GITHUB</span>
+        {{ gh_configs|length }} 个仓库配置 · 用于推送实验代码快照
+      </div>
+      <div class="work-body" data-work-body="github" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">用 <b>fine-grained PAT</b>（只给选定仓库 Contents: read and write）。Token 加密存储，明文不会回传页面。</div>
+          <label class="field"><span>仓库（owner/repo）</span>
+            <input type="text" id="gh-repo" placeholder="例如 yzh189983/my-experiments"></label>
+          <label class="field"><span>GitHub Token</span>
+            <input type="password" id="gh-token" placeholder="{{ '留空则保持原 Token' if gh_configs else 'github_pat_...' }}"></label>
+          <label class="field"><span>默认分支</span>
+            <input type="text" id="gh-branch" value="main"></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn primary sm" id="btn-gh-save">保存配置</button>
+            <button class="btn sm" id="btn-gh-test">测试连接</button>
+            <span class="tiny" id="gh-result" style="align-self:center"></span>
+          </div>
+          {% if gh_configs %}
+          <table class="mt" style="width:100%">
+            <thead><tr><th>仓库</th><th>Token</th><th style="width:70px"></th></tr></thead>
+            <tbody>
+            {% for c in gh_configs %}
+              <tr data-gh-row="{{ c.id }}" data-gh-repo="{{ c.repo_full_name }}" data-gh-branch="{{ c.default_branch }}">
+                <td class="mono tiny">{{ c.repo_full_name }}</td>
+                <td class="tiny faint">••••{{ c.token_hint }}</td>
+                <td><button class="btn sm danger" data-del-gh="{{ c.id }}">删除</button></td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          <div class="tiny faint" style="margin-top:8px">点仓库行可载入到上方表单编辑。</div>
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="notify">
+      <div class="sec-head">
+        <div class="sec-title">通知告警</div>
+        <span class="badge {{ 'ok' if notify_cfg.enabled else 'idle' }}">{{ '已开启' if notify_cfg.enabled else '未开启' }}</span>
+        <button class="work-toggle" data-work-toggle="notify" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">WEBHOOK</span>
+        {{ '已开启' if notify_cfg.enabled else '未开启' }} · 完成 / 失败 / 判据未通过推送
+      </div>
+      <div class="work-body" data-work-body="notify" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">实验完成/失败、判据未通过时推送 Webhook（兼容企业微信/钉钉机器人）。通知按账号隔离，失败不影响实验本身。</div>
+          <label class="field" style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" id="nt-enabled" {% if notify_cfg.enabled %}checked{% endif %} style="width:auto">
+            <span>启用通知</span></label>
+          <label class="field"><span>Webhook 地址</span>
+            <input type="text" id="nt-url" value="{{ notify_cfg.webhook_url or '' }}" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."></label>
+          <label class="field"><span>触发事件（逗号分隔）</span>
+            <input type="text" id="nt-events" value="{{ notify_cfg.events|join(',') if notify_cfg.events is string else (notify_cfg.events or [])|join(',') }}" placeholder="finished,failed,criteria_failed"></label>
+          <label class="field"><span>免打扰时段（如 22:00-08:00，留空=不设）</span>
+            <input type="text" id="nt-quiet" value="{{ notify_cfg.quiet_hours or '' }}" placeholder="22:00-08:00"></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn primary sm" id="btn-nt-save">保存通知配置</button>
+            <button class="btn sm" id="btn-nt-test">发送测试消息</button>
+            <span class="tiny" id="nt-result" style="align-self:center"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="ai-eval">
+      <div class="sec-head">
+        <div class="sec-title">AI 评测与回归</div>
+        <span class="badge {{ 'ok' if ai_eval_runs and ai_eval_runs[0].total and ai_eval_runs[0].passed == ai_eval_runs[0].total else 'idle' }}">
+          {{ (ai_eval_runs[0].passed|string ~ '/' ~ ai_eval_runs[0].total|string) if ai_eval_runs else '未运行' }}
+        </span>
+        <button class="work-toggle" data-work-toggle="ai-eval" aria-expanded="false">评测 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">EVAL</span>
+        {{ '最近一次 ' ~ ai_eval_runs[0].passed|string ~ '/' ~ ai_eval_runs[0].total|string ~ ' 通过' if ai_eval_runs else '内置 golden cases，运行后生成回归报告' }}
+      </div>
+      <div class="work-body" data-work-body="ai-eval" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin-bottom:12px">规则评测集不调用外部模型，可随时运行；结果写入回归历史，用于发现诊断/核验/脱敏等基础能力退化。</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn primary sm" id="btn-ai-eval-run">运行回归评测</button>
+            <span class="tiny" id="ai-eval-result"></span>
+          </div>
+          <div id="ai-eval-history">
+            {% if ai_eval_runs %}
+            <table class="grid-table" style="width:100%">
+              <thead><tr><th>时间</th><th>模型 / 版本</th><th>通过</th><th>明细</th></tr></thead>
+              <tbody>
+              {% for r in ai_eval_runs %}
+                <tr>
+                  <td class="mono tiny">{{ r.created_at|timestamp }}</td>
+                  <td class="tiny mono">{{ r.model }} / {{ r.prompt_version }}</td>
+                  <td class="tiny {{ 'ok-text' if r.passed == r.total and r.total else 'warn-text' }}">{{ r.passed }}/{{ r.total }}</td>
+                  <td class="tiny faint">{{ r.scores|selectattr('passed')|list|length }} 项通过 · {{ r.scores|rejectattr('passed')|list|length }} 项失败</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+            {% else %}<div class="empty">还没有评测结果。</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="ai-tools">
+      <div class="sec-head">
+        <div class="sec-title">AI 工具沙箱</div>
+        <span class="badge idle">{{ ai_tool_audit_count }} 次调用</span>
+        <button class="work-toggle" data-work-toggle="ai-tools" aria-expanded="false">调试 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">SANDBOX</span>
+        白名单只读工具 + 写操作二次确认 + 全量审计；不执行 shell、不读密钥。
+      </div>
+      <div class="work-body" data-work-body="ai-tools" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin-bottom:12px">这里只能调用白名单工具。写操作第一次调用只返回预览，确认后才执行；所有调用都会记入审计。</div>
+          <div class="grid2">
+            <label class="field"><span>工具</span><select id="ai-tool-select"></select></label>
+            <label class="field"><span>确认写操作</span>
+              <span class="tiny faint" style="display:block;margin-bottom:4px">仅 move_experiment 等写工具需要</span>
+              <label class="tiny"><input type="checkbox" id="ai-tool-confirm" style="width:auto"> 我已确认执行</label>
+            </label>
+          </div>
+          <label class="field"><span>参数（JSON）</span>
+            <textarea id="ai-tool-args" rows="3" style="font-family:var(--mono);font-size:12px">{}</textarea></label>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn primary sm" id="btn-ai-tool-call">调用工具</button>
+            <span class="tiny" id="ai-tool-result"></span>
+          </div>
+          <div class="plan-label" style="margin-bottom:6px">最近调用审计</div>
+          <div id="ai-tool-audit"></div>
+        </div>
+      </div>
+    </section>
 
     {% if users %}
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">账号管理</div>
-        <span class="badge idle">{{ users|length }} 个账号</span></div>
-      <div class="card-pad">
-        <table class="mt" style="width:100%;margin-bottom:14px">
-          <thead><tr><th>用户名</th><th>角色</th><th style="width:70px"></th></tr></thead>
-          <tbody>
-          {% for u in users %}
-            <tr><td>{{ u.username }}</td><td>{{ '管理员' if u.role=='admin' else '成员' }}</td>
-              <td>{% if u.id != current_user.id %}<button class="btn sm danger" data-del-user="{{ u.id }}">删除</button>{% endif %}</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <input type="text" id="nu-name" placeholder="用户名" style="width:110px">
-          <input type="password" id="nu-pass" placeholder="密码（≥6 位）" style="width:140px">
-          <select id="nu-role" style="width:90px"><option value="member">成员</option><option value="admin">管理员</option></select>
-          <button class="btn sm accent" id="btn-add-user">添加账号</button>
+    <section class="card work-card" data-work-card="users">
+      <div class="sec-head">
+        <div class="sec-title">账号管理</div>
+        <span class="badge idle">{{ users|length }} 个账号</span>
+        <button class="work-toggle" data-work-toggle="users" aria-expanded="false">管理 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">USERS</span>
+        {{ users|length }} 个平台账号 · 添加 / 删除账号与角色
+      </div>
+      <div class="work-body" data-work-body="users" style="display:none">
+        <div class="card-pad">
+          <table class="mt" style="width:100%;margin-bottom:14px">
+            <thead><tr><th>用户名</th><th>角色</th><th style="width:70px"></th></tr></thead>
+            <tbody>
+            {% for u in users %}
+              <tr><td>{{ u.username }}</td><td>{{ '管理员' if u.role=='admin' else '成员' }}</td>
+                <td>{% if u.id != current_user.id %}<button class="btn sm danger" data-del-user="{{ u.id }}">删除</button>{% endif %}</td></tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="nu-name" placeholder="用户名" style="width:110px">
+            <input type="password" id="nu-pass" placeholder="密码（≥6 位）" style="width:140px">
+            <select id="nu-role" style="width:90px"><option value="member">成员</option><option value="admin">管理员</option></select>
+            <button class="btn sm accent" id="btn-add-user">添加账号</button>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
     {% endif %}
   </div>
 </div>
@@ -157,6 +296,34 @@
 
 {% block scripts %}
 <script>
+function setSettingOpen(name, open) {
+  const card = document.querySelector(`[data-work-card="${name}"]`);
+  const body = document.querySelector(`[data-work-body="${name}"]`);
+  const btn = document.querySelector(`[data-work-toggle="${name}"]`);
+  if (!card || !body || !btn) return;
+  card.classList.toggle('open', open);
+  body.style.display = open ? '' : 'none';
+  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →' };
+  btn.textContent = open ? '收起 ↑' : (labels[name] || '配置 →');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+document.querySelectorAll('[data-work-toggle]').forEach(btn => {
+  btn.onclick = () => {
+    const card = document.querySelector(`[data-work-card="${btn.dataset.workToggle}"]`);
+    setSettingOpen(btn.dataset.workToggle, !(card && card.classList.contains('open')));
+  };
+});
+document.querySelectorAll('.work-preview').forEach(box => {
+  box.onclick = () => {
+    const card = box.closest('[data-work-card]');
+    if (card) setSettingOpen(card.dataset.workCard, true);
+  };
+});
+const settingsExpand = document.getElementById('btn-settings-expand');
+const settingsCollapse = document.getElementById('btn-settings-collapse');
+if (settingsExpand) settingsExpand.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setSettingOpen(c.dataset.workCard, true));
+if (settingsCollapse) settingsCollapse.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setSettingOpen(c.dataset.workCard, false));
+
 document.getElementById('btn-save').onclick = async () => {
   const body = {
     llm: {
@@ -219,7 +386,6 @@ document.querySelectorAll('[data-del-user]').forEach(btn => {
   };
 });
 
-// GitHub 集成
 let ghEditId = null;
 const ghRowEls = document.querySelectorAll('[data-gh-row]');
 ghRowEls.forEach(row => {
@@ -273,7 +439,6 @@ if (btnGhTest) btnGhTest.onclick = async () => {
   } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
 };
 
-// 通知告警
 function notifyBody() {
   return {
     enabled: document.getElementById('nt-enabled').checked,
@@ -302,5 +467,75 @@ if (btnNtTest) btnNtTest.onclick = async () => {
     else { el.textContent = '✕ ' + (r.error || '发送失败'); el.style.color = 'var(--err)'; }
   } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
 };
+
+// AI 评测与工具沙箱
+const btnAiEval = document.getElementById('btn-ai-eval-run');
+if (btnAiEval) btnAiEval.onclick = async () => {
+  const el = document.getElementById('ai-eval-result');
+  btnAiEval.disabled = true; el.textContent = '运行中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/ai/eval/run', { method: 'POST' });
+    el.textContent = `✓ ${r.passed}/${r.total} 通过，已保存回归记录`;
+    el.style.color = r.passed === r.total ? 'var(--accent)' : 'var(--warn)';
+    setTimeout(() => location.reload(), 700);
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+  finally { btnAiEval.disabled = false; }
+};
+
+async function loadAiTools() {
+  const sel = document.getElementById('ai-tool-select');
+  if (!sel) return;
+  try {
+    const r = await api('/api/ai/tools');
+    sel.innerHTML = (r.tools || []).map(t =>
+      `<option value="${esc(t.name)}">${esc(t.name)} — ${esc(t.desc)}${t.write ? '（写）' : ''}</option>`).join('');
+  } catch (e) { toast(e.message, true); }
+}
+
+async function loadAiToolAudit() {
+  const box = document.getElementById('ai-tool-audit');
+  if (!box) return;
+  try {
+    const r = await api('/api/ai/tools/audit');
+    if (!r.items || !r.items.length) { box.innerHTML = '<div class="tiny faint">还没有调用记录。</div>'; return; }
+    box.innerHTML = '<table class="grid-table" style="width:100%"><thead><tr><th>时间</th><th>工具</th><th>状态</th><th>结果</th></tr></thead><tbody>' +
+      r.items.map(i => `<tr>
+        <td class="mono tiny">${fmtTime(i.created_at)}</td>
+        <td class="tiny mono">${esc(i.tool)}</td>
+        <td class="tiny mono">${esc(i.status)}</td>
+        <td class="tiny faint">${esc(JSON.stringify(i.result || {}).slice(0, 120))}</td>
+      </tr>`).join('') + '</tbody></table>';
+  } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+}
+
+const btnAiTool = document.getElementById('btn-ai-tool-call');
+if (btnAiTool) btnAiTool.onclick = async () => {
+  const sel = document.getElementById('ai-tool-select');
+  const argsEl = document.getElementById('ai-tool-args');
+  const confirmEl = document.getElementById('ai-tool-confirm');
+  const el = document.getElementById('ai-tool-result');
+  let args;
+  try { args = JSON.parse(argsEl.value.trim() || '{}'); }
+  catch (e) { el.textContent = '✕ 参数不是合法 JSON'; el.style.color = 'var(--err)'; return; }
+  btnAiTool.disabled = true; el.textContent = '调用中…'; el.style.color = 'var(--muted)';
+  try {
+    const r = await api('/api/ai/tools/call', {
+      method: 'POST', body: { tool: sel.value, args, confirm: confirmEl.checked }
+    });
+    if (r.needs_confirm) {
+      el.textContent = '⚠ 写操作需要二次确认；勾选「我已确认执行」后再调用。';
+      el.style.color = 'var(--warn)';
+    } else if (r.ok) {
+      el.textContent = '✓ 调用成功：' + JSON.stringify(r.data || {}).slice(0, 200);
+      el.style.color = 'var(--accent)';
+    } else {
+      el.textContent = '✕ ' + (r.error || '调用失败'); el.style.color = 'var(--err)';
+    }
+    loadAiToolAudit();
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
+  finally { btnAiTool.disabled = false; }
+};
+
+document.addEventListener('DOMContentLoaded', () => { loadAiTools(); loadAiToolAudit(); });
 </script>
 {% endblock %}

@@ -103,9 +103,18 @@ def diagnose(log_tail, exit_code=None, status=None):
 
 
 def diagnose_run(run_id):
-    """从 run 记录读取 log_tail/exit_code/status 生成诊断。"""
-    from core import db
-    run = db.q1("SELECT log_tail, exit_code, status FROM runs WHERE id=?", (run_id,))
+    """从 run 记录读取 log_tail/exit_code/status 生成诊断并登记可信输出。"""
+    from core import db, ai_trust
+    run = db.q1("""SELECT log_tail, exit_code, status, experiment_id, user_id
+                   FROM runs WHERE id=?""", (run_id,))
     if not run:
         return None
-    return diagnose(run["log_tail"], run.get("exit_code"), run.get("status"))
+    result = diagnose(run["log_tail"], run.get("exit_code"), run.get("status"))
+    if result:
+        ai_trust.record_output(
+            run.get("experiment_id") or 0, run_id, "diagnosis", result,
+            {"line_no": (result.get("evidence") or {}).get("line_no") or 0,
+             "log_line": (result.get("evidence") or {}).get("line") or "",
+             "exit_code": run.get("exit_code") or ""},
+            uid=run.get("user_id"))
+    return result

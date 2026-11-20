@@ -162,6 +162,13 @@ def summarize(run_id, exp_id, status=None, force=False):
         db.update_experiment(exp_id, checkpoint="done")
 
     db.update_run(run_id, summary_json=json.dumps(summary, ensure_ascii=False))
+    try:
+        from core import ai_trust
+        evidence = ai_trust.build_evidence_from_summary(summary, run, exp)
+        ai_trust.record_output(exp_id, run_id, "summary", summary, evidence,
+                               uid=exp.get("user_id"))
+    except Exception:
+        pass
     db.add_audit(exp_id, "summary", "生成实验总结",
                  {"verdict": summary.get("verdict"),
                   "unverified_numbers": len(summary["verification"]["unverified_numbers"]),

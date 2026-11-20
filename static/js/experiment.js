@@ -3,6 +3,21 @@ const EXP_ID = window.__EXP__.id;
 const HOSTS = window.__HOSTS__ || [];
 let EXP = window.__EXP__;
 let LLM_OK = window.__LLM_OK__;
+const PERM = window.__PERM__ || {
+  can_write: true, can_run: true, can_delete: true, can_share: true, can_manage: true
+};
+
+function applyPerms() {
+  const hide = ids => ids.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+  if (!PERM.can_write) hide([
+    'btn-mode', 'btn-tags', 'btn-archive', 'btn-replan', 'btn-recode',
+    'btn-plan', 'btn-code', 'btn-save-code', 'btn-swap-innov',
+    'btn-edit-criteria', 'btn-summarize', 'btn-review'
+  ]);
+  if (!PERM.can_run) hide(['btn-run', 'btn-stop']);
+  if (!PERM.can_delete) hide(['btn-delete-exp']);
+  if (!PERM.can_share) hide(['btn-share-settings', 'btn-observe']);
+}
 
 const S = {
   series: {},          // name -> [{v,s,t}]
@@ -22,6 +37,116 @@ const S = {
 };
 
 const $ = id => document.getElementById(id);
+
+/* ---------------- 缩略卡片 ---------------- */
+function cleanText(text, limit = 150) {
+  return String(text || '').replace(/\s+/g, ' ').trim().slice(0, limit);
+}
+
+const AI_TIERS = {
+  verified: { label: '实测支持', cls: 'ok' },
+  supported: { label: '日志/代码支持', cls: 'ok' },
+  inferred: { label: 'AI 推断', cls: 'run' },
+  external: { label: '外部知识', cls: 'idle' },
+  unverified: { label: '待验证', cls: 'warn' },
+};
+
+function renderAITrust() {
+  const box = $('ai-trust-body');
+  const list = EXP.ai_outputs || [];
+  if (!box) return;
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">还没有 AI 输出记录。生成方案、代码、总结或诊断后会自动登记。</div>';
+    return;
+  }
+  const badges = list.map(o => {
+    const tier = AI_TIERS[o.tier] || AI_TIERS.unverified;
+    const claims = ((o.content || {}).claims || []).slice(0, 3);
+    const ev = o.evidence || {};
+    const chips = [
+      ev.metrics && ev.metrics.length ? `指标 ${ev.metrics.length}` : '',
+      ev.sources && ev.sources.length ? `证据 ${ev.sources.length}` : '',
+      ev.unverified_numbers && ev.unverified_numbers.length ? `未核数字 ${ev.unverified_numbers.length}` : '',
+      ev.commit ? 'commit' : '',
+      ev.line_no ? `日志行 ${ev.line_no}` : '',
+    ].filter(Boolean).map(x => `<span class="preview-tag">${esc(x)}</span>`).join('');
+    return `<div class="card card-pad" style="margin-bottom:10px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="badge ${tier.cls}">${tier.label}</span>
+        <span class="tiny mono">${esc(o.kind)}</span>
+        <span class="tiny faint">${fmtTime(o.created_at)}</span>
+      </div>
+      <div style="margin:8px 0 6px;font-size:12.5px">${esc(o.summary || '（无摘要）')}</div>
+      <div style="margin-bottom:8px">${chips || '<span class="tiny faint">无直接证据</span>'}</div>
+      <details><summary class="tiny faint" style="cursor:pointer">查看逐句分级</summary>
+        <ul style="margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:11.5px;line-height:1.7">
+          ${claims.map(c => `<li><b>${(AI_TIERS[c.tier] || AI_TIERS.unverified).label}</b>：${esc(c.text)}</li>`).join('') || '<li>无逐句记录</li>'}
+        </ul>
+      </details>
+    </div>`;
+  }).join('');
+  box.innerHTML = badges;
+}
+
+function setPreview(id, tag, text) {
+  const el = $(id);
+  if (!el) return;
+  const html = `<span class="preview-tag">${esc(tag)}</span>${esc(text || '暂无内容')}`;
+  if (el.innerHTML !== html) el.innerHTML = html;
+}
+
+function updatePreviews() {
+  const idea = cleanText(($('innov-text') || {}).textContent, 130);
+  setPreview('preview-idea', '研究问题', idea || (EXP.innovation || '').slice(0, 130));
+  setPreview('preview-plan', '实验方案', cleanText(($('plan-body') || {}).textContent, 160) || '还没有生成实验方案');
+  setPreview('preview-code', '实验代码', S.files.length
+    ? `${S.files.length} 个文件 · 入口 ${S.curFile || (S.files[0] && S.files[0].path) || 'main.py'}`
+    : '还没有生成实验代码');
+  setPreview('preview-summary', '实验结论', cleanText(($('summary-body') || {}).textContent, 160) || '还没有生成实验结论');
+  setPreview('preview-criteria', '预注册判据', cleanText(($('criteria-body') || {}).textContent, 160) || '还没有设置判据');
+  setPreview('preview-audit', '过程审计', cleanText(($('audit-count') || {}).textContent, 40) || '0 条记录');
+  setPreview('preview-trust', 'AI 可信', (EXP.ai_outputs || []).length
+    ? `${(EXP.ai_outputs || []).length} 条输出 · ${(EXP.ai_outputs || []).filter(x => x.tier === 'verified').length} 条实测支持 · ${(EXP.ai_outputs || []).filter(x => x.tier === 'unverified').length} 条待验证`
+    : '还没有 AI 输出记录');
+  setPreview('preview-usage', '成本复现', cleanText(($('usage-body') || {}).textContent, 160) || '还没有用量数据');
+}
+
+function setWorkOpen(name, open) {
+  const card = document.querySelector(`[data-work-card="${name}"]`);
+  const body = document.querySelector(`[data-work-body="${name}"]`);
+  const btn = document.querySelector(`[data-work-toggle="${name}"]`);
+  if (!card || !body || !btn) return;
+  card.classList.toggle('open', open);
+  body.style.display = open ? '' : 'none';
+  btn.textContent = open ? '收起 ↑' : '查看 →';
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) updatePreviews();
+}
+
+function toggleWork(name) {
+  const card = document.querySelector(`[data-work-card="${name}"]`);
+  setWorkOpen(name, !(card && card.classList.contains('open')));
+}
+
+function setupWorkCards() {
+  document.querySelectorAll('[data-work-toggle]').forEach(btn => {
+    btn.onclick = () => toggleWork(btn.dataset.workToggle);
+  });
+  document.querySelectorAll('.work-preview').forEach(box => {
+    box.onclick = () => toggleWork(box.id.replace('preview-', ''));
+  });
+  document.querySelectorAll('[data-work-link]').forEach(a => a.onclick = e => {
+    e.preventDefault();
+    const name = a.dataset.workLink;
+    setWorkOpen(name, true);
+    const card = document.querySelector(`[data-work-card="${name}"]`);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  const expand = $('btn-expand-all');
+  const collapse = $('btn-collapse-all');
+  if (expand) expand.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setWorkOpen(c.dataset.workCard, true));
+  if (collapse) collapse.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setWorkOpen(c.dataset.workCard, false));
+}
 
 /* ---------------- 渲染：方案 ---------------- */
 function renderPlan() {
@@ -138,7 +263,12 @@ function renderCode() {
     </div>`;
 
   const ta = $('code-editor');
-  ta.addEventListener('input', () => { S.dirty = true; $('btn-save-code').style.display = ''; updateSize(); });
+  if (!PERM.can_write) {
+    ta.readOnly = true;
+    const recodeBtn = $('btn-recode-2');
+    if (recodeBtn && recodeBtn.parentElement) recodeBtn.parentElement.style.display = 'none';
+  }
+  ta.addEventListener('input', () => { S.dirty = true; if (PERM.can_write) $('btn-save-code').style.display = ''; updateSize(); });
   ta.addEventListener('keydown', e => {
     if (e.key === 'Tab') {
       e.preventDefault();
@@ -211,8 +341,10 @@ function renderSummary() {
   }
   $('num-sum').className = 'sec-num done';
   $('num-sum').textContent = '✓';
-  $('btn-summarize').style.display = '';
-  $('btn-review').style.display = '';
+  if (PERM.can_write) {
+    $('btn-summarize').style.display = '';
+    $('btn-review').style.display = '';
+  }
   $('btn-export').style.display = '';
   renderReview();
   $('btn-export-docx').style.display = '';
@@ -616,7 +748,7 @@ function setStatus(st) {
     finished: '结束', failed: '失败', lost: '失联', stopped: '已停止',
   })[st] || st || '—';
   const busy = ['uploading', 'setup', 'running', 'pending'].includes(st);
-  $('btn-stop').style.display = busy ? '' : 'none';
+  $('btn-stop').style.display = (busy && PERM.can_run) ? '' : 'none';
   $('btn-run').disabled = busy;
   if (!busy) { $('btn-run').textContent = '运行实验'; }
 }
@@ -919,7 +1051,9 @@ async function reload() {
   renderPlan(); renderCode(); renderSummary();
   renderRun(S.run); renderLineage();
   renderMode(); renderCriteria(); renderAudits(); renderUsage();
+  renderAITrust();
   setStatus(d.status);
+  updatePreviews();
   $('btn-replan').disabled = false;
   $('btn-recode').disabled = false;
   $('btn-plan').disabled = false;
@@ -1118,10 +1252,14 @@ async function swapInnovation() {
 
 /* ---------------- 初始化 ---------------- */
 function init() {
+  applyPerms();
   renderPlan(); renderCode(); renderSummary();
   renderRun(S.run); renderLineage();
   renderMode(); renderCriteria(); renderAudits(); renderUsage();
+  renderAITrust();
   setStatus(EXP.status);
+  setupWorkCards();
+  updatePreviews();
 
   if (S.run && S.run.log_tail) {
     S.run.log_tail.split('\n').filter(Boolean).forEach(l => pushLog(l));

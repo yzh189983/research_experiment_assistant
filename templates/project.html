@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% set active = 'projects' %}
+{% block title %}{{ project.name }} · 项目管理 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="exp-head page-head">
+  <div>
+    <a class="tiny faint" href="/projects" style="text-decoration:none">← 返回项目列表</a>
+    <div class="eyebrow" style="margin-top:8px">Project · 项目管理</div>
+    <h1>{{ project.name }}</h1>
+    <div class="exp-meta">
+      <span>创建于 {{ project.created_at | timestamp }}</span>
+      <span class="badge {{ 'ok' if role == 'owner' else 'run' if role == 'editor' else 'idle' }}">{{ role }}</span>
+      {% if project.kind == 'personal' %}<span class="badge idle">个人工作区</span>{% endif %}
+      {% if project.archived %}<span class="badge warn">已归档</span>{% endif %}
+    </div>
+  </div>
+  <div class="exp-actions">
+    <a class="btn sm" href="/?project_id={{ project.id }}">查看项目实验</a>
+    {% if role == 'owner' and project.kind != 'personal' %}
+    <button class="btn sm" id="btn-project-archive" data-archived="{{ project.archived }}">
+      {{ '取消归档' if project.archived else '归档项目' }}
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<section class="card project-detail-head">
+  <div class="project-mark large">{{ project.name[:1] }}</div>
+  <div style="flex:1;min-width:0">
+    <h2>{{ project.name }}</h2>
+    <div class="project-meta">{{ project.description or '暂无项目说明' }}</div>
+  </div>
+  <div class="project-stat-grid compact">
+    <div class="project-stat"><i>实验</i><b>{{ experiments|length }}</b></div>
+    <div class="project-stat"><i>成员</i><b>{{ members|length }}</b></div>
+    <div class="project-stat"><i>角色</i><b>{{ role }}</b></div>
+  </div>
+</section>
+
+<div class="project-tabs detail-tabs">
+  <button class="project-tab on" data-detail-tab="overview">概览</button>
+  <button class="project-tab" data-detail-tab="members">成员</button>
+  <button class="project-tab" data-detail-tab="experiments">实验</button>
+  <button class="project-tab" data-detail-tab="shares">分享</button>
+</div>
+
+<section class="card detail-panel" data-detail-panel="overview">
+  <div class="sec-head"><div class="sec-title">项目概览</div><span class="eyebrow">Overview</span></div>
+  <div class="card-pad">
+    <p class="section-intro">{{ project.description or '还没有填写项目说明。' }}</p>
+    {% if role == 'owner' %}
+    <div class="project-edit-form">
+      <div class="plan-label">项目设置</div>
+      <div class="project-create-fields">
+        <input type="text" id="edit-project-name" value="{{ project.name }}" placeholder="项目名称">
+        <input type="text" id="edit-project-desc" value="{{ project.description or '' }}" placeholder="项目说明">
+        <button class="btn sm" id="btn-project-save">保存修改</button>
+        {% if project.kind != 'personal' %}
+        <button class="btn sm danger" id="btn-project-delete">删除项目</button>
+        {% endif %}
+      </div>
+      <div class="tiny faint" style="margin-top:7px">删除项目不会删除实验，实验会自动回到各自的个人工作区。</div>
+    </div>
+    {% else %}
+    <div class="hint">你是此项目的 {{ role }}，只能查看和管理你有权限的内容。</div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card detail-panel" data-detail-panel="members" style="display:none">
+  <div class="sec-head"><div class="sec-title">成员与角色</div><span class="eyebrow">Members</span></div>
+  <div class="card-pad">
+    <table class="grid-table" style="width:100%">
+      <thead><tr><th>用户</th><th>项目角色</th><th>平台角色</th><th></th></tr></thead>
+      <tbody>
+        {% for m in members %}
+        <tr>
+          <td class="tiny">{{ m.username }}</td>
+          <td class="tiny mono">{{ m.role }}</td>
+          <td class="tiny faint">{{ m.global_role }}</td>
+          <td>
+            {% if role == 'owner' and m.role != 'owner' %}
+            <button class="btn ghost sm" data-member-remove="{{ m.id }}">移除</button>
+            {% else %}<span class="tiny faint">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if role == 'owner' %}
+    <div class="project-create-fields" style="margin-top:12px">
+      <input type="text" class="log-tool" id="member-username" placeholder="用户名" style="width:180px">
+      <select class="log-tool" id="member-role">
+        <option value="viewer">viewer · 只读</option>
+        <option value="editor">editor · 可改可跑，不能删</option>
+      </select>
+      <button class="btn sm" id="btn-member-add">添加 / 更新成员</button>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="card detail-panel" data-detail-panel="experiments" style="display:none">
+  <div class="sec-head"><div class="sec-title">项目内实验</div><span class="eyebrow">{{ experiments|length }} 项</span></div>
+  {% if experiments %}
+  <div class="exp-list">
+    {% for e in experiments %}
+    <div class="exp-item">
+      <a class="exp-link" href="/exp/{{ e.id }}">
+        <div class="t">
+          <b>{{ e.title }}</b>
+          <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行{% if e.tags %} · {{ e.tags }}{% endif %}</small>
+        </div>
+        {{ statusBadge(e.status) | safe }}
+      </a>
+      {% if role == 'owner' %}
+      <div class="project-move">
+        <select class="log-tool" data-move-target="{{ e.id }}" aria-label="移动到项目">
+          {% for opt in projects if opt.role in ['owner', 'editor'] %}
+          <option value="{{ opt.id }}" {% if opt.id == project.id %}selected{% endif %}>{{ opt.name }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn ghost sm" data-move-exp="{{ e.id }}">移动</button>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">这个项目还没有实验。</div>
+  {% endif %}
+</section>
+
+<section class="card detail-panel" data-detail-panel="shares" style="display:none">
+  <div class="sec-head"><div class="sec-title">项目分享</div><span class="eyebrow">Read only</span></div>
+  <div class="card-pad">
+    {% if role in ['owner', 'editor'] %}
+    <div class="project-create-fields">
+      <input type="number" class="log-tool" id="share-ttl" value="168" title="有效期（小时）" style="width:120px">
+      <input type="number" class="log-tool" id="share-views" value="0" title="最大访问次数，0 不限" style="width:120px">
+      <input type="password" class="log-tool" id="share-pwd" placeholder="访问密码（可选）" style="width:170px">
+      <label class="tiny"><input type="checkbox" id="share-redact" style="width:auto"> 脱敏</label>
+      <button class="btn sm" id="btn-share-create">创建链接</button>
+    </div>
+    <div class="tiny faint" id="share-result" style="margin-top:8px"></div>
+    {% endif %}
+    <div id="share-list" style="margin-top:10px"></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PID = {{ project.id }};
+
+document.querySelectorAll('[data-detail-tab]').forEach(tab => tab.onclick = () => {
+  document.querySelectorAll('[data-detail-tab]').forEach(b => b.classList.remove('on'));
+  tab.classList.add('on');
+  document.querySelectorAll('[data-detail-panel]').forEach(panel => {
+    panel.style.display = panel.dataset.detailPanel === tab.dataset.detailTab ? '' : 'none';
+  });
+  if (tab.dataset.detailTab === 'shares') loadShares();
+});
+
+const btnSave = document.getElementById('btn-project-save');
+if (btnSave) btnSave.onclick = async () => {
+  const body = {
+    name: document.getElementById('edit-project-name').value.trim(),
+    description: document.getElementById('edit-project-desc').value.trim()
+  };
+  try {
+    await api('/api/projects/' + PID, { method: 'PUT', body });
+    toast('项目已更新'); location.reload();
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnDelete = document.getElementById('btn-project-delete');
+if (btnDelete) btnDelete.onclick = async () => {
+  if (!confirm('确定删除这个项目？\n实验不会删除，会自动回到各自的个人工作区。')) return;
+  try {
+    await api('/api/projects/' + PID, { method: 'DELETE' });
+    toast('项目已删除'); location.href = '/projects';
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnArchive = document.getElementById('btn-project-archive');
+if (btnArchive) btnArchive.onclick = async () => {
+  const archived = btnArchive.dataset.archived === '1';
+  if (!confirm(archived ? '取消归档这个项目？' : '归档这个项目？')) return;
+  try {
+    await api('/api/projects/' + PID + '/archive', { method: 'POST', body: { archived: !archived } });
+    location.reload();
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnMember = document.getElementById('btn-member-add');
+if (btnMember) btnMember.onclick = async () => {
+  const username = document.getElementById('member-username').value.trim();
+  const role = document.getElementById('member-role').value;
+  if (!username) return toast('请填写用户名', true);
+  try {
+    await api('/api/projects/' + PID + '/members', { method: 'POST', body: { username, role } });
+    toast('成员已更新'); location.reload();
+  } catch (e) { toast(e.message, true); }
+};
+
+document.querySelectorAll('[data-member-remove]').forEach(btn => btn.onclick = async () => {
+  if (!confirm('确定移除这个成员？')) return;
+  try {
+    await api('/api/projects/' + PID + '/members/' + btn.dataset.memberRemove, { method: 'DELETE' });
+    toast('成员已移除'); location.reload();
+  } catch (e) { toast(e.message, true); }
+});
+
+document.querySelectorAll('[data-move-exp]').forEach(btn => btn.onclick = async () => {
+  const eid = btn.dataset.moveExp;
+  const pid = Number(document.querySelector('[data-move-target="' + eid + '"]').value);
+  try {
+    await api('/api/experiments/' + eid + '/project', { method: 'POST', body: { project_id: pid } });
+    toast('实验已移动'); location.reload();
+  } catch (e) { toast(e.message, true); }
+});
+
+async function loadShares() {
+  const box = document.getElementById('share-list');
+  if (!box) return;
+  try {
+    const list = await api('/api/projects/' + PID + '/shares');
+    if (!list.length) { box.innerHTML = '<div class="tiny faint">还没有项目分享链接。</div>'; return; }
+    box.innerHTML = '<table class="grid-table" style="width:100%"><thead><tr><th>链接</th><th>密码</th><th>到期</th><th>访问</th><th></th></tr></thead><tbody>' +
+      list.map(s => `<tr>
+        <td class="mono tiny"><a href="${esc(location.origin + s.url)}" target="_blank" rel="noopener" style="color:var(--accent)">打开 ↗</a></td>
+        <td class="tiny">${s.has_password ? '有' : '无'}${s.redact ? ' · 脱敏' : ''}</td>
+        <td class="tiny mono">${s.expires_at ? fmtTime(s.expires_at) : '永不'}</td>
+        <td class="tiny mono">${s.views}${s.max_views ? '/' + s.max_views : ''}</td>
+        <td>${s.revoked ? '<span class="tiny faint">已撤销</span>' : `<button class="btn ghost sm" data-revoke-share="${s.id}">撤销</button>`}</td>
+      </tr>`).join('') + '</tbody></table>';
+    box.querySelectorAll('[data-revoke-share]').forEach(b => b.onclick = async () => {
+      if (!confirm('撤销这个项目分享链接？')) return;
+      try {
+        await api('/api/shares/' + b.dataset.revokeShare, { method: 'DELETE' });
+        toast('已撤销'); loadShares();
+      } catch (e) { toast(e.message, true); }
+    });
+  } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+}
+
+const btnShare = document.getElementById('btn-share-create');
+if (btnShare) btnShare.onclick = async () => {
+  const body = {
+    ttl_hours: Number(document.getElementById('share-ttl').value),
+    max_views: Number(document.getElementById('share-views').value),
+    password: document.getElementById('share-pwd').value.trim(),
+    redact: document.getElementById('share-redact').checked
+  };
+  const out = document.getElementById('share-result');
+  btnShare.disabled = true; out.textContent = '创建中…';
+  try {
+    const r = await api('/api/projects/' + PID + '/shares', { method: 'POST', body });
+    const url = location.origin + r.share.url;
+    out.innerHTML = '链接已创建：<a href="' + esc(url) + '" target="_blank" rel="noopener" style="color:var(--accent)">' + esc(url) + '</a>';
+    toast('项目分享链接已创建');
+    loadShares();
+  } catch (e) { out.textContent = ''; toast(e.message, true); }
+  finally { btnShare.disabled = false; }
+};
+</script>
+{% endblock %}
