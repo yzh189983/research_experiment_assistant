@@ -37,6 +37,26 @@ DEFAULTS = {
         "stream": False,            # 是否流式输出（前端逐字显示时开启）
         "circuit_break_after": 5,   # 连续失败 N 次熔断，避免烧 token
     },
+    "kaka": {
+        # 卡卡智能体专用模型；留空的字段自动跟随主 LLM，方便单独换模型而不改全局
+        "enabled": True,            # 关掉则只用内置规则回答，不调用大模型
+        "model": "",                # 卡卡模型名，例如 glm-4-flash / deepseek-chat
+        "base_url": "",             # 卡卡接口地址，留空跟随 llm.base_url
+        "api_key": "",              # 卡卡专用 Key，留空跟随 llm.api_key
+        "temperature": 0.2,
+        "max_tokens": 1200,
+    },
+    "dataset_search": {
+        # 卡卡数据集收集的外部检索；失败会自动退回内置目录，不影响主流程
+        "enabled": True,
+        "sources": ["openalex", "arxiv", "huggingface"],  # 可加 "zenodo"
+        "timeout": 8,               # 单个来源超时秒数
+        "max_papers": 5,
+        "max_links": 4,
+        "prefer_top_venues": True,  # 优先 CCF-A / 中科院一区论文
+        "year_from": 0,             # 论文起始年份；0 = 不限
+        "year_to": 0,               # 论文结束年份；0 = 不限
+    },
     "monitor": {
         "interval_sec": 3,          # 轮询间隔
         "max_metrics_points": 800,  # 单条曲线最多保留点数
@@ -168,16 +188,21 @@ def user_config_path(uid):
 
 
 def _decode_secrets(cfg):
-    key = (cfg.get("llm") or {}).get("api_key")
-    if key:
-        cfg["llm"]["api_key"] = crypto.decrypt(key)
+    for section in ("llm", "kaka"):
+        key = (cfg.get(section) or {}).get("api_key")
+        if key and str(key).startswith(crypto.PREFIX):
+            cfg[section]["api_key"] = crypto.decrypt(key)
     return cfg
 
 
 def _encode_secrets(patch):
     out = copy.deepcopy(patch or {})
-    if isinstance(out.get("llm"), dict) and "api_key" in out["llm"]:
-        out["llm"]["api_key"] = crypto.encrypt(out["llm"]["api_key"])
+    for section in ("llm", "kaka"):
+        if not isinstance(out.get(section), dict) or "api_key" not in out[section]:
+            continue
+        key = out[section]["api_key"]
+        if key and not str(key).startswith(crypto.PREFIX) and "*" not in str(key):
+            out[section]["api_key"] = crypto.encrypt(str(key))
     return out
 
 
@@ -230,12 +255,16 @@ def migrate_config_secrets():
                 paths.append(os.path.join(root, "config.json"))
     for path in paths:
         raw = _read_json(path)
-        key = (raw.get("llm") or {}).get("api_key")
-        if not key or str(key).startswith(crypto.PREFIX) or set(str(key)) == {"*"}:
-            continue
-        raw["llm"]["api_key"] = crypto.encrypt(key)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(raw, f, ensure_ascii=False, indent=2)
+        changed = False
+        for section in ("llm", "kaka"):
+            key = (raw.get(section) or {}).get("api_key")
+            if not key or str(key).startswith(crypto.PREFIX) or set(str(key)) == {"*"}:
+                continue
+            raw[section]["api_key"] = crypto.encrypt(key)
+            changed = True
+        if changed:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(raw, f, ensure_ascii=False, indent=2)
 
 
 def mask_secret(s):

@@ -195,6 +195,15 @@ def _finish(run_id, exp_id, status, message, exit_code=None):
     db.update_experiment(exp_id, status=exp_status)
     bus.status(exp_id, exp_status, run_id, {"run_status": status})
 
+    # 卡卡播报：运行完成 / 失败（项目群聊，继承项目角色）
+    try:
+        from core import kaka
+        kaka._broadcast_for_exp(
+            exp_id, "run_finished" if status == "finished" else "run_failed",
+            f"run #{run_id} {status}", uid=config.current_uid())
+    except Exception:
+        pass
+
     # 失败自动诊断（规则签名，立即可用）
     if status != "finished":
         try:
@@ -222,7 +231,14 @@ def _finish(run_id, exp_id, status, message, exit_code=None):
     # 自动总结
     from core import summarizer
     try:
-        summarizer.summarize(run_id, exp_id, status=status)
+        summary = summarizer.summarize(run_id, exp_id, status=status)
+        try:
+            from core import kaka
+            verdict = (summary or {}).get("verdict") or (summary or {}).get("one_liner") or "结果已生成"
+            kaka._broadcast_for_exp(exp_id, "summary_ready", verdict[:180],
+                                    uid=config.current_uid())
+        except Exception:
+            pass
     except Exception as e:
         msg = f"结果总结失败：{e}"
         bus.note(exp_id, msg, "error", run_id)

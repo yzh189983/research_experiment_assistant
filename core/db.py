@@ -274,6 +274,49 @@ CREATE TABLE IF NOT EXISTS ai_tool_audit (
     role TEXT DEFAULT '',
     created_at REAL
 );
+
+-- 卡卡智能体：项目群聊与数据集资产
+CREATE TABLE IF NOT EXISTS project_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    project_id INTEGER NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'user',
+    content TEXT NOT NULL,
+    content_json TEXT DEFAULT '{}',
+    created_at REAL
+);
+CREATE TABLE IF NOT EXISTS project_datasets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    project_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    version TEXT DEFAULT '',
+    paper TEXT DEFAULT '',
+    evidence TEXT DEFAULT '',
+    url TEXT DEFAULT '',
+    url_type TEXT DEFAULT '',
+    license TEXT DEFAULT '',
+    status TEXT DEFAULT 'candidate',
+    created_at REAL
+);
+
+-- 卡卡多轮对话：scope 形如 global / exp:<id> / project:<id>
+CREATE TABLE IF NOT EXISTS kaka_conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    scope TEXT NOT NULL DEFAULT 'global',
+    created_at REAL,
+    updated_at REAL
+);
+CREATE TABLE IF NOT EXISTS kaka_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    conversation_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    role TEXT NOT NULL,
+    content TEXT NOT NULL,
+    meta TEXT DEFAULT '{}',
+    created_at REAL
+);
 """
 
 # 依赖 user_id 列的索引：必须在老库 ALTER 补列之后再建，否则迁移时会报
@@ -296,7 +339,11 @@ USER_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_ai_outputs_user ON ai_outputs(user_id)",
     "CREATE INDEX IF NOT EXISTS idx_ai_eval_cases_user ON ai_eval_cases(user_id)",
     "CREATE INDEX IF NOT EXISTS idx_ai_eval_runs_user ON ai_eval_runs(user_id)",
-    "CREATE INDEX IF NOT EXISTS idx_ai_tool_audit_user ON ai_tool_audit(user_id)"
+    "CREATE INDEX IF NOT EXISTS idx_ai_tool_audit_user ON ai_tool_audit(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_project_messages_project ON project_messages(project_id, id)",
+    "CREATE INDEX IF NOT EXISTS idx_project_datasets_project ON project_datasets(project_id, id)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_conv_user_scope ON kaka_conversations(user_id, scope)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_msg_conv ON kaka_messages(conversation_id, id)"
 ]
 
 
@@ -577,6 +624,9 @@ def delete_project(pid, uid=None):
            (personal, now(), exp_row["id"]))
     ex("DELETE FROM share_comments WHERE share_id IN (SELECT id FROM share_links WHERE project_id=?)", (pid,))
     ex("DELETE FROM share_links WHERE project_id=?", (pid,))
+    ex("DELETE FROM project_messages WHERE project_id=?", (pid,))
+    ex("DELETE FROM project_datasets WHERE project_id=?", (pid,))
+    ex("DELETE FROM kaka_conversations WHERE scope=?", (f"project:{pid}",))
     ex("DELETE FROM project_members WHERE project_id=?", (pid,))
     ex("DELETE FROM projects WHERE id=?", (pid,))
     return True
@@ -652,8 +702,13 @@ def delete_user(uid):
     for table in ("metrics",):
         ex(f"DELETE FROM {table} WHERE run_id IN (SELECT id FROM runs WHERE user_id=?)", (uid,))
     for table in ("events", "audit_log", "usage_log", "runs", "experiments", "hosts",
-                  "ai_outputs", "ai_eval_cases", "ai_eval_runs", "ai_tool_audit"):
+                  "ai_outputs", "ai_eval_cases", "ai_eval_runs", "ai_tool_audit",
+                  "project_messages", "project_datasets"):
         ex(f"DELETE FROM {table} WHERE user_id=?", (uid,))
+    conv_ids = [r["id"] for r in q("SELECT id FROM kaka_conversations WHERE user_id=?", (uid,))]
+    for cid in conv_ids:
+        ex("DELETE FROM kaka_messages WHERE conversation_id=?", (cid,))
+    ex("DELETE FROM kaka_conversations WHERE user_id=?", (uid,))
     owned_projects = [r["id"] for r in q("SELECT id FROM projects WHERE owner_id=?", (uid,))]
     for pid in owned_projects:
         ex("DELETE FROM project_members WHERE project_id=?", (pid,))
@@ -1255,3 +1310,104 @@ def list_ai_tool_audit(uid=None, limit=50):
         r["result"] = json.loads(r.pop("result_json") or "{}")
         out.append(r)
     return out
+
+
+# ---------------- 卡卡智能体：群聊 / 数据集资产 ----------------
+
+def add_project_message(project_id, kind, content, extra=None, uid=None):
+    return ex(
+        """INSERT INTO project_messages(user_id,project_id,kind,content,content_json,created_at)
+           VALUES(?,?,?,?,?,?)""",
+        (_uid(uid), int(project_id), str(kind), str(content or "")[:8000],
+         json.dumps(extra or {}, ensure_ascii=False), now()))
+
+
+def list_project_messages(project_id, uid=None, limit=100):
+    rows = q(
+        """SELECT m.*, u.username FROM project_messages m
+           LEFT JOIN users u ON u.id=m.user_id
+           WHERE m.project_id=? ORDER BY m.id DESC LIMIT ?""",
+        (int(project_id), int(limit or 100)))
+    out = []
+    for row in rows:
+        r = dict(row)
+        r["extra"] = json.loads(r.pop("content_json") or "{}")
+        out.append(r)
+    out.reverse()
+    return out
+
+
+def add_project_dataset(project_id, name, uid=None, version="", paper="",
+                        evidence="", url="", url_type="", license_name="",
+                        status="candidate"):
+    name = str(name or "").strip()
+    if not name:
+        return None
+    return ex(
+        """INSERT INTO project_datasets(user_id,project_id,name,version,paper,evidence,
+                                         url,url_type,license,status,created_at)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+        (_uid(uid), int(project_id), name[:160], str(version or "")[:80],
+         str(paper or "")[:300], str(evidence or "")[:1000],
+         str(url or "")[:1000], str(url_type or "")[:40],
+         str(license_name or "")[:80], str(status or "candidate"), now()))
+
+
+def list_project_datasets(project_id, uid=None):
+    return [dict(r) for r in q(
+        "SELECT * FROM project_datasets WHERE project_id=? ORDER BY id DESC",
+        (int(project_id),))]
+
+
+def update_project_dataset(dataset_id, project_id, fields, uid=None):
+    allowed = {"name", "version", "paper", "evidence", "url", "url_type", "license", "status"}
+    updates, args = [], []
+    for key, value in (fields or {}).items():
+        if key not in allowed:
+            continue
+        updates.append(f"{key}=?")
+        args.append(str(value or "")[:1000])
+    if not updates:
+        return False
+    args += [int(dataset_id), int(project_id), _uid(uid)]
+    ex(f"UPDATE project_datasets SET {','.join(updates)} WHERE id=? AND project_id=? AND user_id=?",
+       tuple(args))
+    return True
+
+
+def delete_project_dataset(dataset_id, project_id, uid=None):
+    ex("DELETE FROM project_datasets WHERE id=? AND project_id=? AND user_id=?",
+       (int(dataset_id), int(project_id), _uid(uid)))
+    return True
+
+
+def get_or_create_kaka_conversation(scope, uid=None):
+    scope = str(scope or "global")[:80]
+    uid = _uid(uid)
+    row = q1("SELECT id FROM kaka_conversations WHERE user_id=? AND scope=?",
+             (uid, scope))
+    if row:
+        return row["id"]
+    return ex("INSERT INTO kaka_conversations(user_id,scope,created_at,updated_at) VALUES(?,?,?,?)",
+              (uid, scope, now(), now()))
+
+
+def list_kaka_messages(conversation_id, uid=None, limit=30):
+    rows = q(
+        "SELECT * FROM kaka_messages WHERE conversation_id=? AND user_id=? "
+        "ORDER BY id DESC LIMIT ?", (int(conversation_id), _uid(uid), int(limit)))
+    return [dict(r) for r in rows][::-1]
+
+
+def add_kaka_message(conversation_id, role, content, meta=None, uid=None):
+    mid = ex("INSERT INTO kaka_messages(conversation_id,user_id,role,content,meta,created_at) "
+             "VALUES(?,?,?,?,?,?)",
+             (int(conversation_id), _uid(uid), str(role), str(content or "")[:4000],
+              json.dumps(meta or {}, ensure_ascii=False), now()))
+    ex("UPDATE kaka_conversations SET updated_at=? WHERE id=?", (now(), conversation_id))
+    return mid
+
+
+def clear_kaka_messages(conversation_id, uid=None):
+    ex("DELETE FROM kaka_messages WHERE conversation_id=? AND user_id=?",
+       (int(conversation_id), _uid(uid)))

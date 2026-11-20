@@ -42,6 +42,8 @@
   <button class="project-tab on" data-detail-tab="overview">概览</button>
   <button class="project-tab" data-detail-tab="members">成员</button>
   <button class="project-tab" data-detail-tab="experiments">实验</button>
+  <button class="project-tab" data-detail-tab="discuss">讨论</button>
+  <button class="project-tab" data-detail-tab="datasets">数据集</button>
   <button class="project-tab" data-detail-tab="shares">分享</button>
 </div>
 
@@ -132,6 +134,44 @@
   {% endif %}
 </section>
 
+<section class="card detail-panel" data-detail-panel="discuss" style="display:none">
+  <div class="sec-head"><div class="sec-title">项目群聊</div><span class="eyebrow">卡卡会播报进度与结果</span></div>
+  <div class="card-pad">
+    <div class="kaka-chat" id="chat-list"><div class="tiny faint">加载中…</div></div>
+    {% if role in ['owner', 'editor'] %}
+    <div class="chat-compose-wrap">
+      <div class="chat-compose">
+        <input type="text" id="chat-input" placeholder="发消息；输入 @ 选择对象，@卡卡 可提问，例如：@卡卡 最近进展" autocomplete="off">
+        <button type="button" id="btn-chat-send">发送</button>
+      </div>
+      <div class="mention-menu" id="mention-menu" style="display:none"></div>
+    </div>
+    {% else %}
+    <div class="hint">你是 viewer，可以阅读群聊，但不能发言。</div>
+    {% endif %}
+    <div class="tiny faint" style="margin-top:8px">成员与发言权限继承项目角色；卡卡不会越权读取代码或报告。</div>
+  </div>
+</section>
+
+<section class="card detail-panel" data-detail-panel="datasets" style="display:none">
+  <div class="sec-head"><div class="sec-title">数据集资产</div><span class="eyebrow">Datasets</span></div>
+  <div class="card-pad">
+    {% if role in ['owner', 'editor'] %}
+    <div class="ds-collect">
+      <input type="text" id="ds-query" placeholder="研究任务，例如：医学 VQA 幻觉检测 / ImageNet 图像分类">
+      <input type="number" id="dsq-year-from" min="0" max="2100" placeholder="起始年" style="width:88px" title="起始年份，留空不限">
+      <span class="tiny faint">—</span>
+      <input type="number" id="dsq-year-to" min="0" max="2100" placeholder="结束年" style="width:88px" title="结束年份，留空不限">
+      <button type="button" class="btn sm" id="btn-ds-collect">让卡卡找数据集</button>
+    </div>
+    <div id="ds-candidates"></div>
+    {% else %}
+    <div class="hint">你是 viewer，只能查看数据集资产。</div>
+    {% endif %}
+    <div id="ds-list" style="margin-top:14px">加载中…</div>
+  </div>
+</section>
+
 <section class="card detail-panel" data-detail-panel="shares" style="display:none">
   <div class="sec-head"><div class="sec-title">项目分享</div><span class="eyebrow">Read only</span></div>
   <div class="card-pad">
@@ -153,6 +193,8 @@
 {% block scripts %}
 <script>
 const PID = {{ project.id }};
+const CAN_WRITE = {{ 'true' if role in ['owner', 'editor'] else 'false' }};
+const CHAT_MEMBERS = {{ members | selectattr('username') | map(attribute='username') | list | tojson }};
 
 document.querySelectorAll('[data-detail-tab]').forEach(tab => tab.onclick = () => {
   document.querySelectorAll('[data-detail-tab]').forEach(b => b.classList.remove('on'));
@@ -160,7 +202,10 @@ document.querySelectorAll('[data-detail-tab]').forEach(tab => tab.onclick = () =
   document.querySelectorAll('[data-detail-panel]').forEach(panel => {
     panel.style.display = panel.dataset.detailPanel === tab.dataset.detailTab ? '' : 'none';
   });
-  if (tab.dataset.detailTab === 'shares') loadShares();
+  const t = tab.dataset.detailTab;
+  if (t === 'shares') loadShares();
+  if (t === 'discuss') loadChat();
+  if (t === 'datasets') loadDatasets();
 });
 
 const btnSave = document.getElementById('btn-project-save');
@@ -264,6 +309,246 @@ if (btnShare) btnShare.onclick = async () => {
     loadShares();
   } catch (e) { out.textContent = ''; toast(e.message, true); }
   finally { btnShare.disabled = false; }
+};
+
+let dsCandidates = [];
+
+async function loadChat() {
+  const box = document.getElementById('chat-list');
+  if (!box) return;
+  try {
+    const r = await api(`/api/projects/${PID}/messages`);
+    const items = r.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="tiny faint">还没有消息。卡卡会在实验创建、运行完成、总结生成等事件发生时自动播报。</div>';
+      return;
+    }
+    box.innerHTML = items.map(m => `
+      <div class="chat-msg ${m.kind === 'kaka' ? 'kaka' : ''}">
+        <div class="chat-who">${m.kind === 'kaka' ? '卡卡' : esc((m.username || '?').slice(0, 2))}</div>
+        <div class="chat-body">
+          <div class="chat-meta">${esc(m.username || '系统')} · ${fmtTime(m.created_at)}${m.kind === 'kaka' ? ' · 播报' : ''}</div>
+          <div class="chat-text">${esc(m.content)}</div>
+        </div>
+      </div>`).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+}
+
+/* ---- @ 提及补全：卡卡 + 项目成员 ---- */
+const chatInput = document.getElementById('chat-input');
+const mentionMenu = document.getElementById('mention-menu');
+const MENTION_TARGETS = (() => {
+  const out = [{ name: '卡卡', role: 'AI 助手', bot: true }];
+  (CHAT_MEMBERS || []).forEach(n => {
+    if (!n) return;
+    if (!out.some(x => x.name === n)) out.push({ name: n, role: '项目成员', bot: false });
+  });
+  return out;
+})();
+let mentionItems = [];
+let mentionActive = 0;
+let mentionFrom = -1;   // @ 在输入框中的起始下标
+let mentionTo = -1;     // 当前光标位置
+
+function currentMention() {
+  if (!chatInput) return null;
+  const v = chatInput.value;
+  const pos = chatInput.selectionStart;
+  const left = v.slice(0, pos);
+  const at = left.lastIndexOf('@');
+  if (at < 0) return null;
+  // @ 前必须是开头或空白；查询串里不含空白
+  if (at > 0 && !/\s/.test(left[at - 1])) return null;
+  const q = left.slice(at + 1);
+  if (/\s/.test(q)) return null;
+  return { at, pos, q };
+}
+
+function openMention(m) {
+  const q = m.q.toLowerCase();
+  mentionItems = MENTION_TARGETS.filter(t => t.name.toLowerCase().includes(q));
+  if (!mentionItems.length) { closeMention(); return; }
+  mentionFrom = m.at;
+  mentionTo = m.pos;
+  mentionActive = 0;
+  renderMention();
+}
+
+function renderMention() {
+  if (!mentionMenu) return;
+  mentionMenu.innerHTML = '<div class="mention-head">选择要 @ 的对象</div>' +
+    mentionItems.map((t, i) => `
+      <button type="button" class="mention-item ${i === mentionActive ? 'on' : ''}" data-mention-index="${i}">
+        <span class="mention-avatar ${t.bot ? 'bot' : ''}">${t.bot ? '卡' : esc(t.name.slice(0, 1))}</span>
+        <span class="mention-name">${esc(t.name)}</span>
+        <span class="mention-role">${esc(t.role)}</span>
+      </button>`).join('');
+  mentionMenu.style.display = '';
+  mentionMenu.querySelectorAll('[data-mention-index]').forEach(b => {
+    b.onclick = () => applyMention(Number(b.dataset.mentionIndex));
+  });
+}
+
+function closeMention() {
+  if (mentionMenu) mentionMenu.style.display = 'none';
+  mentionItems = [];
+  mentionFrom = mentionTo = -1;
+}
+
+function applyMention(idx) {
+  const t = mentionItems[idx];
+  if (!t || !chatInput || mentionFrom < 0) return;
+  const v = chatInput.value;
+  const after = v.slice(mentionTo);
+  const insert = '@' + t.name + ' ';
+  chatInput.value = v.slice(0, mentionFrom) + insert + after;
+  const caret = mentionFrom + insert.length;
+  closeMention();
+  chatInput.focus();
+  chatInput.setSelectionRange(caret, caret);
+}
+
+if (chatInput) {
+  chatInput.addEventListener('input', () => {
+    const m = currentMention();
+    if (m) openMention(m); else closeMention();
+  });
+  chatInput.addEventListener('keydown', e => {
+    if (!mentionItems.length) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      mentionActive = (mentionActive + 1) % mentionItems.length;
+      renderMention();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      mentionActive = (mentionActive - 1 + mentionItems.length) % mentionItems.length;
+      renderMention();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault();
+      applyMention(mentionActive);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      closeMention();
+    }
+  });
+  chatInput.addEventListener('blur', () => setTimeout(closeMention, 120));
+}
+
+const btnChat = document.getElementById('btn-chat-send');
+if (btnChat) btnChat.onclick = async () => {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  btnChat.disabled = true;
+  try {
+    if (text.startsWith('@卡卡')) {
+      await api(`/api/projects/${PID}/kaka/ask`, {
+        method: 'POST', body: { question: text.slice(3).trim() }
+      });
+      toast('卡卡已回复，可在播报中查看');
+    } else {
+      await api(`/api/projects/${PID}/messages`, { method: 'POST', body: { content: text } });
+    }
+    input.value = '';
+    closeMention();
+    await loadChat();
+  } catch (e) { toast(e.message, true); }
+  finally { btnChat.disabled = false; }
+};
+
+async function loadDatasets() {
+  const box = document.getElementById('ds-list');
+  if (!box) return;
+  try {
+    const r = await api(`/api/projects/${PID}/datasets`);
+    const items = r.items || [];
+    if (!items.length) {
+      box.innerHTML = '<div class="tiny faint">还没有数据集资产。可以用上面的输入框让卡卡从研究方向里找一批。</div>';
+      return;
+    }
+    box.innerHTML = '<table class="ds-table"><thead><tr><th>数据集</th><th>版本 / 来源论文</th><th>链接</th><th>许可</th><th>状态</th><th></th></tr></thead><tbody>' +
+      items.map(d => `<tr>
+        <td><b>${esc(d.name)}</b><div class="tiny faint">${esc((d.evidence || '').slice(0, 90))}</div></td>
+        <td class="tiny">${esc(d.version || '—')}<div class="faint">${esc((d.paper || '').slice(0, 60))}</div></td>
+        <td class="tiny">${d.url ? `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.url_type || 'link')} ↗</a>` : '—'}</td>
+        <td class="tiny">${esc(d.license || '未知')}</td>
+        <td class="tiny"><span class="badge ${d.status === 'confirmed' ? 'ok' : 'idle'}">${esc(d.status)}</span></td>
+        <td class="tiny">${CAN_WRITE ? `<button class="btn ghost sm" data-ds-confirm="${d.id}">确认</button> <button class="btn ghost sm" data-ds-del="${d.id}">删除</button>` : '—'}</td>
+      </tr>`).join('') + '</tbody></table>';
+    box.querySelectorAll('[data-ds-confirm]').forEach(b => b.onclick = async () => {
+      try {
+        await api(`/api/projects/${PID}/datasets/${b.dataset.dsConfirm}`, {
+          method: 'PUT', body: { status: 'confirmed' }
+        });
+        toast('数据集已确认'); loadDatasets();
+      } catch (e) { toast(e.message, true); }
+    });
+    box.querySelectorAll('[data-ds-del]').forEach(b => b.onclick = async () => {
+      if (!confirm('删除这条数据集资产？')) return;
+      try {
+        await api(`/api/projects/${PID}/datasets/${b.dataset.dsDel}`, { method: 'DELETE' });
+        toast('已删除'); loadDatasets();
+      } catch (e) { toast(e.message, true); }
+    });
+  } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+}
+
+const btnDS = document.getElementById('btn-ds-collect');
+if (btnDS) btnDS.onclick = async () => {
+  const q = document.getElementById('ds-query').value.trim();
+  if (!q) return toast('先写一个研究任务方向', true);
+  const box = document.getElementById('ds-candidates');
+  btnDS.disabled = true;
+  box.innerHTML = '<div class="tiny faint">卡卡正在查内置数据集目录…</div>';
+  try {
+    const r = await api(`/api/projects/${PID}/datasets/collect`, {
+      method: 'POST', body: {
+        query: q,
+        year_from: Number(document.getElementById('dsq-year-from').value) || 0,
+        year_to: Number(document.getElementById('dsq-year-to').value) || 0,
+      }
+    });
+    dsCandidates = r.candidates || [];
+    if (!dsCandidates.length) {
+      box.innerHTML = '<div class="ds-candidate">没找到匹配的数据集，试试更具体的任务描述。</div>';
+      return;
+    }
+    const papers = r.papers || [];
+    const papersHtml = papers.length
+      ? '<div class="tiny faint" style="margin-top:9px;padding-bottom:8px;border-bottom:1px dashed var(--rule)">' +
+        '<b>检索到的论文：</b>' + papers.map(p =>
+          `<div style="margin-top:4px">${esc(p.title)}${p.url ? ` <a href="${esc(p.url)}" target="_blank" rel="noopener">↗</a>` : ''}` +
+          `<span class="faint"> · ${esc(p.source || '')} ${p.year || ''}${p.venue ? ' · ' + esc(p.venue) : ''}</span>` +
+          (p.venue_tier ? `<span class="badge ok" style="margin-left:6px">${esc(p.venue_tier)}</span>` : '') +
+          '</div>').join('') + '</div>'
+      : '';
+    box.innerHTML = '<div class="ds-candidate"><b>找到 ' + dsCandidates.length + ' 条候选：</b>' +
+      papersHtml +
+      dsCandidates.map((c, i) => `<div style="margin-top:7px">
+        <label><input type="checkbox" data-ds-pick="${i}" checked> <b>${esc(c.name)}</b></label>
+        <span class="tiny faint">${esc(c.source || c.url_type)} · ${esc(c.license)}</span>
+        <div class="tiny faint">${esc(c.evidence)}</div>
+        ${(c.downloads || []).length ? '<div class="tiny" style="margin-top:3px">下载：' +
+          c.downloads.map(d => `<a href="${esc(d.url)}" target="_blank" rel="noopener">${esc(d.label)}</a>`).join(' · ') + '</div>' : ''}
+      </div>`).join('') +
+      '<div style="margin-top:10px"><button class="btn sm" id="btn-ds-adopt">收录勾选项</button> ' +
+      '<span class="tiny faint">' + esc(r.notice) + '</span></div></div>';
+    document.getElementById('btn-ds-adopt').onclick = async () => {
+      const picks = Array.from(box.querySelectorAll('[data-ds-pick]:checked'))
+        .map(el => dsCandidates[Number(el.dataset.dsPick)]);
+      if (!picks.length) return toast('至少勾选一条', true);
+      try {
+        await api(`/api/projects/${PID}/datasets/adopt`, {
+          method: 'POST', body: { candidates: picks }
+        });
+        toast('已收录到数据集资产');
+        box.innerHTML = '';
+        await loadDatasets();
+      } catch (e) { toast(e.message, true); }
+    };
+  } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
+  finally { btnDS.disabled = false; }
 };
 </script>
 {% endblock %}

@@ -14,6 +14,7 @@
 
   <div class="settings-summary">
     <div class="settings-summary-tile"><i>LLM</i><b class="{{ 'ok-text' if has_key else 'warn-text' }}">{{ '已配置' if has_key else '未配置' }}</b><span>{{ cfg.llm.model }}</span></div>
+    <div class="settings-summary-tile"><i>卡卡</i><b class="{{ 'ok-text' if kaka_ready else 'warn-text' }}">{{ '已接入' if kaka_ready else '规则模式' }}</b><span>{{ kaka_effective.model }}</span></div>
     <div class="settings-summary-tile"><i>监控</i><b>{{ cfg.monitor.interval_sec }}s</b><span>轮询间隔</span></div>
     <div class="settings-summary-tile"><i>GitHub</i><b>{{ gh_configs|length }}</b><span>仓库配置</span></div>
     <div class="settings-summary-tile"><i>通知</i><b class="{{ 'ok-text' if notify_cfg.enabled else '' }}">{{ '已开启' if notify_cfg.enabled else '未开启' }}</b><span>Webhook</span></div>
@@ -60,6 +61,84 @@
             <button class="btn" id="btn-test">测试连通性</button>
             <span class="tiny" id="test-result" style="align-self:center"></span>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="kaka">
+      <div class="sec-head">
+        <div class="sec-title">卡卡模型</div>
+        <button class="work-toggle" data-work-toggle="kaka" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">KAKA</span>
+        {{ '已接入大模型' if kaka_ready else '规则模式（未接入大模型）' }} · {{ kaka_effective.model }}
+      </div>
+      <div class="work-body" data-work-body="kaka" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">卡卡负责问答、实验建议与数据集抽取。留空就自动用上面「大模型」的配置；单独填写即可让卡卡用更便宜 / 更快的模型。</div>
+          <label class="field"><span>启用大模型驱动</span>
+            <select id="k-enabled">
+              <option value="1" {% if kaka_cfg.get('enabled', true) %}selected{% endif %}>启用 · 用模型回答</option>
+              <option value="0" {% if not kaka_cfg.get('enabled', true) %}selected{% endif %}>关闭 · 只用内置规则</option>
+            </select></label>
+          <label class="field"><span>卡卡模型名</span>
+            <input type="text" id="k-model" value="{{ kaka_cfg.get('model') or '' }}" placeholder="留空跟随主模型：{{ cfg.llm.model }}"></label>
+          <label class="field"><span>接口地址（可选）</span>
+            <input type="text" id="k-url" value="{{ kaka_cfg.get('base_url') or '' }}" placeholder="留空跟随主模型接口"></label>
+          <label class="field"><span>API Key（可选）</span>
+            <input type="password" id="k-key" placeholder="留空跟随主模型 Key"></label>
+          <div class="hint" style="margin:-8px 0 12px">Key 加密存本机、仅对你生效；留空保持原值不变。</div>
+          <label class="field"><span>温度</span>
+            <input type="number" id="k-temp" step="0.05" min="0" max="2" value="{{ kaka_cfg.get('temperature') or 0.2 }}"></label>
+          <label class="field"><span>最大输出 token</span>
+            <input type="number" id="k-maxtokens" min="128" max="8000" value="{{ kaka_cfg.get('max_tokens') or 1200 }}"></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn primary" id="btn-kaka-save">保存卡卡配置</button>
+            <button class="btn" id="btn-kaka-test">测试卡卡模型</button>
+            <span class="tiny" id="kaka-test-result" style="align-self:center"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="dataset-search">
+      <div class="sec-head">
+        <div class="sec-title">外部检索</div>
+        <button class="work-toggle" data-work-toggle="dataset-search" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">SEARCH</span>
+        {{ '已开启' if cfg.dataset_search.enabled else '已关闭' }} · {{ '优先 CCF-A / 中科院一区' if cfg.dataset_search.prefer_top_venues else '按相关度' }} · {{ cfg.dataset_search.year_from or '不限' }}–{{ cfg.dataset_search.year_to or '不限' }}
+      </div>
+      <div class="work-body" data-work-body="dataset-search" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">开启后卡卡会从公开 API 搜真实论文并补全数据集链接；任一来源失败都会自动退回内置目录，不影响收集。</div>
+          <label class="field"><span>启用外部检索</span>
+            <select id="ds-enabled">
+              <option value="1" {% if cfg.dataset_search.enabled %}selected{% endif %}>开启</option>
+              <option value="0" {% if not cfg.dataset_search.enabled %}selected{% endif %}>关闭（只用内置目录）</option>
+            </select></label>
+          <label class="field"><span>论文偏好</span>
+            <select id="ds-top">
+              <option value="1" {% if cfg.dataset_search.prefer_top_venues %}selected{% endif %}>优先 CCF-A / 中科院一区</option>
+              <option value="0" {% if not cfg.dataset_search.prefer_top_venues %}selected{% endif %}>按相关度，不筛刊物</option>
+            </select></label>
+          <label class="field"><span>检索来源（逗号分隔）</span>
+            <input type="text" id="ds-sources" value="{{ cfg.dataset_search.sources|join(',') }}" placeholder="openalex,arxiv,huggingface,zenodo"></label>
+          <label class="field"><span>单源超时（秒）</span>
+            <input type="number" id="ds-timeout" min="3" max="30" value="{{ cfg.dataset_search.timeout }}"></label>
+          <label class="field"><span>最多论文数 / 链接数</span>
+            <div style="display:flex;gap:8px">
+              <input type="number" id="ds-papers" min="1" max="10" value="{{ cfg.dataset_search.max_papers }}">
+              <input type="number" id="ds-links" min="1" max="10" value="{{ cfg.dataset_search.max_links }}">
+            </div></label>
+          <label class="field"><span>论文年份范围（0 = 不限）</span>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="ds-year-from" min="0" max="2100" value="{{ cfg.dataset_search.year_from }}" placeholder="起始年">
+              <span>—</span>
+              <input type="number" id="ds-year-to" min="0" max="2100" value="{{ cfg.dataset_search.year_to }}" placeholder="结束年">
+            </div></label>
         </div>
       </div>
     </section>
@@ -303,7 +382,7 @@ function setSettingOpen(name, open) {
   if (!card || !body || !btn) return;
   card.classList.toggle('open', open);
   body.style.display = open ? '' : 'none';
-  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →' };
+  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →', kaka: '配置 →', 'dataset-search': '配置 →' };
   btn.textContent = open ? '收起 ↑' : (labels[name] || '配置 →');
   btn.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
@@ -324,6 +403,16 @@ const settingsCollapse = document.getElementById('btn-settings-collapse');
 if (settingsExpand) settingsExpand.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setSettingOpen(c.dataset.workCard, true));
 if (settingsCollapse) settingsCollapse.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setSettingOpen(c.dataset.workCard, false));
 
+function kakaBody() {
+  return {
+    enabled: document.getElementById('k-enabled').value === '1',
+    model: document.getElementById('k-model').value.trim(),
+    base_url: document.getElementById('k-url').value.trim(),
+    api_key: document.getElementById('k-key').value.trim(),
+    temperature: Number(document.getElementById('k-temp').value),
+    max_tokens: Number(document.getElementById('k-maxtokens').value),
+  };
+}
 document.getElementById('btn-save').onclick = async () => {
   const body = {
     llm: {
@@ -336,12 +425,44 @@ document.getElementById('btn-save').onclick = async () => {
       interval_sec: Number(document.getElementById('s-interval').value),
       stall_warn_sec: Number(document.getElementById('s-stall').value),
     },
+    kaka: kakaBody(),
+    dataset_search: {
+      enabled: document.getElementById('ds-enabled').value === '1',
+      prefer_top_venues: document.getElementById('ds-top').value === '1',
+      sources: document.getElementById('ds-sources').value.split(',').map(s => s.trim()).filter(Boolean),
+      timeout: Number(document.getElementById('ds-timeout').value),
+      max_papers: Number(document.getElementById('ds-papers').value),
+      max_links: Number(document.getElementById('ds-links').value),
+      year_from: Number(document.getElementById('ds-year-from').value),
+      year_to: Number(document.getElementById('ds-year-to').value),
+    },
   };
   try {
     const r = await api('/api/settings', { method: 'POST', body });
     toast('已保存');
     if (r.llm_configured) setTimeout(() => location.reload(), 600);
   } catch (e) { toast(e.message, true); }
+};
+
+const btnKakaSave = document.getElementById('btn-kaka-save');
+if (btnKakaSave) btnKakaSave.onclick = async () => {
+  try {
+    await api('/api/settings', { method: 'POST', body: { kaka: kakaBody() } });
+    toast('卡卡配置已保存');
+    setTimeout(() => location.reload(), 500);
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnKakaTest = document.getElementById('btn-kaka-test');
+if (btnKakaTest) btnKakaTest.onclick = async () => {
+  const el = document.getElementById('kaka-test-result');
+  el.textContent = '测试中…'; el.style.color = 'var(--muted)';
+  try {
+    await api('/api/settings', { method: 'POST', body: { kaka: kakaBody() } });
+    const r = await api('/api/kaka/test', { method: 'POST' });
+    if (r.ok) { el.textContent = '✓ ' + r.model + '：' + r.reply; el.style.color = 'var(--accent)'; }
+    else { el.textContent = '✕ ' + r.error; el.style.color = 'var(--err)'; }
+  } catch (e) { el.textContent = '✕ ' + e.message; el.style.color = 'var(--err)'; }
 };
 
 document.getElementById('btn-test').onclick = async () => {
