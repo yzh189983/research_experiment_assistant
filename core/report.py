@@ -67,6 +67,7 @@ def build(eid, limit_audits=200):
         "verification": (summary or {}).get("verification") or {},
         "stats": _experiment_stats(eid),
         "review": json.loads((latest or {}).get("review_json") or "{}") if latest else {},
+        "ai_outputs": db.list_ai_outputs(experiment_id=eid, limit=80),
     }
 
 
@@ -223,6 +224,24 @@ def markdown(r):
                 out.append(f"- {name}：{m['mean']} ± {m['std']}，95% CI ±{m['ci95']}，"
                            f"范围 [{m['min']}, {m['max']}]，n={m['n']}")
         out += ["- 说明：统计量为近似计算；不同参数组的显著性比较请用批量对比面板。", ""]
+
+    ai_outputs = r.get("ai_outputs") or []
+    out += ["### 6.1 AI 可信分级与证据", ""]
+    if ai_outputs:
+        tier_labels = {"verified": "实测支持", "supported": "日志/代码支持",
+                       "inferred": "AI 推断", "external": "外部知识", "unverified": "待验证"}
+        for o in ai_outputs[:20]:
+            ev = o.get("evidence") or {}
+            hints = []
+            if ev.get("metrics"): hints.append(f"指标 {len(ev['metrics'])}")
+            if ev.get("sources"): hints.append(f"证据 {len(ev['sources'])}")
+            if ev.get("unverified_numbers"): hints.append(f"未核数字 {len(ev['unverified_numbers'])}")
+            if ev.get("commit"): hints.append("commit")
+            out.append(f"- {_fmt(o.get('kind'))}：{tier_labels.get(o.get('tier'), '待验证')} — "
+                       f"{_fmt(o.get('summary'))}（{'、'.join(hints) or '无直接证据'}）")
+        out.append("")
+    else:
+        out += ["尚无 AI 输出可信记录。", ""]
 
     env = r.get("env") or {}
     out += ["## 七、复现实验配置", ""]

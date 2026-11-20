@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% set active = '' %}
+{% block title %}{{ project.name }} · 项目观察 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="exp-head">
+  <div>
+    <div class="eyebrow">Project view · 只读项目视图</div>
+    <h1>{{ project.name }}</h1>
+    <div class="exp-meta">
+      <span>{{ project.description or '暂无说明' }}</span>
+      <span>共 {{ experiments|length }} 个实验</span>
+      {% if redact %}<span>已启用脱敏</span>{% endif %}
+    </div>
+  </div>
+  <div class="exp-actions">
+    <span class="badge idle">viewer · 只读</span>
+  </div>
+</div>
+
+{% if not pwd_ok %}
+<section class="card card-pad">
+  <div class="sec-title">此链接需要访问密码</div>
+  <form method="get" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+    <input type="password" name="p" placeholder="访问密码" autocomplete="off" required>
+    <button class="btn primary" type="submit">查看项目</button>
+  </form>
+</section>
+{% else %}
+<section class="card">
+  <div class="sec-head">
+    <div class="sec-title">实验列表</div>
+    <span class="eyebrow">read only</span>
+  </div>
+  {% if experiments %}
+  <div class="exp-list">
+    {% for e in experiments %}
+    <div class="exp-item">
+      <div class="t">
+        <b>{{ e.title }}</b>
+        <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行{% if e.tags %} · {{ e.tags }}{% endif %}{% if e.archived %} · 已归档{% endif %}</small>
+      </div>
+      {{ statusBadge(e.status) | safe }}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">这个项目还没有实验。</div>
+  {% endif %}
+</section>
+
+<section class="card card-pad">
+  <div class="tiny faint">
+    项目视图为只读共享：访客可以查看实验列表与状态，但不能查看或修改代码、判据，也不能运行或删除实验。
+  </div>
+</section>
+{% endif %}
+{% endblock %}

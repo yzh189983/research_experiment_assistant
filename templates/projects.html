@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% set active = 'projects' %}
+{% block title %}项目 / 工作区 · 科研实验助手{% endblock %}
+
+{% block body %}
+<div class="exp-head page-head">
+  <div>
+    <div class="eyebrow">Projects · 工作区</div>
+    <h1>项目 / 工作区</h1>
+    <div class="exp-meta">
+      <span>共 {{ projects|length }} 个项目</span>
+      <span>点卡片进入项目管理</span>
+    </div>
+  </div>
+  <div class="exp-actions">
+    <a class="btn sm" href="/projects{% if show_archived %}?archived=0{% else %}?archived=1{% endif %}">
+      {{ '← 返回当前项目' if show_archived else '显示归档项目' }}
+    </a>
+  </div>
+</div>
+
+<section class="card project-create">
+  <div class="project-create-icon">＋</div>
+  <div class="project-create-main">
+    <div class="sec-title">新建项目</div>
+    <div class="tiny faint" style="margin-top:4px">把同一课题的实验、成员和分享链接放在一起管理。</div>
+    <div class="project-create-fields">
+      <input type="text" id="new-project-name" placeholder="项目名称，例如：医学 VQA 课题组">
+      <input type="text" id="new-project-desc" placeholder="项目说明（可选）">
+      <button class="btn primary" id="btn-project-create">创建项目</button>
+    </div>
+    <div class="tiny faint" id="project-create-hint" style="margin-top:7px">创建后你自动成为 owner</div>
+  </div>
+</section>
+
+<div class="project-toolbar">
+  <input type="text" id="project-search" class="log-tool" placeholder="搜索项目名称 / 说明…" aria-label="搜索项目">
+  <span class="tiny faint">共 {{ projects|length }} 张卡片</span>
+</div>
+
+<div class="project-grid" id="project-grid">
+  {% for p in projects %}
+  <a class="project-tile" href="/project/{{ p.id }}"
+     data-name="{{ (p.name ~ ' ' ~ (p.description or ''))|lower }}">
+    <div class="project-tile-top">
+      <div class="project-mark">{{ p.name[:1] }}</div>
+      <div class="project-tile-badges">
+        <span class="badge {{ 'ok' if p.role == 'owner' else 'run' if p.role == 'editor' else 'idle' }}">{{ p.role }}</span>
+        {% if p.kind == 'personal' %}<span class="badge idle">个人</span>{% endif %}
+        {% if p.archived %}<span class="badge warn">已归档</span>{% endif %}
+      </div>
+    </div>
+    <h2>{{ p.name }}</h2>
+    <p class="project-tile-desc">{{ p.description or '暂无说明，点进去补充项目简介。' }}</p>
+    <div class="project-tile-stats">
+      <span><b>{{ p.exp_count }}</b> 实验</span>
+      <span><b>{{ p.members|length }}</b> 成员</span>
+      <span class="project-enter">管理 →</span>
+    </div>
+  </a>
+  {% else %}
+  <div class="empty">还没有项目，先在上面创建一个吧。</div>
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btn-project-create').onclick = async () => {
+  const name = document.getElementById('new-project-name').value.trim();
+  const description = document.getElementById('new-project-desc').value.trim();
+  const hint = document.getElementById('project-create-hint');
+  if (!name) return toast('请填写项目名称', true);
+  const btn = document.getElementById('btn-project-create');
+  btn.disabled = true; hint.textContent = '创建中…';
+  try {
+    await api('/api/projects', { method: 'POST', body: { name, description } });
+    location.href = '/projects';
+  } catch (e) { hint.textContent = ''; toast(e.message, true); btn.disabled = false; }
+};
+
+const projectSearch = document.getElementById('project-search');
+if (projectSearch) projectSearch.oninput = () => {
+  const q = projectSearch.value.trim().toLowerCase();
+  document.querySelectorAll('#project-grid .project-tile').forEach(tile => {
+    tile.style.display = !q || (tile.dataset.name || '').includes(q) ? '' : 'none';
+  });
+};
+</script>
+{% endblock %}

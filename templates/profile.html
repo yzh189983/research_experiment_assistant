@@ -3,136 +3,203 @@
 {% block title %}个人主页 · 科研实验助手{% endblock %}
 
 {% block body %}
-<div class="page-narrow">
+<div class="profile-shell">
   <div class="page-head">
     <div>
       <div class="eyebrow">Profile · 个人主页</div>
       <h1>科研工作者档案</h1>
-      <p class="page-sub">在这里记录你的研究方向、单位、技能与学术链接。信息只属于当前账号，保存在本机 <span class="mono">data/app.db</span>，不会和其他用户共享。</p>
+      <p class="page-sub">记录研究方向、单位、技能与学术链接。信息只属于当前账号，保存在本机。</p>
     </div>
     <span class="badge {{ 'ok' if filled else 'idle' }}"><i class="dot"></i>资料完成 {{ filled }}/{{ total }}</span>
   </div>
 
-  <div class="profile-grid">
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">名片</div><span class="tiny muted">仅自己可见</span></div>
-      <div class="card-pad">
-        <div class="profile-hero">
-          <div class="profile-avatar">{{ (profile.name or current_user.username)[0] }}</div>
-          <div class="profile-identity">
-            <div class="profile-name">{{ profile.name or current_user.username }}</div>
-            <div class="muted tiny">{{ profile.title or '科研工作者' }}</div>
-            <div class="muted tiny">{{ profile.affiliation or '未填写单位 / 实验室' }}</div>
-          </div>
-        </div>
-
-        <div class="profile-section">
-          <div class="profile-label">研究方向</div>
-          {% if tags %}
-            <div class="tag-row">{% for tag in tags %}<span class="tag">{{ tag }}</span>{% endfor %}</div>
-          {% else %}<div class="profile-value muted">未填写</div>{% endif %}
-        </div>
-
-        <div class="profile-section">
-          <div class="profile-label">个人简介</div>
-          <div class="profile-value">{{ profile.bio or '还没有写个人简介。' }}</div>
-        </div>
-
-        <div class="profile-section">
-          <div class="profile-label">方法与技能</div>
-          <div class="profile-value">{{ profile.skills or '未填写' }}</div>
-        </div>
-
-        <div class="profile-section">
-          <div class="profile-label">教育 / 工作经历</div>
-          <div class="profile-value">{{ profile.education or '未填写教育经历' }}</div>
-          <div class="profile-value" style="margin-top:6px">{{ profile.experience or '未填写工作经历' }}</div>
-        </div>
-
-        <div class="profile-section">
-          <div class="profile-label">联系方式</div>
-          <div class="profile-value">{{ profile.email or '未填写邮箱' }}</div>
-          {% if profile.orcid %}<div class="profile-value">ORCID：{{ profile.orcid }}</div>{% endif %}
-          <div class="profile-links" style="margin-top:8px">
-            {% if links.scholar %}<a href="{{ links.scholar }}" target="_blank" rel="noopener">Google Scholar ↗</a>{% endif %}
-            {% if links.github %}<a href="{{ links.github }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
-            {% if links.website %}<a href="{{ links.website }}" target="_blank" rel="noopener">个人 / 实验室主页 ↗</a>{% endif %}
-          </div>
-        </div>
+  <section class="card profile-summary-card">
+    <div class="profile-avatar large">{{ (profile.name or current_user.username)[0] }}</div>
+    <div class="profile-summary-main">
+      <div class="profile-summary-name">{{ profile.name or current_user.username }}</div>
+      <div class="muted tiny">{{ profile.title or '科研工作者' }} {% if profile.affiliation %}· {{ profile.affiliation }}{% endif %}</div>
+      <div class="profile-summary-tags">
+        {% if tags %}
+          {% for tag in tags[:5] %}<span class="tag">{{ tag }}</span>{% endfor %}
+          {% if tags|length > 5 %}<span class="tiny faint">+{{ tags|length - 5 }}</span>{% endif %}
+        {% else %}<span class="tiny faint">还没有填写研究方向</span>{% endif %}
       </div>
     </div>
-
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">编辑资料</div>
-        <button class="btn sm accent" id="btn-save-profile" type="button">保存资料</button>
-      </div>
-      <div class="card-pad">
-        <div class="grid2">
-          <label class="field"><span>姓名 / 常用名</span>
-            <input type="text" id="pf-name" value="{{ profile.name or '' }}" placeholder="例如：李明"></label>
-          <label class="field"><span>职称 / 身份</span>
-            <input type="text" id="pf-title" value="{{ profile.title or '' }}" placeholder="例如：副教授 / 博士生"></label>
-        </div>
-        <label class="field"><span>单位 / 实验室</span>
-          <input type="text" id="pf-affiliation" value="{{ profile.affiliation or '' }}" placeholder="例如：某某大学 计算机学院 智能实验室"></label>
-        <div class="grid2">
-          <label class="field"><span>研究方向 <em>逗号分隔</em></span>
-            <input type="text" id="pf-research" value="{{ profile.research_fields or '' }}" placeholder="医学影像, 幻觉检测, 可信 AI"></label>
-          <label class="field"><span>关键词 <em>逗号分隔</em></span>
-            <input type="text" id="pf-keywords" value="{{ profile.keywords or '' }}" placeholder="VQA, 大模型评估"></label>
-        </div>
-        <label class="field"><span>个人简介</span>
-          <textarea id="pf-bio" rows="4" placeholder="用几句话介绍你的研究兴趣与工作…">{{ profile.bio or '' }}</textarea></label>
-        <label class="field"><span>方法与技能</span>
-          <textarea id="pf-skills" rows="3" placeholder="例如：PyTorch、统计建模、SSH 集群、实验设计…">{{ profile.skills or '' }}</textarea></label>
-        <div class="grid2">
-          <label class="field"><span>教育经历</span>
-            <textarea id="pf-education" rows="3" placeholder="学校 / 专业 / 学位 / 时间">{{ profile.education or '' }}</textarea></label>
-          <label class="field"><span>工作经历</span>
-            <textarea id="pf-experience" rows="3" placeholder="单位 / 职位 / 时间">{{ profile.experience or '' }}</textarea></label>
-        </div>
-        <div class="grid2">
-          <label class="field"><span>邮箱</span>
-            <input type="text" id="pf-email" value="{{ profile.email or '' }}" placeholder="name@university.edu"></label>
-          <label class="field"><span>ORCID</span>
-            <input type="text" id="pf-orcid" value="{{ profile.orcid or '' }}" placeholder="0000-0000-0000-0000"></label>
-        </div>
-        <div class="grid2">
-          <label class="field"><span>Google Scholar 链接</span>
-            <input type="text" id="pf-scholar" value="{{ profile.scholar or '' }}" placeholder="https://scholar.google.com/..."></label>
-          <label class="field"><span>GitHub 链接</span>
-            <input type="text" id="pf-github" value="{{ profile.github or '' }}" placeholder="https://github.com/..."></label>
-        </div>
-        <label class="field"><span>个人 / 实验室主页</span>
-          <input type="text" id="pf-website" value="{{ profile.website or '' }}" placeholder="https://..."></label>
-        <div class="hint">所有字段均可留空。链接只接受 http:// 或 https:// 开头的地址。</div>
-      </div>
+    <div class="profile-summary-progress">
+      <span class="tiny faint">资料完成度</span>
+      <b>{{ ((filled / total * 100) | int) if total else 0 }}%</b>
+      <span class="tiny faint">{{ filled }} / {{ total }} 项</span>
     </div>
+  </section>
+
+  <div class="work-toolbar">
+    <span class="tiny faint">资料内容已收起为缩略卡，点开后再查看或修改。</span>
+    <button class="btn ghost sm" id="btn-profile-expand">展开全部</button>
+    <button class="btn ghost sm" id="btn-profile-collapse">收起全部</button>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <div class="sec-head"><div class="sec-title">账号安全 · 修改密码</div>
-      <span class="badge idle">当前账号：{{ current_user.username }}</span>
-    </div>
-    <div class="card-pad">
-      <div class="hint" style="margin-bottom:14px">修改密码需要验证当前密码。修改后请用新密码登录；已签发的 CLI 令牌不会自动失效，必要时可到「设置」重新生成。</div>
-      <div class="grid2">
-        <label class="field"><span>当前密码</span>
-          <input type="password" id="pw-old" autocomplete="current-password" placeholder="输入现在的密码"></label>
-        <div></div>
-        <label class="field"><span>新密码 <em>至少 6 位</em></span>
-          <input type="password" id="pw-new" autocomplete="new-password" placeholder="输入新密码"></label>
-        <label class="field"><span>确认新密码</span>
-          <input type="password" id="pw-confirm" autocomplete="new-password" placeholder="再输入一次新密码"></label>
+  <div class="work-grid">
+    <section class="card work-card" data-work-card="card">
+      <div class="sec-head">
+        <div class="sec-title">名片</div>
+        <span class="tiny muted">仅自己可见</span>
+        <button class="work-toggle" data-work-toggle="card" aria-expanded="false">查看 →</button>
       </div>
-      <button class="btn primary" id="btn-change-password" type="button">修改密码</button>
-    </div>
+      <div class="work-preview">
+        <span class="preview-tag">CARD</span>
+        {{ profile.bio or (profile.name or current_user.username) }} · {{ profile.title or '科研工作者' }} · {{ profile.affiliation or '未填写单位 / 实验室' }}
+      </div>
+      <div class="work-body" data-work-body="card" style="display:none">
+        <div class="card-pad">
+          <div class="profile-section">
+            <div class="profile-label">研究方向</div>
+            {% if tags %}<div class="tag-row">{% for tag in tags %}<span class="tag">{{ tag }}</span>{% endfor %}</div>
+            {% else %}<div class="profile-value muted">未填写</div>{% endif %}
+          </div>
+          <div class="profile-section">
+            <div class="profile-label">个人简介</div>
+            <div class="profile-value">{{ profile.bio or '还没有写个人简介。' }}</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-label">方法与技能</div>
+            <div class="profile-value">{{ profile.skills or '未填写' }}</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-label">教育 / 工作经历</div>
+            <div class="profile-value">{{ profile.education or '未填写教育经历' }}</div>
+            <div class="profile-value" style="margin-top:6px">{{ profile.experience or '未填写工作经历' }}</div>
+          </div>
+          <div class="profile-section">
+            <div class="profile-label">联系方式</div>
+            <div class="profile-value">{{ profile.email or '未填写邮箱' }}</div>
+            {% if profile.orcid %}<div class="profile-value">ORCID：{{ profile.orcid }}</div>{% endif %}
+            <div class="profile-links" style="margin-top:8px">
+              {% if links.scholar %}<a href="{{ links.scholar }}" target="_blank" rel="noopener">Google Scholar ↗</a>{% endif %}
+              {% if links.github %}<a href="{{ links.github }}" target="_blank" rel="noopener">GitHub ↗</a>{% endif %}
+              {% if links.website %}<a href="{{ links.website }}" target="_blank" rel="noopener">个人 / 实验室主页 ↗</a>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="edit">
+      <div class="sec-head">
+        <div class="sec-title">编辑资料</div>
+        <span class="badge idle">{{ filled }}/{{ total }}</span>
+        <button class="work-toggle" data-work-toggle="edit" aria-expanded="false">编辑 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">EDIT</span>
+        姓名 / 单位 / 研究方向 / 简介 / 技能 / 经历 / 联系方式与学术链接
+      </div>
+      <div class="work-body" data-work-body="edit" style="display:none">
+        <div class="card-pad">
+          <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+            <button class="btn sm accent" id="btn-save-profile" type="button">保存资料</button>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>姓名 / 常用名</span>
+              <input type="text" id="pf-name" value="{{ profile.name or '' }}" placeholder="例如：李明"></label>
+            <label class="field"><span>职称 / 身份</span>
+              <input type="text" id="pf-title" value="{{ profile.title or '' }}" placeholder="例如：副教授 / 博士生"></label>
+          </div>
+          <label class="field"><span>单位 / 实验室</span>
+            <input type="text" id="pf-affiliation" value="{{ profile.affiliation or '' }}" placeholder="例如：某某大学 计算机学院 智能实验室"></label>
+          <div class="grid2">
+            <label class="field"><span>研究方向 <em>逗号分隔</em></span>
+              <input type="text" id="pf-research" value="{{ profile.research_fields or '' }}" placeholder="医学影像, 幻觉检测, 可信 AI"></label>
+            <label class="field"><span>关键词 <em>逗号分隔</em></span>
+              <input type="text" id="pf-keywords" value="{{ profile.keywords or '' }}" placeholder="VQA, 大模型评估"></label>
+          </div>
+          <label class="field"><span>个人简介</span>
+            <textarea id="pf-bio" rows="4" placeholder="用几句话介绍你的研究兴趣与工作…">{{ profile.bio or '' }}</textarea></label>
+          <label class="field"><span>方法与技能</span>
+            <textarea id="pf-skills" rows="3" placeholder="例如：PyTorch、统计建模、SSH 集群、实验设计…">{{ profile.skills or '' }}</textarea></label>
+          <div class="grid2">
+            <label class="field"><span>教育经历</span>
+              <textarea id="pf-education" rows="3" placeholder="学校 / 专业 / 学位 / 时间">{{ profile.education or '' }}</textarea></label>
+            <label class="field"><span>工作经历</span>
+              <textarea id="pf-experience" rows="3" placeholder="单位 / 职位 / 时间">{{ profile.experience or '' }}</textarea></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>邮箱</span>
+              <input type="text" id="pf-email" value="{{ profile.email or '' }}" placeholder="name@university.edu"></label>
+            <label class="field"><span>ORCID</span>
+              <input type="text" id="pf-orcid" value="{{ profile.orcid or '' }}" placeholder="0000-0000-0000-0000"></label>
+          </div>
+          <div class="grid2">
+            <label class="field"><span>Google Scholar 链接</span>
+              <input type="text" id="pf-scholar" value="{{ profile.scholar or '' }}" placeholder="https://scholar.google.com/..."></label>
+            <label class="field"><span>GitHub 链接</span>
+              <input type="text" id="pf-github" value="{{ profile.github or '' }}" placeholder="https://github.com/..."></label>
+          </div>
+          <label class="field"><span>个人 / 实验室主页</span>
+            <input type="text" id="pf-website" value="{{ profile.website or '' }}" placeholder="https://..."></label>
+          <div class="hint">所有字段均可留空。链接只接受 http:// 或 https:// 开头的地址。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="security">
+      <div class="sec-head">
+        <div class="sec-title">账号安全 · 修改密码</div>
+        <span class="badge idle">{{ current_user.username }}</span>
+        <button class="work-toggle" data-work-toggle="security" aria-expanded="false">修改 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">SECURITY</span>
+        修改密码需要验证当前密码；CLI 令牌不会自动失效。
+      </div>
+      <div class="work-body" data-work-body="security" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin-bottom:14px">修改后请用新密码登录；已签发的 CLI 令牌不会自动失效，必要时可到「设置」重新生成。</div>
+          <div class="grid2">
+            <label class="field"><span>当前密码</span>
+              <input type="password" id="pw-old" autocomplete="current-password" placeholder="输入现在的密码"></label>
+            <div></div>
+            <label class="field"><span>新密码 <em>至少 6 位</em></span>
+              <input type="password" id="pw-new" autocomplete="new-password" placeholder="输入新密码"></label>
+            <label class="field"><span>确认新密码</span>
+              <input type="password" id="pw-confirm" autocomplete="new-password" placeholder="再输入一次新密码"></label>
+          </div>
+          <button class="btn primary" id="btn-change-password" type="button">修改密码</button>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+function setProfileOpen(name, open) {
+  const card = document.querySelector(`[data-work-card="${name}"]`);
+  const body = document.querySelector(`[data-work-body="${name}"]`);
+  const btn = document.querySelector(`[data-work-toggle="${name}"]`);
+  if (!card || !body || !btn) return;
+  card.classList.toggle('open', open);
+  body.style.display = open ? '' : 'none';
+  btn.textContent = open ? '收起 ↑' : ({ card: '查看 →', edit: '编辑 →', security: '修改 →' }[name] || '查看 →');
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+document.querySelectorAll('[data-work-toggle]').forEach(btn => {
+  btn.onclick = () => {
+    const card = document.querySelector(`[data-work-card="${btn.dataset.workToggle}"]`);
+    setProfileOpen(btn.dataset.workToggle, !(card && card.classList.contains('open')));
+  };
+});
+document.querySelectorAll('.work-preview').forEach(box => {
+  box.onclick = () => {
+    const card = box.closest('[data-work-card]');
+    if (card) setProfileOpen(card.dataset.workCard, true);
+  };
+});
+const profileExpand = document.getElementById('btn-profile-expand');
+const profileCollapse = document.getElementById('btn-profile-collapse');
+if (profileExpand) profileExpand.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setProfileOpen(c.dataset.workCard, true));
+if (profileCollapse) profileCollapse.onclick = () => document.querySelectorAll('[data-work-card]').forEach(c => setProfileOpen(c.dataset.workCard, false));
+
 const profileIds = {
   name: 'pf-name', title: 'pf-title', affiliation: 'pf-affiliation',
   research_fields: 'pf-research', keywords: 'pf-keywords', bio: 'pf-bio',

@@ -3,196 +3,239 @@
 {% block title %}科研实验助手{% endblock %}
 
 {% block body %}
-<div class="hero">
-  <div class="card card-pad">
-    <div class="eyebrow">Research pipeline · 研究流水线</div>
-    <h1>把创新点交给它，<br>剩下的实验它替你盯着。</h1>
-    <p class="sub">写清楚你的想法，系统会拆成实验方案、写出能跑的代码、SSH 部署到你的服务器上跑，全程盯日志和指标，跑完自动给出结论。</p>
+<div class="home-shell">
+  <section class="card home-hero">
+    <div class="home-hero-copy">
+      <div class="eyebrow">Research pipeline · 研究流水线</div>
+      <h1>把创新点交给它，<br>剩下的实验它替你盯着。</h1>
+      <p class="sub">写清楚你的想法，系统会拆方案、写代码、部署运行，跑完自动给出结论。</p>
+      <div class="home-hero-stats">
+        <span><b>{{ stats.exp }}</b> 实验</span>
+        <span><b>{{ stats.busy }}</b> 进行中</span>
+        <span><b>{{ stats.done }}</b> 已完成</span>
+        <span><b>{{ stats.hosts }}</b> 服务器</span>
+        <span class="{{ 'ok-text' if llm_ok else 'warn-text' }}">{{ 'LLM 已配置' if llm_ok else 'LLM 未配置' }}</span>
+      </div>
+    </div>
+    <div class="home-hero-actions">
+      <button class="btn primary" id="btn-toggle-create">＋ 新建实验</button>
+      <a class="btn" href="/projects">项目管理</a>
+    </div>
+  </section>
 
-    <div class="field">
-      <div class="field-head">
-        <span>实验模板 <em class="faint">选一个快速起步，也可自定义</em></span>
-      </div>
-      <select id="template-select" style="width:100%">
-        <option value="">— 不使用模板 —</option>
-        {% for t in templates %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="field">
-      <span>实验标题</span>
-      <input type="text" id="new-title" placeholder="例：反事实增强的医学 VQA 幻觉检测">
-    </div>
-    <div class="field">
-      <div class="field-head">
-        <span>创新点 / 研究想法 <em class="faint">越具体，方案越准</em></span>
-        <button type="button" class="btn sm" id="btn-pick-file">从文件读取</button>
-      </div>
-      <div class="drop-wrap" id="drop-wrap">
-        <textarea id="new-innovation" rows="7" placeholder="例：现有的幻觉检测方法依赖输出置信度，但模型对自身知识边界的判断更可靠。
-我想验证：在医学 VQA 上，把反事实问题下的答案一致性（AIC）与原始的 epistemic 信号组合起来，
-能否比单一置信度更好地把幻觉样本区分出来。计划在 VQA-RAD / SLAKE 上做，指标用 AUROC 与 F1。"></textarea>
-        <div class="drop-mask">松手即可读取 · 支持 .md .txt .docx .pdf</div>
-      </div>
-      <div class="file-chip" id="file-chip" hidden>
-        <span class="mono" id="file-name"></span>
-        <span class="faint" id="file-meta"></span>
-        <button type="button" class="x" id="btn-clear-file" title="清掉文件内容" aria-label="清掉文件内容">×</button>
-      </div>
-      <input type="file" id="file-input" hidden
-             accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-      <button class="btn primary" id="btn-create">创建实验 →</button>
-      <button class="btn" id="btn-toggle-batch">批量参数实验</button>
-      <span class="tiny faint" id="create-hint"></span>
-    </div>
-
-    <div id="batch-panel" style="display:none;margin-top:14px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--rule)">
-      <div class="plan-label" style="margin-bottom:6px">参数矩阵（JSON，最多 50 组）</div>
-      <textarea id="batch-params" rows="3" style="width:100%;font-family:var(--mono);font-size:12px" placeholder='例：{"lr":[0.01,0.001],"batch_size":[32,64]}　→ 自动生成 4 个实验'>{"lr":[0.01,0.001],"batch_size":[32,64]}</textarea>
-      <div class="tiny faint" style="margin:6px 0 10px">每组参数会生成一个独立实验，方案里会带上本次参数；创建后可逐个生成方案并排队运行。</div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input type="text" id="batch-prefix" placeholder="标题前缀（可选）" style="width:170px">
-        <button class="btn sm" id="btn-batch-create">批量创建</button>
-        <span class="tiny faint" id="batch-hint"></span>
-      </div>
-    </div>
-
-    {% if not llm_ok %}
-    <div style="margin-top:18px;padding:11px 13px;background:var(--warn-soft);border:1px solid #E8D5AE;border-left:2px solid var(--warn);border-radius:0" class="tiny">
-      还没有配置大模型 API Key，只能生成占位代码。<a href="/settings" style="color:var(--warn);text-decoration:underline">去设置 →</a>
-    </div>
-    {% endif %}
+  {% if failed_runs %}
+  <div class="run-alert home-alert">
+    <b>⚠ 最近有 {{ failed_runs|length }} 次运行未正常完成</b>
+    <span class="tiny">点开对应实验查看日志与异常原因，必要时重新运行。</span>
   </div>
+  {% endif %}
 
-  <div style="display:flex;flex-direction:column;gap:24px;min-width:0">
-    {% if failed_runs %}
-    <div class="run-alert">
-      <b>⚠ 最近有 {{ failed_runs|length }} 次运行未正常完成</b>
-      <div class="tiny">点开对应实验查看日志与异常原因，必要时重新运行。</div>
+  <section class="card create-panel" id="create-panel" style="display:none">
+    <div class="sec-head">
+      <div class="sec-title">新建实验</div>
+      <span class="eyebrow">Create</span>
     </div>
-    {% endif %}
+    <div class="card-pad">
+      <div class="home-create-grid">
+        <div class="field">
+          <div class="field-head">
+            <span>所属项目 <em class="faint"><a href="/projects" style="color:var(--accent)">管理项目与成员</a></em></span>
+          </div>
+          <select id="project-select" style="width:100%">
+            {% for p in projects %}
+            <option value="{{ p.id }}" {% if request.args.get('project_id')|string == p.id|string %}selected{% endif %}>{{ p.name }} · {{ p.role }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <div class="field-head">
+            <span>实验模板 <em class="faint">选一个快速起步，也可自定义</em></span>
+          </div>
+          <select id="template-select" style="width:100%">
+            <option value="">— 不使用模板 —</option>
+            {% for t in templates %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <span>实验标题</span>
+        <input type="text" id="new-title" placeholder="例：反事实增强的医学 VQA 幻觉检测">
+      </div>
+      <div class="field">
+        <div class="field-head">
+          <span>创新点 / 研究想法 <em class="faint">越具体，方案越准</em></span>
+          <button type="button" class="btn sm" id="btn-pick-file">从文件读取</button>
+        </div>
+        <div class="drop-wrap" id="drop-wrap">
+          <textarea id="new-innovation" rows="5" placeholder="例：现有的幻觉检测方法依赖输出置信度，但模型对自身知识边界的判断更可靠。我想验证：在医学 VQA 上，把反事实问题下的答案一致性（AIC）与原始的 epistemic 信号组合起来，能否比单一置信度更好地把幻觉样本区分出来。"></textarea>
+          <div class="drop-mask">松手即可读取 · 支持 .md .txt .docx .pdf</div>
+        </div>
+        <div class="file-chip" id="file-chip" hidden>
+          <span class="mono" id="file-name"></span>
+          <span class="faint" id="file-meta"></span>
+          <button type="button" class="x" id="btn-clear-file" title="清掉文件内容" aria-label="清掉文件内容">×</button>
+        </div>
+        <input type="file" id="file-input" hidden accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn primary" id="btn-create">创建实验 →</button>
+        <button class="btn" id="btn-toggle-batch">批量参数实验</button>
+        <span class="tiny faint" id="create-hint"></span>
+      </div>
 
-    <div class="card">
+      <div id="batch-panel" style="display:none;margin-top:14px;padding:13px 15px;background:var(--surface-2);border:1px solid var(--rule)">
+        <div class="plan-label" style="margin-bottom:6px">参数矩阵（JSON，最多 50 组）</div>
+        <textarea id="batch-params" rows="3" style="width:100%;font-family:var(--mono);font-size:12px" placeholder='例：{"lr":[0.01,0.001],"batch_size":[32,64]}　→ 自动生成 4 个实验'>{"lr":[0.01,0.001],"batch_size":[32,64]}</textarea>
+        <div class="tiny faint" style="margin:6px 0 10px">每组参数会生成一个独立实验；创建后可逐个生成方案并排队运行。</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="batch-prefix" placeholder="标题前缀（可选）" style="width:170px">
+          <button class="btn sm" id="btn-batch-create">批量创建</button>
+          <span class="tiny faint" id="batch-hint"></span>
+        </div>
+      </div>
+
+      {% if not llm_ok %}
+      <div class="tiny warn-text" style="margin-top:14px">还没有配置大模型 API Key，只能生成占位代码。<a href="/settings" style="color:var(--warn);text-decoration:underline">去设置 →</a></div>
+      {% endif %}
+    </div>
+  </section>
+
+  <div class="home-board">
+    <section class="card home-recent">
       <div class="sec-head">
         <div class="sec-title">最近运行</div>
-        <span class="eyebrow">实时状态</span>
+        <span class="eyebrow">{{ recent_runs|length }} 条</span>
       </div>
       {% if recent_runs %}
-      <div class="exp-list">
-        {% for r in recent_runs %}
-        <a class="exp-item" href="/exp/{{ r.experiment_id }}">
-          <div class="t">
-            <b>{{ r.exp_title or ('实验 #' ~ r.experiment_id) }}</b>
-            <small>run #{{ r.id }} · {{ r.started_at|timestamp }}{% if r.exit_code %} · 退出码 {{ r.exit_code }}{% endif %}</small>
+      <div class="recent-run-grid">
+        {% for r in recent_runs[:6] %}
+        <a class="recent-run-card" href="/exp/{{ r.experiment_id }}">
+          <div class="recent-run-top">
+            <span class="mono tiny">run #{{ r.id }}</span>
+            {{ statusBadge(r.status) | safe }}
           </div>
-          {{ statusBadge(r.status) | safe }}
+          <b>{{ r.exp_title or ('实验 #' ~ r.experiment_id) }}</b>
+          <small>{{ r.started_at|timestamp }}{% if r.exit_code %} · exit {{ r.exit_code }}{% endif %}</small>
         </a>
         {% endfor %}
       </div>
       {% else %}
       <div class="empty">还没有运行记录</div>
       {% endif %}
-    </div>
+    </section>
 
-    <div class="card">
+    <section class="card home-experiments">
       <div class="sec-head">
         <div class="sec-title">最近的实验</div>
         <span class="eyebrow">{{ experiments|length }} 项</span>
       </div>
-      <div class="card-pad" style="padding-bottom:6px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <input type="text" id="exp-search" class="log-tool" placeholder="搜索标题 / 创新点 / 标签…" aria-label="搜索实验" style="flex:1;min-width:180px">
-          <select id="exp-status" class="log-tool" aria-label="按状态筛选">
-            <option value="">全部状态</option>
-            <option value="draft">待开始</option><option value="planned">方案就绪</option>
-            <option value="coded">代码就绪</option><option value="running">运行中</option>
-            <option value="done">已完成</option><option value="failed">失败</option>
-          </select>
-          <label class="tiny" style="display:flex;align-items:center;gap:4px;color:var(--muted)">
-            <input type="checkbox" id="exp-archived" style="width:auto"> 显示归档</label>
-        </div>
+      <div class="card-pad home-filters">
+        <input type="text" id="exp-search" class="log-tool" placeholder="搜索标题 / 标签…" aria-label="搜索实验">
+        <select id="exp-project" class="log-tool" aria-label="按项目筛选">
+          <option value="">全部项目</option>
+          {% for p in projects %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+        </select>
+        <select id="exp-status" class="log-tool" aria-label="按状态筛选">
+          <option value="">全部状态</option>
+          <option value="draft">待开始</option><option value="planned">方案就绪</option>
+          <option value="coded">代码就绪</option><option value="running">运行中</option>
+          <option value="done">已完成</option><option value="failed">失败</option>
+        </select>
+        <label class="tiny faint"><input type="checkbox" id="exp-archived" style="width:auto"> 归档</label>
       </div>
+
       {% if experiments %}
-      <div class="exp-list" id="exp-list">
-        {% for e in experiments %}
-        <a class="exp-item" href="/exp/{{ e.id }}" data-id="{{ e.id }}" data-status="{{ e.status }}" data-archived="{{ e.archived or 0 }}"
-           data-tags="{{ e.tags or '' }}" data-title="{{ e.title }}">
-          <div class="t">
-            <b>{{ e.title }}</b>
-            <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行{% if e.tags %} · {{ e.tags }}{% endif %}{% if e.archived %} · 已归档{% endif %}</small>
+      <div id="exp-list" class="home-exp-groups">
+        {% for pid, group in experiments|groupby('project_id') %}
+        <div class="project-group" data-project-id="{{ pid or 0 }}">
+          <div class="exp-group-head">
+            {% if pid %}<a href="/project/{{ pid }}">{{ group[0].project_name or '项目' }}</a>{% else %}个人项目{% endif %}
+            <span>{{ group|length }} 项</span>
           </div>
-          {{ statusBadge(e.status) | safe }}
-        </a>
+          <div class="home-exp-grid">
+            {% for e in group %}
+            <div class="home-exp-card" data-id="{{ e.id }}" data-status="{{ e.status }}" data-archived="{{ e.archived or 0 }}"
+                 data-project-id="{{ e.project_id or 0 }}" data-project-role="{{ e.project_role }}"
+                 data-tags="{{ e.tags or '' }}" data-title="{{ e.title }}">
+              <a class="home-exp-link" href="/exp/{{ e.id }}">
+                <div class="home-exp-top">
+                  <span class="home-exp-icon">{{ e.title[:1] }}</span>
+                  {{ statusBadge(e.status) | safe }}
+                </div>
+                <b>{{ e.title }}</b>
+                <small>No. {{ '%03d' % e.id }} · {{ e.run_count }} 次运行 · {{ e.project_role }}</small>
+                {% if e.tags %}<div class="home-exp-tags">{{ e.tags }}</div>{% endif %}
+              </a>
+              {% if e.project_role == 'owner' %}
+              <button class="home-exp-delete" type="button" data-del-exp="{{ e.id }}" title="删除实验">×</button>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
         {% endfor %}
       </div>
       {% else %}
-      <div class="empty" id="exp-empty">还没有实验，左边写一个创新点开始</div>
+      <div class="empty" id="exp-empty">还没有实验，点右上角「新建实验」开始</div>
       {% endif %}
-    </div>
+    </section>
+  </div>
 
-    {% if timeline %}
-    <div class="card">
-      <div class="sec-head"><div class="sec-title">全局时间线</div><span class="tiny muted">最近 {{ timeline|length }} 条</span></div>
-      <div class="card-pad" style="padding:0">
-        <table class="grid-table">
-          <thead><tr><th>时间</th><th>实验</th><th>事件</th><th>结果</th></tr></thead>
-          <tbody>
-          {% for t in timeline %}
-            <tr>
-              <td class="mono tiny">{{ t.ts | timestamp }}</td>
-              <td class="tiny"><a href="/exp/{{ t.experiment_id }}" style="color:var(--accent)">{{ t.exp_title }}</a></td>
-              <td class="tiny">{{ t.action }}</td>
-              <td class="tiny faint">{{ (t.decision or '')[:50] }}</td>
-            </tr>
-          {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-    {% endif %}
-
-    {% set batch_exps = experiments | selectattr('template_id') | list %}
-    {% if batch_exps|length > 1 %}
-    <div class="card" id="batch-compare-card">
-      <div class="sec-head">
-        <div class="sec-title">批量实验对比</div>
+  {% set batch_exps = experiments | selectattr('template_id') | list %}
+  {% if batch_exps|length > 1 %}
+  <details class="card home-fold" id="batch-compare-card">
+    <summary>批量实验对比 <span>{{ batch_exps|length }} 项</span></summary>
+    <div class="card-pad">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
         <button class="btn sm" id="btn-compare">对比选中项</button>
       </div>
       <div class="exp-list">
         {% for e in batch_exps[:20] %}
         <label class="exp-item" style="cursor:pointer">
           <input type="checkbox" class="batch-check" value="{{ e.id }}" checked>
-          <div class="t">
-            <b>{{ e.title }}</b>
-            <small>{{ e.template_id }} · {{ e.run_count }} 次运行</small>
-          </div>
+          <div class="t"><b>{{ e.title }}</b><small>{{ e.template_id }} · {{ e.run_count }} 次运行</small></div>
           {{ statusBadge(e.status) | safe }}
         </label>
         {% endfor %}
       </div>
     </div>
-    {% endif %}
+  </details>
+  {% endif %}
 
-    <div class="card">
-      <div class="sec-head">
-        <div class="sec-title">概览</div>
-        <span class="eyebrow">at a glance</span>
-      </div>
-      <div class="stat-row plain">
-        <div class="stat"><i>实验总数</i><b>{{ stats.exp }}</b></div>
-        <div class="stat"><i>进行中</i><b>{{ stats.busy }}</b></div>
-        <div class="stat"><i>已完成</i><b>{{ stats.done }}</b></div>
-        <div class="stat"><i>服务器</i><b>{{ stats.hosts }}</b></div>
-      </div>
-      <div class="plan-block" style="padding:13px 18px">
-        <div class="plan-label" style="margin-bottom:5px">大模型</div>
-        <div class="tiny" style="color:{{ 'var(--accent)' if llm_ok else 'var(--warn)' }}">
-          {{ '已配置 · 方案与代码由 LLM 生成' if llm_ok else '未配置 · 仅生成占位方案与代码' }}
-        </div>
+  {% if timeline %}
+  <details class="card home-fold">
+    <summary>全局时间线 <span>最近 {{ timeline|length }} 条</span></summary>
+    <div class="card-pad" style="padding:0">
+      <table class="grid-table">
+        <thead><tr><th>时间</th><th>实验</th><th>事件</th><th>结果</th></tr></thead>
+        <tbody>
+        {% for t in timeline %}
+          <tr>
+            <td class="mono tiny">{{ t.ts | timestamp }}</td>
+            <td class="tiny"><a href="/exp/{{ t.experiment_id }}" style="color:var(--accent)">{{ t.exp_title }}</a></td>
+            <td class="tiny">{{ t.action }}</td>
+            <td class="tiny faint">{{ (t.decision or '')[:50] }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
+
+  <details class="card home-fold">
+    <summary>一次实验的六个环节 <span>流程说明</span></summary>
+    <div class="card-pad">
+      <div class="flow">
+        <div class="flow-step"><i>01</i> 创新点</div><span class="flow-arrow">→</span>
+        <div class="flow-step"><i>02</i> 实验方案</div><span class="flow-arrow">→</span>
+        <div class="flow-step"><i>03</i> 生成代码</div><span class="flow-arrow">→</span>
+        <div class="flow-step"><i>04</i> SSH 部署运行</div><span class="flow-arrow">→</span>
+        <div class="flow-step"><i>05</i> 实时监控</div><span class="flow-arrow">→</span>
+        <div class="flow-step"><i>06</i> 自动总结</div>
       </div>
     </div>
-  </div>
+  </details>
 </div>
 
 <div id="compare-modal" class="compare-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="cmp-title">
@@ -212,18 +255,6 @@
     </div>
   </div>
 </div>
-
-<div class="card card-pad">
-  <div class="eyebrow" style="margin-bottom:14px">Workflow · 一次实验的六个环节</div>
-  <div class="flow">
-    <div class="flow-step"><i>01</i> 创新点</div><span class="flow-arrow">→</span>
-    <div class="flow-step"><i>02</i> 实验方案</div><span class="flow-arrow">→</span>
-    <div class="flow-step"><i>03</i> 生成代码</div><span class="flow-arrow">→</span>
-    <div class="flow-step"><i>04</i> SSH 部署运行</div><span class="flow-arrow">→</span>
-    <div class="flow-step"><i>05</i> 实时监控</div><span class="flow-arrow">→</span>
-    <div class="flow-step"><i>06</i> 自动总结</div>
-  </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -233,70 +264,65 @@ const fileInput = document.getElementById('file-input');
 const dropWrap = document.getElementById('drop-wrap');
 const fileChip = document.getElementById('file-chip');
 
-/* ---------- 从本地文件读创新点 ---------- */
+const createPanel = document.getElementById('create-panel');
+const toggleCreate = document.getElementById('btn-toggle-create');
+if (toggleCreate) toggleCreate.onclick = () => {
+  const show = createPanel.style.display === 'none';
+  createPanel.style.display = show ? '' : 'none';
+  toggleCreate.textContent = show ? '收起创建面板' : '＋ 新建实验';
+  if (show) createPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+};
+
 document.getElementById('btn-pick-file').onclick = () => fileInput.click();
 
 fileInput.onchange = () => {
   if (fileInput.files[0]) loadFile(fileInput.files[0]);
-  fileInput.value = '';           // 允许连续选同一个文件
+  fileInput.value = '';
 };
 
 ['dragenter', 'dragover'].forEach(ev => dropWrap.addEventListener(ev, e => {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'copy';
-  dropWrap.classList.add('drag');
+  e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; dropWrap.classList.add('drag');
 }));
 ['dragleave', 'dragend'].forEach(ev => dropWrap.addEventListener(ev, e => {
   if (!dropWrap.contains(e.relatedTarget)) dropWrap.classList.remove('drag');
 }));
 dropWrap.addEventListener('drop', e => {
-  e.preventDefault();
-  dropWrap.classList.remove('drag');
+  e.preventDefault(); dropWrap.classList.remove('drag');
   const f = e.dataTransfer.files && e.dataTransfer.files[0];
   if (f) loadFile(f);
 });
 
 document.getElementById('btn-clear-file').onclick = () => {
-  ta.value = '';
-  fileChip.hidden = true;
-  ta.focus();
+  ta.value = ''; fileChip.hidden = true; ta.focus();
 };
 
 async function loadFile(file) {
   if (ta.value.trim() && !confirm(`文本框里已经有内容，用「${file.name}」的内容替换？`)) return;
   const hint = document.getElementById('create-hint');
   hint.textContent = `读取 ${file.name}…`;
-  const fd = new FormData();
-  fd.append('file', file);
+  const fd = new FormData(); fd.append('file', file);
   try {
     const r = await fetch('/api/extract', { method: 'POST', body: fd });
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || `读取失败 ${r.status}`);
     ta.value = d.text;
     document.getElementById('file-name').textContent = d.name;
-    document.getElementById('file-meta').textContent =
-      `${d.chars.toLocaleString()} 字 · ${(file.size / 1024).toFixed(0)} KB`;
+    document.getElementById('file-meta').textContent = `${d.chars.toLocaleString()} 字 · ${(file.size / 1024).toFixed(0)} KB`;
     fileChip.hidden = false;
-
-    // 标题还空着就用文稿首行顶上，没有就用文件名
     const titleEl = document.getElementById('new-title');
     if (!titleEl.value.trim()) {
-      const firstLine = d.text.split('\n').map(s => s.trim())
-        .find(s => s.length >= 4) || '';
+      const firstLine = d.text.split('\n').map(s => s.trim()).find(s => s.length >= 4) || '';
       const guess = firstLine.replace(/^#+\s*/, '').slice(0, 60).trim()
         || d.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').trim();
       titleEl.value = guess;
     }
     toast('已读取 ' + d.name);
-  } catch (e) {
-    toast(e.message, true);
-  } finally {
-    hint.textContent = '';
-  }
+  } catch (e) { toast(e.message, true); }
+  finally { hint.textContent = ''; }
 }
 
-/* ---------- 模板与批量实验 ---------- */
 const TEMPLATES = {{ templates | tojson }};
+const projectSel = document.getElementById('project-select');
 const templateSel = document.getElementById('template-select');
 templateSel.onchange = () => {
   const t = TEMPLATES.find(x => x.id === templateSel.value);
@@ -323,6 +349,7 @@ document.getElementById('btn-batch-create').onclick = async () => {
       method: 'POST',
       body: {
         template_id: templateSel.value,
+        project_id: Number(projectSel.value) || 0,
         innovation: ta.value.trim(),
         params: params,
         title_prefix: document.getElementById('batch-prefix').value.trim(),
@@ -330,17 +357,12 @@ document.getElementById('btn-batch-create').onclick = async () => {
     });
     toast(`已创建 ${r.count} 个实验`);
     location.href = '/exp/' + r.ids[0];
-  } catch (e) {
-    toast(e.message, true);
-  } finally {
-    btn.disabled = false; hint.textContent = '';
-  }
+  } catch (e) { toast(e.message, true); }
+  finally { btn.disabled = false; hint.textContent = ''; }
 };
 
-/* ---------- 批量实验对比 / 断点续跑 ---------- */
 let cmpIds = [];
 const cmpModal = document.getElementById('compare-modal');
-
 document.getElementById('btn-compare').onclick = async () => {
   cmpIds = Array.from(document.querySelectorAll('.batch-check:checked')).map(x => Number(x.value));
   if (cmpIds.length < 2) return toast('至少勾选两个实验', true);
@@ -350,8 +372,7 @@ document.getElementById('btn-compare').onclick = async () => {
   try {
     const d = await api('/api/batch/compare?ids=' + cmpIds.join(','));
     const names = d.metric_names || [];
-    const head = '<tr><th>实验</th><th>参数</th><th>状态</th>' +
-      names.map(n => `<th>${esc(n)}</th>`).join('') + '</tr>';
+    const head = '<tr><th>实验</th><th>参数</th><th>状态</th>' + names.map(n => `<th>${esc(n)}</th>`).join('') + '</tr>';
     const rows = (d.rows || []).map(r => {
       const params = Object.entries(r.params || {}).map(([k, v]) => `${k}=${v}`).join(' & ');
       const cells = names.map(n => {
@@ -365,21 +386,12 @@ document.getElementById('btn-compare').onclick = async () => {
     body.innerHTML = names.length || rows
       ? `<table class="mt"><thead>${head}</thead><tbody>${rows}</tbody></table>`
       : '<div class="empty">这些实验还没有可比对的指标，先运行几次再看。</div>';
-  } catch (e) {
-    body.innerHTML = `<div class="empty" style="color:var(--err)">${esc(e.message)}</div>`;
-  }
+  } catch (e) { body.innerHTML = `<div class="empty" style="color:var(--err)">${esc(e.message)}</div>`; }
 };
-
-function closeCompare() {
-  cmpModal.style.display = 'none';
-  document.getElementById('btn-compare').focus();
-}
+function closeCompare() { cmpModal.style.display = 'none'; document.getElementById('btn-compare').focus(); }
 document.getElementById('cmp-close').onclick = closeCompare;
 cmpModal.onclick = e => { if (e.target === cmpModal) closeCompare(); };
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && cmpModal.style.display !== 'none') closeCompare();
-});
-
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && cmpModal.style.display !== 'none') closeCompare(); });
 document.getElementById('cmp-retry').onclick = async () => {
   const hostId = Number(document.getElementById('cmp-host').value);
   if (!hostId) return toast('请先在「服务器」页添加主机', true);
@@ -388,9 +400,7 @@ document.getElementById('cmp-retry').onclick = async () => {
   const hint = document.getElementById('cmp-hint');
   btn.disabled = true; hint.textContent = '提交中…';
   try {
-    const r = await api('/api/batch/retry-failed', {
-      method: 'POST', body: { ids: cmpIds, host_id: hostId }
-    });
+    const r = await api('/api/batch/retry-failed', { method: 'POST', body: { ids: cmpIds, host_id: hostId } });
     toast(`已续跑 ${r.started.length} 项，跳过 ${r.skipped.length} 项`);
     if (r.started.length) { cmpModal.style.display = 'none'; location.reload(); }
     else hint.textContent = `跳过：${r.skipped.map(x => `#${x.id} ${x.reason}`).join('；')}`;
@@ -407,7 +417,7 @@ document.getElementById('btn-create').onclick = async () => {
   try {
     const r = await api('/api/experiments', {
       method: 'POST',
-      body: { title, innovation, template_id: templateSel.value }
+      body: { title, innovation, template_id: templateSel.value, project_id: Number(projectSel.value) || 0 }
     });
     location.href = '/exp/' + r.id;
   } catch (e) {
@@ -416,27 +426,57 @@ document.getElementById('btn-create').onclick = async () => {
   }
 };
 
-// 实验搜索 / 筛选（客户端即时过滤，数据已在页面）
+(function () {
+  const list = document.getElementById('exp-list');
+  if (!list) return;
+  list.addEventListener('click', async e => {
+    const btn = e.target.closest('[data-del-exp]');
+    if (!btn) return;
+    e.preventDefault();
+    const row = btn.closest('.home-exp-card');
+    const id = btn.dataset.delExp;
+    const title = (row && row.dataset.title) || ('实验 #' + id);
+    if (!confirm('确定删除实验「' + title + '」？\n运行记录、指标、审计、分享链接和访客批注都会一起删除，且不可恢复。')) return;
+    btn.disabled = true; btn.textContent = '删除中…';
+    try {
+      await api('/api/experiments/' + id, { method: 'DELETE' });
+      toast('实验已删除，正在刷新列表…');
+      setTimeout(() => { location.reload(); }, 500);
+    } catch (err) {
+      btn.disabled = false; btn.textContent = '×'; toast(err.message, true);
+    }
+  });
+})();
+
 (function () {
   const inp = document.getElementById('exp-search');
   const sel = document.getElementById('exp-status');
+  const proj = document.getElementById('exp-project');
   const arch = document.getElementById('exp-archived');
-  const items = Array.from(document.querySelectorAll('#exp-list .exp-item'));
+  const items = Array.from(document.querySelectorAll('#exp-list .home-exp-card'));
+  const groups = Array.from(document.querySelectorAll('#exp-list .project-group'));
   if (!inp) return;
   function apply() {
     const q = inp.value.trim().toLowerCase();
     const st = sel.value;
     const showArch = arch.checked;
+    const projectId = proj ? proj.value : '';
     items.forEach(el => {
       const matchQ = !q || (el.dataset.title || '').toLowerCase().includes(q) ||
                      (el.dataset.tags || '').toLowerCase().includes(q) ||
                      (el.dataset.id || '').includes(q);
       const matchSt = !st || el.dataset.status === st;
+      const matchProj = !projectId || el.dataset.projectId === projectId;
       const matchArch = showArch || el.dataset.archived !== '1';
-      el.style.display = (matchQ && matchSt && matchArch) ? '' : 'none';
+      el.style.display = (matchQ && matchSt && matchProj && matchArch) ? '' : 'none';
+    });
+    groups.forEach(g => {
+      const visible = Array.from(g.querySelectorAll('.home-exp-card')).some(el => el.style.display !== 'none');
+      g.style.display = visible ? '' : 'none';
     });
   }
   inp.oninput = apply; sel.onchange = apply; arch.onchange = apply;
+  if (proj) proj.onchange = apply;
 })();
 </script>
 {% endblock %}

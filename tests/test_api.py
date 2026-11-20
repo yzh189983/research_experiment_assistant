@@ -87,6 +87,44 @@ class TestApi(unittest.TestCase):
         self._login(self.u1)
         db.ex("DELETE FROM experiments WHERE id=?", (eid,))
 
+    def test_project_roles_enforced(self):
+        self._login(self.u1)
+        pid = self.client.post("/api/projects", json={
+            "name": "API角色项目", "description": "验证细粒度角色"}).get_json()["id"]
+        self.assertEqual(self.client.post(f"/api/projects/{pid}/members", json={
+            "username": "apitest_u2", "role": "editor"}).status_code, 200)
+        eid = self.client.post("/api/experiments", json={
+            "title": "项目协作实验", "innovation": "验证 editor 能改不能删",
+            "project_id": pid}).get_json()["id"]
+        self.assertEqual(self.client.get("/projects").status_code, 200)
+        self.assertEqual(self.client.get(f"/project/{pid}").status_code, 200)
+
+        self._login(self.u2)
+        self.assertEqual(self.client.get(f"/project/{pid}").status_code, 200)
+        self.assertEqual(self.client.get(f"/api/experiments/{eid}").status_code, 200)
+        self.assertEqual(self.client.post(f"/api/experiments/{eid}/tags",
+                                          json={"tags": "协作"}).status_code, 200)
+        self.assertEqual(self.client.delete(f"/api/experiments/{eid}").status_code, 403)
+
+        self._login(self.u1)
+        self.assertEqual(self.client.post(f"/api/projects/{pid}/members", json={
+            "username": "apitest_u2", "role": "viewer"}).status_code, 200)
+        self._login(self.u2)
+        self.assertEqual(self.client.post(f"/api/experiments/{eid}/tags",
+                                          json={"tags": "只读"}).status_code, 403)
+        self.assertEqual(self.client.put(f"/api/projects/{pid}", json={
+            "name": "越权改名", "description": "不应成功"}).status_code, 403)
+        self.assertEqual(self.client.delete(f"/api/projects/{pid}").status_code, 403)
+
+        self._login(self.u1)
+        self.assertEqual(self.client.put(f"/api/projects/{pid}", json={
+            "name": "API项目已改名", "description": "已更新"}).status_code, 200)
+        personal = db.ensure_personal_project(self.u1)
+        self.assertEqual(self.client.post(f"/api/experiments/{eid}/project", json={
+            "project_id": personal}).status_code, 200)
+        self.assertEqual(self.client.delete(f"/api/projects/{pid}").status_code, 200)
+        self.assertIsNone(db.get_project(pid))
+
     def test_mode_and_criteria_lock(self):
         self._login(self.u1)
         eid = self.client.post("/api/experiments", json={

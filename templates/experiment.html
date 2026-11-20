@@ -2,118 +2,195 @@
 {% set active = 'exp' %}
 {% block title %}{{ exp.title }} · 科研实验助手{% endblock %}
 
+{% block head %}{{ super() }}
+<script>window.__PERM__ = {{ perm | tojson }};</script>
+{% endblock %}
+
 {% block body %}
-<div class="exp-head">
+<div class="exp-head page-head">
   <div>
     <div class="eyebrow">Experiment · 实验档案</div>
     <h1>{{ exp.title }}</h1>
     <div class="exp-meta">
       <span>No. {{ '%03d' % exp.id }}</span>
+      <span>项目：<a href="{% if project %}/project/{{ project.id }}{% else %}/projects{% endif %}" style="color:var(--accent)">{{ project.name if project else '个人项目' }}</a></span>
+      <span class="badge {{ 'ok' if perm.role == 'owner' else 'run' if perm.role == 'editor' else 'idle' }}">{{ perm.role }}</span>
       <span id="meta-status">{{ exp.status }}</span>
       <span id="meta-run"></span>
     </div>
   </div>
   <div class="exp-actions">
-    <button class="btn sm" id="btn-mode" title="自主模式一键跑到底；副驾驶模式在阶段间等待你的确认">自主模式</button>
-    <a class="btn sm" id="btn-observe" href="{{ url_for('observe_page', token=observe_token) }}" title="快速只读分享链接，7 天有效">只读观察</a>
-    <button class="btn sm" id="btn-share-settings" title="设置带密码/有效期/批注的分享链接">分享设置…</button>
-    <button class="btn sm" id="btn-tags" title="编辑标签（逗号分隔）">标签</button>
-    <button class="btn sm" id="btn-archive" title="归档实验">归档</button>
-    <button class="btn sm" id="btn-replan">重新生成方案</button>
-    <button class="btn sm" id="btn-recode">重新生成代码</button>
-    <button class="btn sm accent" id="btn-run">运行实验</button>
+    <div class="action-group">
+      <button class="btn sm" id="btn-mode" title="自主模式一键跑到底；副驾驶模式在阶段间等待你的确认">自主模式</button>
+      <button class="btn sm" id="btn-replan">重新生成方案</button>
+      <button class="btn sm" id="btn-recode">重新生成代码</button>
+    </div>
+    <div class="action-group">
+      <a class="btn sm" id="btn-observe" href="{{ url_for('observe_page', token=observe_token) }}" title="快速只读分享链接，7 天有效">只读观察</a>
+      <button class="btn sm" id="btn-share-settings" title="设置带密码/有效期/批注的分享链接">分享设置…</button>
+      <button class="btn sm" id="btn-tags" title="编辑标签（逗号分隔）">标签</button>
+      <button class="btn sm" id="btn-archive" title="归档实验">归档</button>
+      <button class="btn sm btn-danger-action" id="btn-delete-exp" title="删除实验及全部关联数据（不可恢复）">删除</button>
+    </div>
+    <button class="btn sm btn-primary-action" id="btn-run">运行实验</button>
   </div>
 </div>
 
 <div id="checkpoint-banner" class="checkpoint-banner" style="display:none"></div>
 
+<nav class="stage-nav" aria-label="实验流程导航">
+  <a class="stage-link" href="#sec-idea" data-work-link="idea"><span>01</span>创新点</a>
+  <a class="stage-link" href="#sec-plan" data-work-link="plan"><span>02</span>实验方案</a>
+  <a class="stage-link" href="#sec-code" data-work-link="code"><span>03</span>实验代码</a>
+  <a class="stage-link" href="#sec-summary" data-work-link="summary"><span>04</span>实验结论</a>
+  <a class="stage-link" href="#sec-trust" data-work-link="trust"><span>05</span>AI 可信</a>
+  <a class="stage-link" href="#criteria-card" data-work-link="criteria"><span>06</span>预注册判据</a>
+  <a class="stage-link" href="#audit-card" data-work-link="audit"><span>07</span>过程审计</a>
+  <a class="stage-link" href="#usage-card" data-work-link="usage"><span>08</span>成本与复现</a>
+</nav>
+
+<div class="work-toolbar">
+  <span class="tiny faint">内容已收起为缩略卡，点开后再查看完整详情。</span>
+  <button class="btn ghost sm" id="btn-expand-all">展开全部</button>
+  <button class="btn ghost sm" id="btn-collapse-all">收起全部</button>
+</div>
+
 <div class="layout">
-  <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+  <div class="work-grid" id="work-grid">
 
     <!-- 1 创新点 -->
-    <section class="card">
+    <section class="card work-card" id="sec-idea" data-work-card="idea">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num done">1</span>创新点</div>
-        <div style="display:flex;gap:8px">
+        <div style="display:flex;gap:8px;align-items:center">
           <button class="btn ghost sm" id="btn-swap-innov" title="重新上传一份文稿，用抽取器替换创新点">换一份文稿</button>
-          <button class="btn ghost sm" id="btn-toggle-innov">展开/收起</button>
+          <button class="work-toggle" data-work-toggle="idea" aria-expanded="false">查看 →</button>
         </div>
       </div>
-      <div class="plan-block" id="innov-body" style="display:none">
-        <div id="innov-text" style="white-space:pre-wrap;line-height:1.8;font-size:13.5px">{{ exp.innovation }}</div>
-        <input type="file" id="innov-file" hidden accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
+      <div class="work-preview" id="preview-idea"></div>
+      <div class="work-body" data-work-body="idea" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">一句话说清研究问题与验证路径。展开后可直接修改或换一份文稿。</div>
+        <div class="plan-block" id="innov-body">
+          <div id="innov-text" style="white-space:pre-wrap;line-height:1.8;font-size:13.5px">{{ exp.innovation }}</div>
+          <input type="file" id="innov-file" hidden accept=".txt,.md,.markdown,.rst,.tex,.csv,.docx,.pdf">
+        </div>
       </div>
     </section>
 
     <!-- 2 方案 -->
-    <section class="card">
+    <section class="card work-card" id="sec-plan" data-work-card="plan">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num" id="num-plan">2</span>实验方案</div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="tiny faint" id="plan-hint"></span>
           <button class="btn sm" id="btn-plan">生成方案</button>
+          <button class="work-toggle" data-work-toggle="plan" aria-expanded="false">查看 →</button>
         </div>
       </div>
-      <div id="plan-body"></div>
+      <div class="work-preview" id="preview-plan"></div>
+      <div class="work-body" data-work-body="plan" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">把假设、数据集、基线和指标固定下来；生成后仍可继续迭代。</div>
+        <div id="plan-body"></div>
+      </div>
     </section>
 
     <!-- 3 代码 -->
-    <section class="card">
+    <section class="card work-card" id="sec-code" data-work-card="code">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num" id="num-code">3</span>实验代码</div>
         <div style="display:flex;gap:8px;align-items:center">
           <span class="tiny faint" id="code-hint"></span>
           <button class="btn sm" id="btn-save-code" style="display:none">保存修改</button>
           <button class="btn sm" id="btn-code">生成代码</button>
+          <button class="work-toggle" data-work-toggle="code" aria-expanded="false">查看 →</button>
         </div>
       </div>
-      <div id="code-body"></div>
-      <div id="lineage-panel" class="lineage-panel"></div>
+      <div class="work-preview" id="preview-code"></div>
+      <div class="work-body" data-work-body="code" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">代码与运行前快照绑定；修改后记得保存，谱系里可回溯每一次运行。</div>
+        <div id="code-body"></div>
+        <div id="lineage-panel" class="lineage-panel"></div>
+      </div>
     </section>
 
     <!-- 4 结论 -->
-    <section class="card">
+    <section class="card work-card" id="sec-summary" data-work-card="summary">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num" id="num-sum">4</span>实验结论</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn ghost sm" id="btn-summarize" style="display:none">重新总结</button>
           <button class="btn ghost sm" id="btn-review" style="display:none">AI 自审</button>
           <button class="btn ghost sm" id="btn-export" style="display:none">导出 Markdown</button>
           <button class="btn ghost sm" id="btn-export-docx" style="display:none">导出 Word</button>
           <a class="btn ghost sm" id="btn-export-pdf" style="display:none" target="_blank">打印 / PDF</a>
+          <button class="work-toggle" data-work-toggle="summary" aria-expanded="false">查看 →</button>
         </div>
       </div>
-      <div id="summary-body"></div>
-      <div id="review-body"></div>
+      <div class="work-preview" id="preview-summary"></div>
+      <div class="work-body" data-work-body="summary" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">证据链、数字核验和 AI 审稿集中在这里；导出即带完整复现信息。</div>
+        <div id="summary-body"></div>
+        <div id="review-body"></div>
+      </div>
     </section>
 
-    <!-- 5 预注册判据 -->
-    <section class="card" id="criteria-card">
+    <!-- 5 AI 可信与证据 -->
+    <section class="card work-card" id="sec-trust" data-work-card="trust">
+      <div class="sec-head">
+        <div class="sec-title"><span class="sec-num" id="num-trust">5</span>AI 可信与证据</div>
+        <button class="work-toggle" data-work-toggle="trust" aria-expanded="false">查看 →</button>
+      </div>
+      <div class="work-preview" id="preview-trust"></div>
+      <div class="work-body" data-work-body="trust" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">AI 输出按实测 / 日志支持 / 推断 / 外部知识 / 待验证分级；每条都可查看依据。</div>
+        <div id="ai-trust-body" style="padding:0 18px 18px"></div>
+      </div>
+    </section>
+
+    <!-- 6 预注册判据 -->
+    <section class="card work-card" id="criteria-card" data-work-card="criteria">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num" id="num-criteria">5</span>预注册判据</div>
         <div style="display:flex;gap:8px;align-items:center">
           <span id="criteria-lock-badge"></span>
           <button class="btn sm" id="btn-edit-criteria">编辑判据</button>
+          <button class="work-toggle" data-work-toggle="criteria" aria-expanded="false">查看 →</button>
         </div>
       </div>
-      <div id="criteria-body"></div>
+      <div class="work-preview" id="preview-criteria"></div>
+      <div class="work-body" data-work-body="criteria" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">先锁定通过标准，再看结果，避免事后改口径。</div>
+        <div id="criteria-body"></div>
+      </div>
     </section>
 
     <!-- 6 过程审计 -->
-    <section class="card" id="audit-card">
+    <section class="card work-card" id="audit-card" data-work-card="audit">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num">6</span>实验过程 · 审计轨迹</div>
-        <span class="eyebrow" id="audit-count"></span>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="eyebrow" id="audit-count"></span>
+          <button class="work-toggle" data-work-toggle="audit" aria-expanded="false">查看 →</button>
+        </div>
       </div>
-      <div id="audit-body"></div>
+      <div class="work-preview" id="preview-audit"></div>
+      <div class="work-body" data-work-body="audit" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">关键动作按时间顺序记录，可回溯到阶段、操作与结果。</div>
+        <div id="audit-body"></div>
+      </div>
     </section>
 
     <!-- 7 用量与复现配置 -->
-    <section class="card" id="usage-card">
+    <section class="card work-card" id="usage-card" data-work-card="usage">
       <div class="sec-head">
         <div class="sec-title"><span class="sec-num">7</span>成本用量 · 复现配置</div>
+        <button class="work-toggle" data-work-toggle="usage" aria-expanded="false">查看 →</button>
       </div>
-      <div id="usage-body"></div>
+      <div class="work-preview" id="preview-usage"></div>
+      <div class="work-body" data-work-body="usage" style="display:none">
+        <div class="section-intro card-pad" style="padding-top:0">记录模型调用成本与复现所需环境，便于估算和交接。</div>
+        <div id="usage-body"></div>
+      </div>
     </section>
   </div>
 
@@ -124,6 +201,7 @@
         <b>实时监控</b>
         <span id="mon-status">{{ statusBadge(exp.status) | safe }}</span>
       </div>
+      <div class="rail-head-note" style="padding:8px 18px;border-bottom:1px solid var(--rule)">阶段、指标、GPU 与日志集中在这里；失败时会自动给出诊断。</div>
       <div class="mon-body">
         <div class="stat-row">
           <div class="stat"><i>阶段</i><b id="st-stage">—</b></div>
@@ -266,6 +344,28 @@ window.__LLM_OK__ = {{ 'true' if llm_ok else 'false' }};
     } catch (e) { toast(e.message, true); }
   };
   if (btnArch && window.__EXP__ && window.__EXP__.archived) btnArch.textContent = '取消归档';
+})();
+
+// 删除实验
+(function () {
+  const eid = window.__EXP__ && window.__EXP__.id;
+  const btn = document.getElementById('btn-delete-exp');
+  if (!btn || !eid) return;
+  btn.onclick = async () => {
+    const title = (window.__EXP__ && window.__EXP__.title) || ('实验 #' + eid);
+    if (!confirm('确定删除实验「' + title + '」？\n运行记录、指标、审计、分享链接和访客批注都会一起删除，且不可恢复。')) return;
+    btn.disabled = true;
+    btn.textContent = '删除中…';
+    try {
+      await api('/api/experiments/' + eid, { method: 'DELETE' });
+      toast('实验已删除，正在返回首页…');
+      setTimeout(() => { location.href = '/'; }, 500);
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = '删除实验';
+      toast(e.message, true);
+    }
+  };
 })();
 </script>
 {% endblock %}

@@ -1,5 +1,6 @@
 """数据层单元测试：schema、多用户隔离、事件与审计。"""
 import os
+import sqlite3
 import sys
 import unittest
 
@@ -30,9 +31,57 @@ class TestDb(unittest.TestCase):
     def test_required_tables_exist(self):
         names = {r["name"] for r in db.q(
             "SELECT name FROM sqlite_master WHERE type='table'")}
-        for t in ("users", "hosts", "experiments", "runs", "metrics",
-                  "events", "audit_log", "usage_log", "terminal_tickets"):
+        for t in ("users", "projects", "project_members", "hosts", "experiments",
+                  "runs", "metrics", "events", "audit_log", "usage_log",
+                  "terminal_tickets"):
             self.assertIn(t, names)
+
+    def test_project_roles(self):
+        pid = db.create_project("角色测试项目", uid=self.uid_a)
+        try:
+            self.assertTrue(db.set_project_member(pid, self.uid_b, "editor", uid=self.uid_a))
+            eid = db.create_experiment("协作实验", "验证项目角色", uid=self.uid_a, project_id=pid)
+            self.assertIsNotNone(db.get_experiment(eid, uid=self.uid_b))
+
+            db.update_experiment(eid, uid=self.uid_b, tags="editor")
+            self.assertEqual(db.get_experiment(eid, uid=self.uid_a)["tags"], "editor")
+
+            db.delete_experiment(eid, uid=self.uid_b)
+            self.assertIsNotNone(db.get_experiment(eid, uid=self.uid_a))
+
+            self.assertTrue(db.set_project_member(pid, self.uid_b, "viewer", uid=self.uid_a))
+            db.update_experiment(eid, uid=self.uid_b, tags="viewer")
+            self.assertEqual(db.get_experiment(eid, uid=self.uid_a)["tags"], "editor")
+
+            db.delete_experiment(eid, uid=self.uid_a)
+            self.assertIsNone(db.get_experiment(eid, uid=self.uid_a))
+        finally:
+            db.ex("DELETE FROM project_members WHERE project_id=?", (pid,))
+            db.ex("DELETE FROM projects WHERE id=?", (pid,))
+
+    def test_create_project_is_committed(self):
+        pid = db.create_project("持久化项目", uid=self.uid_a)
+        self.assertIsNotNone(pid)
+        conn = sqlite3.connect(config.DB_PATH)
+        try:
+            row = conn.execute("SELECT name FROM projects WHERE id=?", (pid,)).fetchone()
+        finally:
+            conn.close()
+        self.assertIsNotNone(row)
+        self.assertEqual(row[0], "持久化项目")
+        db.ex("DELETE FROM project_members WHERE project_id=?", (pid,))
+        db.ex("DELETE FROM projects WHERE id=?", (pid,))
+
+    def test_project_update_and_delete(self):
+        pid = db.create_project("待管理项目", uid=self.uid_a)
+        eid = db.create_experiment("项目内实验", "验证删除项目不删实验", uid=self.uid_a, project_id=pid)
+        self.assertTrue(db.update_project(pid, "已改名项目", "新说明", uid=self.uid_a))
+        self.assertEqual(db.get_project(pid)["name"], "已改名项目")
+        self.assertFalse(db.delete_project(pid, uid=self.uid_b))
+        personal = db.ensure_personal_project(self.uid_a)
+        self.assertTrue(db.delete_project(pid, uid=self.uid_a))
+        self.assertIsNone(db.get_project(pid))
+        self.assertEqual(db.get_experiment(eid, uid=self.uid_a)["project_id"], personal)
 
     def test_create_and_get_experiment(self):
         eid = db.create_experiment("隔离测试", "验证实验", uid=self.uid_a)
