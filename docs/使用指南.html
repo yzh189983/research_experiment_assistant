@@ -351,19 +351,20 @@ python3 -m venv .venv
   <!-- 5 实验详情 -->
   <section id="detail">
     <div class="sec-head"><span class="sec-num">05</span><h2>实验详情页全解</h2><span class="en">Experiment Page</span></div>
-    <p class="lead">详情页是主战场，七个区块默认收起为缩略卡，只显示一句摘要；点「查看 →」或点摘要卡展开完整内容，也可一键展开全部 / 收起全部。顶部按「生成/重做」「分享/管理」「运行」分组收拢操作，并提供可点击的流程导航；右侧监控栏集中展示阶段、指标、GPU 与日志。</p>
+    <p class="lead">详情页是主战场，八个区块默认收起为缩略卡，只显示一句摘要；点「查看 →」或点摘要卡展开完整内容，也可一键展开全部 / 收起全部。顶部按「生成/重做」「分享/管理」「运行」分组收拢操作，并提供可点击的流程导航；右侧监控栏集中展示阶段、指标、GPU 与日志。</p>
 
     <table>
-      <caption>表 3　实验详情页的七个区块</caption>
+      <caption>表 3　实验详情页的八个区块</caption>
       <thead><tr><th style="width:22%">区块</th><th>能做什么</th></tr></thead>
       <tbody>
         <tr><td>① 创新点</td><td>展开/收起原文；「换一份文稿」复用抽取器替换。</td></tr>
         <tr><td>② 实验方案</td><td>核心命题、可证伪假设、数据集、指标、基线、消融、成败判据与风险；「重新生成方案」可重做。</td></tr>
         <tr><td>③ 代码</td><td>可编辑的多文件实验代码；改动后点「保存」。遵循指标上报协议、自动检测 GPU、数据缺失时降级到合成数据。</td></tr>
         <tr><td>④ 实验结论</td><td>假设判定、关键发现、异常、局限、下一步与论文段落；下方是「结果核验」面板。</td></tr>
-        <tr><td>⑤ 预注册判据</td><td>结构化判据编辑与锁定、变更记录、结果逐条判定。</td></tr>
-        <tr><td>⑥ 审计轨迹</td><td>方案/代码/判据/运行/总结等全部关键操作的时间线。</td></tr>
-        <tr><td>⑦ 成本用量 · 复现配置</td><td>LLM token 账本与预算；seed、Python、主机、代码 commit、pip freeze、nvidia-smi。</td></tr>
+        <tr><td>⑤ AI 可信</td><td>方案/代码/总结/审稿/诊断的五档可信分级、逐句证据与未核数字提示。</td></tr>
+        <tr><td>⑥ 预注册判据</td><td>结构化判据编辑与锁定、变更记录、结果逐条判定。</td></tr>
+        <tr><td>⑦ 审计轨迹</td><td>方案/代码/判据/运行/总结等全部关键操作的时间线。</td></tr>
+        <tr><td>⑧ 成本用量 · 复现配置</td><td>LLM token 账本与预算；seed、Python、主机、代码 commit、pip freeze、nvidia-smi。</td></tr>
       </tbody>
     </table>
 
