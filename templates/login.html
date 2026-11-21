@@ -13,6 +13,9 @@
 .auth-mark .brand-mark{width:12px;height:12px;background:var(--accent);display:inline-block}
 .auth-top h1{font-family:var(--serif);font-size:28px;font-weight:500;margin:20px 0 6px;letter-spacing:-.01em}
 .auth-top p{font-size:12.5px;color:var(--muted);line-height:1.6}
+.auth-tabs{display:flex;gap:0;border-bottom:1px solid var(--rule);padding:0 32px}
+.auth-tab{flex:1;text-align:center;padding:13px 0 11px;font-size:13px;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:inherit}
+.auth-tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
 .auth-body{padding:26px 32px 30px}
 .auth-label{display:block;font-size:11px;letter-spacing:var(--tracking);text-transform:uppercase;color:var(--muted);margin:0 0 7px}
 .auth-input{width:100%;height:38px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius);background:var(--paper);outline:none}
@@ -23,8 +26,10 @@
 .auth-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
 .auth-error{background:var(--err-soft);border:1px solid #E2C9C4;color:var(--err);font-size:12.5px;padding:9px 11px;border-radius:var(--radius);margin-bottom:16px}
 .auth-submit{width:100%;height:40px}
-.auth-foot{padding:16px 32px;border-top:1px solid var(--rule);font-size:12px;color:var(--muted);text-align:center}
-.auth-foot a{color:var(--accent);text-decoration:none}
+.auth-foot{padding:16px 32px;border-top:1px solid var(--rule);font-size:12px;color:var(--muted);text-align:center;line-height:1.8}
+.auth-foot a{color:var(--accent);text-decoration:none;cursor:pointer}
+.auth-pane{display:none}
+.auth-pane.on{display:block}
 </style>
 </head>
 <body>
@@ -34,12 +39,19 @@
   <div class="auth-card">
     <div class="auth-top">
       <div class="auth-mark"><span class="brand-mark" aria-hidden="true"></span><span data-i18n="brand.name">科研实验助手</span> <small style="color:var(--faint)">rekit</small></div>
-      <h1>登录工作台</h1>
-      <p>从创新点到实验报告，本地私有运行。</p>
+      <h1 id="auth-title">登录工作台</h1>
+      <p id="auth-subtitle">从创新点到实验报告，本地私有运行。</p>
+    </div>
+    <div class="auth-tabs">
+      <button type="button" class="auth-tab {{ '' if mode == 'register' else 'on' }}" data-auth-mode="login">登录</button>
+      {% if can_register %}<button type="button" class="auth-tab {{ 'on' if mode == 'register' else '' }}" data-auth-mode="register">注册</button>{% endif %}
     </div>
     <div class="auth-body">
       {% if error %}<div class="auth-error">{{ error }}</div>{% endif %}
-      <form method="post" action="{{ url_for('login_page', next=next) }}">
+      <input type="hidden" id="auth-next" value="{{ next or request.args.get('next', '') }}">
+      <!-- 登录 -->
+      <form method="post" class="auth-pane {{ '' if mode == 'register' else 'on' }}" id="pane-login" action="{{ url_for('login_page', next=next) }}">
+        <input type="hidden" name="mode" value="login">
         <div class="auth-field">
           <label class="auth-label" for="u">用户名</label>
           <input class="auth-input" id="u" name="username" autocomplete="username" required autofocus>
@@ -50,17 +62,63 @@
         </div>
         <div class="auth-row">
           <label><input type="checkbox" name="remember" value="1"> 记住我</label>
+          {% if password_reset_enabled %}<a href="{{ url_for('forgot_password_page') }}">忘记密码？</a>{% endif %}
         </div>
         <input type="hidden" name="next" value="{{ next }}">
         <button class="btn primary auth-submit" type="submit" data-i18n="auth.login">登录</button>
       </form>
+      <!-- 注册 -->
+      {% if can_register %}
+      <form method="post" class="auth-pane {{ 'on' if mode == 'register' else '' }}" id="pane-register" action="{{ url_for('login_page', next=next) }}">
+        <input type="hidden" name="mode" value="register">
+        <div class="auth-field">
+          <label class="auth-label" for="ru">用户名</label>
+          <input class="auth-input" id="ru" name="username" autocomplete="username" required minlength="2" maxlength="32">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" for="re">邮箱{{ '（用于找回密码）' if password_reset_enabled else '（选填）' }}</label>
+          <input class="auth-input" id="re" name="email" type="email" autocomplete="email" {{ 'required' if password_reset_enabled else '' }} placeholder="you@example.com">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" for="rp">密码（至少 6 位）</label>
+          <input class="auth-input" id="rp" name="password" type="password" autocomplete="new-password" required minlength="6" maxlength="128">
+        </div>
+        <div class="auth-field">
+          <label class="auth-label" for="rp2">确认密码</label>
+          <input class="auth-input" id="rp2" name="confirm" type="password" autocomplete="new-password" required minlength="6" maxlength="128">
+        </div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn primary auth-submit" type="submit" data-i18n="auth.register">注册并进入</button>
+      </form>
+      {% endif %}
     </div>
     <div class="auth-foot">
-      {% if can_register %}<a href="{{ url_for('register_page', next=next) }}" data-i18n="auth.registerLink">还没有账号？注册账号 →</a>
-      {% else %}账号由管理员分配，命令行用 <code>rekit login</code> 登录{% endif %}
+      {% if not can_register %}账号由管理员分配，命令行用 <code>rekit login</code> 登录{% endif %}
     </div>
   </div>
 </main>
+<script>
+(function () {
+  const tabs = document.querySelectorAll('[data-auth-mode]');
+  const loginPane = document.getElementById('pane-login');
+  const regPane = document.getElementById('pane-register');
+  const title = document.getElementById('auth-title');
+  const subtitle = document.getElementById('auth-subtitle');
+  function switchTo(mode) {
+    if (!loginPane) return;
+    const reg = mode === 'register';
+    loginPane.classList.toggle('on', !reg);
+    if (regPane) regPane.classList.toggle('on', reg);
+    tabs.forEach(t => t.classList.toggle('on', t.dataset.authMode === mode));
+    title.textContent = reg ? '注册账号' : '登录工作台';
+    subtitle.textContent = reg ? '创建成员账号，数据将按你的账号独立保存。' : '从创新点到实验报告，本地私有运行。';
+    if (window.i18n && window.i18n.apply) window.i18n.apply();
+  }
+  tabs.forEach(t => t.onclick = () => switchTo(t.dataset.authMode));
+  const initial = '{{ mode }}' === 'register' ? 'register' : 'login';
+  switchTo(initial);
+})();
+</script>
 <script src="/static/js/i18n.map.js"></script>
 <script src="/static/js/i18n.js"></script>
 </body>

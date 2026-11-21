@@ -471,6 +471,51 @@
         </div>
       </div>
     </section>
+
+    <section class="card work-card" data-work-card="mail">
+      <div class="sec-head">
+        <div class="sec-title">邮件服务</div>
+        <span class="badge idle">{{ '已开启' if mail_cfg.enabled else '未开启' }}</span>
+        <button class="work-toggle" data-work-toggle="mail" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">SMTP</span>
+        {{ (mail_cfg.host ~ ':' ~ mail_cfg.port) if mail_cfg.host else '未配置（找回密码不可用）' }}
+      </div>
+      <div class="work-body" data-work-body="mail" style="display:none">
+        <div class="card-pad">
+          <label class="field"><span>启用邮件 / 找回密码</span>
+            <select id="mail-enabled">
+              <option value="0" {{ '' if mail_cfg.enabled else 'selected' }}>关闭</option>
+              <option value="1" {{ 'selected' if mail_cfg.enabled else '' }}>开启</option>
+            </select></label>
+          <label class="field"><span>SMTP 服务器</span>
+            <input type="text" id="mail-host" value="{{ mail_cfg.host or '' }}" placeholder="smtp.example.com"></label>
+          <label class="field"><span>端口</span>
+            <input type="number" id="mail-port" value="{{ mail_cfg.port or 587 }}" placeholder="587 / 465"></label>
+          <label class="field"><span>账号</span>
+            <input type="text" id="mail-user" value="{{ mail_cfg.username or '' }}" placeholder="SMTP 用户名"></label>
+          <label class="field"><span>密码</span>
+            <input type="password" id="mail-password" placeholder="{{ mail_password_masked or '填写 SMTP 密码' }}"></label>
+          <label class="field"><span>发件人地址</span>
+            <input type="text" id="mail-from" value="{{ mail_cfg.from_addr or '' }}" placeholder="留空则用账号"></label>
+          <label class="field"><span>加密方式</span>
+            <select id="mail-ssl">
+              <option value="0" {{ '' if mail_cfg.use_ssl else 'selected' }}>STARTTLS（端口 587）</option>
+              <option value="1" {{ 'selected' if mail_cfg.use_ssl else '' }}>SSL/TLS（端口 465）</option>
+            </select></label>
+          <div class="hint" style="margin:-8px 0 12px">
+            开启后登录页显示「忘记密码」，注册时需填邮箱。密码明文填写、加密落盘、页面只显掩码，留空即不修改。保存后<strong>重启服务</strong>生效（与数据库配置相同）。用户需先注册邮箱才能找回密码。
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn primary sm" id="btn-mail-save">保存邮件配置</button>
+            <button class="btn sm" id="btn-mail-test">发送测试邮件</button>
+            <input type="text" id="mail-test-to" placeholder="测试收件邮箱" style="width:180px">
+            <span class="tiny" id="mail-result"></span>
+          </div>
+        </div>
+      </div>
+    </section>
     {% endif %}
   </div>
 </div>
@@ -485,7 +530,7 @@ function setSettingOpen(name, open) {
   if (!card || !body || !btn) return;
   card.classList.toggle('open', open);
   body.style.display = open ? '' : 'none';
-  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →', kaka: '配置 →', 'dataset-search': '配置 →', skills: '管理 →', rsi: '管理 →', storage: '配置 →' };
+  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →', kaka: '配置 →', 'dataset-search': '配置 →', skills: '管理 →', rsi: '管理 →', storage: '配置 →', mail: '配置 →' };
   btn.textContent = open ? '收起 ↑' : (labels[name] || '配置 →');
   btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open && name === 'skills' && typeof loadSkills === 'function') loadSkills();
@@ -953,6 +998,47 @@ if (btnStorageSave) btnStorageSave.onclick = async () => {
     if (result.classList) result.classList.add('err-text');
   } finally {
     btnStorageSave.disabled = false;
+  }
+};
+
+const btnMailSave = document.getElementById('btn-mail-save');
+if (btnMailSave) btnMailSave.onclick = async () => {
+  const body = {
+    enabled: document.getElementById('mail-enabled').value === '1',
+    host: document.getElementById('mail-host').value.trim(),
+    port: document.getElementById('mail-port').value.trim(),
+    username: document.getElementById('mail-user').value.trim(),
+    password: document.getElementById('mail-password').value.trim(),
+    from_addr: document.getElementById('mail-from').value.trim(),
+    use_ssl: document.getElementById('mail-ssl').value === '1',
+  };
+  const result = document.getElementById('mail-result');
+  btnMailSave.disabled = true;
+  try {
+    await api('/api/settings/mail', { method: 'POST', body });
+    result.textContent = '已保存，重启服务后生效';
+    document.getElementById('mail-password').value = '';
+    setTimeout(() => location.reload(), 900);
+  } catch (e) {
+    result.textContent = e.message || '保存失败';
+  } finally {
+    btnMailSave.disabled = false;
+  }
+};
+const btnMailTest = document.getElementById('btn-mail-test');
+if (btnMailTest) btnMailTest.onclick = async () => {
+  const to = document.getElementById('mail-test-to').value.trim();
+  const result = document.getElementById('mail-result');
+  if (!to) { result.textContent = '请填写测试收件邮箱'; return; }
+  btnMailTest.disabled = true;
+  result.textContent = '发送中…';
+  try {
+    await api('/api/settings/mail/test', { method: 'POST', body: { to } });
+    result.textContent = '测试邮件已发送，请查收';
+  } catch (e) {
+    result.textContent = e.message || '发送失败';
+  } finally {
+    btnMailTest.disabled = false;
   }
 };
 

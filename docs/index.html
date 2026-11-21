@@ -405,6 +405,10 @@ body{padding-left:var(--nav-w)}
         <h3>可配置数据存储</h3><p>业务数据默认存本地 SQLite（零配置）；管理员可在「设置 → 数据存储」一键切换到自建 PostgreSQL / MySQL，也可改 <code>data/config.json</code>。密码加密落盘、页面只显掩码，切换需重启生效；表结构与 SQL 由适配层自动翻译，上层功能不变。</p>
       </div>
       <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><path d="M16 11l6 6m0-6-6 6"/></svg></div>
+        <h3>账号注册与邮件找回密码</h3><p>登录页内「登录 / 注册」切换，访客填用户名、邮箱即可自助注册。邮件服务默认开启，忘记密码时输入邮箱收到重置链接（30 分钟有效、仅一次），重置后旧密码与 API token 立即失效。令牌只存摘要、防枚举，SMTP 密码加密落盘；QQ / 163 邮箱需用授权码发信。</p>
+      </div>
+      <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3l14 9-14 9V3zM5 12h9"/></svg></div>
         <h3>卡卡三阶段与演示数据</h3><p>实验前让卡卡写方案/脚本、实验中盯日志与指标、实验后一键总结并核验。不想配服务器也能体验：<code>tools/demo_running.py</code> 造运行中实验看监控，<code>tools/demo_finished.py</code> 造已跑完实验看总结，均带 <code>--reset</code> 重建。</p>
       </div>
@@ -568,6 +572,7 @@ body{padding-left:var(--nav-w)}
           <li><b style="color:var(--accent)">✓ AI P0 可信底座（已完成）</b>：五档可信分级 + 逐句证据、5 个回归样例、7 个白名单工具与二次确认审计</li>
           <li><b style="color:var(--accent)">✓ 卡卡智能体与项目群聊（已完成）</b>：实验前写脚本 / 实验中盯异常 / 实验后总结播报，群内 @卡卡 问答与数据集资产库；技能市场（ClawHub）、RSI 自进化、上下文「看依据」与用量条、SuperAgent 话题路由与会话垃圾箱、项目内 GPU 排队日程表与服务器资源管理</li>
           <li><b style="color:var(--accent)">✓ 可配置数据存储（已完成）</b>：默认本地 SQLite；管理员在「设置 → 数据存储」或 <code>data/config.json</code> 切换到自建 PostgreSQL / MySQL，密码加密落盘，适配层自动翻译 SQL，切换需重启生效</li>
+          <li><b style="color:var(--accent)">✓ 登录页注册与邮件找回密码（已完成）</b>：登录页内切换登录 / 注册，邮件默认开启；忘记密码经邮箱收重置链接（限时一次性、只存摘要、防枚举），重置后吊销旧 token，SMTP 密码加密落盘</li>
         </ul>
       </div>
       <div class="rgroup p1">
