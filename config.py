@@ -91,6 +91,20 @@ DEFAULTS = {
         "enabled": True,            # 登录鉴权总开关；关掉即回到单用户免登录模式
         "session_days": 14,
         "allow_registration": True, # 是否允许访客在登录页自助注册成员账号
+        "password_reset_ttl_sec": 1800,  # 密码重置链接有效期（默认 30 分钟）
+    },
+    "mail": {
+        # SMTP 邮件：用于「忘记密码」发送重置链接。默认开启，使用系统邮箱发信。
+        # 密码不写在此处（源码会进版本库），由 data/config.json 加密保存。
+        # 163 邮箱需在网页端开启 SMTP 并使用「授权码」登录（非网页登录密码）。
+        "enabled": True,
+        "host": "smtp.163.com",
+        "port": 465,                # 163 推荐 465 + SSL/TLS
+        "username": "yzh189983@163.com",
+        "password": "",             # 由 data/config.json 提供（加密落盘）
+        "from_addr": "yzh189983@163.com",
+        "use_ssl": True,            # True=SSL/TLS(465)，False=STARTTLS
+        "timeout": 10,
     },
     "notify": {
         "enabled": False,           # 通知总开关
@@ -210,6 +224,10 @@ def _decode_secrets(cfg):
     password = storage.get("password")
     if password and str(password).startswith(crypto.PREFIX):
         storage["password"] = crypto.decrypt(password)
+    mail = cfg.get("mail") or {}
+    mail_pwd = mail.get("password")
+    if mail_pwd and str(mail_pwd).startswith(crypto.PREFIX):
+        mail["password"] = crypto.decrypt(mail_pwd)
     return cfg
 
 
@@ -226,6 +244,11 @@ def _encode_secrets(patch):
         pwd = storage["password"]
         if not str(pwd).startswith(crypto.PREFIX) and "*" not in str(pwd):
             storage["password"] = crypto.encrypt(str(pwd))
+    mail = out.get("mail")
+    if isinstance(mail, dict) and mail.get("password"):
+        pwd = mail["password"]
+        if not str(pwd).startswith(crypto.PREFIX) and "*" not in str(pwd):
+            mail["password"] = crypto.encrypt(str(pwd))
     return out
 
 
@@ -289,6 +312,11 @@ def migrate_config_secrets():
         if storage.get("password") and not str(storage["password"]).startswith(crypto.PREFIX):
             storage["password"] = crypto.encrypt(str(storage["password"]))
             raw["storage"] = storage
+            changed = True
+        mail = raw.get("mail") or {}
+        if mail.get("password") and not str(mail["password"]).startswith(crypto.PREFIX):
+            mail["password"] = crypto.encrypt(str(mail["password"]))
+            raw["mail"] = mail
             changed = True
         if changed:
             with open(path, "w", encoding="utf-8") as f:

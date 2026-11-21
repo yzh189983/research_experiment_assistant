@@ -30,6 +30,15 @@ Recommended setup order:
 
 It also runs without an LLM configured — placeholder plans and code are generated so you can verify the pipeline. Everything can be done from the terminal instead: `./rekit auto -i @idea.md`.
 
+## Accounts & Password Reset
+
+- The login page has Login / Register tabs: visitors can sign up with username, email and password (disable via `auth.allow_registration`).
+- A "Forgot password?" link on the login page lets users request a reset link to their registered email, valid for 30 minutes and usable once. Resetting immediately invalidates the old password and API token.
+- Mail is **enabled by default**, sending from the configured system mailbox (currently a 163 mailbox, `smtp.163.com:465` with SSL/TLS). Admins can change host/port/user/password/from in "Settings → Mail Service", with STARTTLS 587 or SSL/TLS 465, plus a "Send test email" button.
+- The SMTP password is encrypted at rest, shown masked, and blank means unchanged; restart to apply. Turning mail off (`enabled=false`) hides the reset entry.
+- **For QQ / 163 and similar providers, the SMTP "password" must be an app authorization code — not your web login password** (enable SMTP under webmail "Settings → POP3/SMTP/IMAP" to get one). Using the login password yields `535 authentication failed`.
+- Tokens are stored only as SHA-256 digests, time-limited and single-use; the reset page returns the same message for any address to prevent account enumeration.
+
 ## Data Storage
 
 By default all data lives in a local SQLite file (`data/app.db`, WAL mode) — zero setup. If you already run PostgreSQL / MySQL, you can point the app at it in two ways:

@@ -25,7 +25,7 @@ from werkzeug.security import check_password_hash
 
 import config
 from core import (ai_eval, ai_tools, auth, bus, coder, crypto, db, extract,
-                  gitlineage, github, kaka, llm, monitor, planner, report, ssh_runner,
+                  gitlineage, github, kaka, llm, mail, monitor, planner, report, ssh_runner,
                   stats as stats_mod, summarizer, terminal, workspace)
 from web.blueprints import api_bp
 
@@ -350,19 +350,33 @@ EXPERIMENT_TEMPLATES = [
 ]
 
 
-def _create_account(username, password, role="member"):
+def _normalize_email(value):
+    value = str(value or "").strip().lower()
+    if not value:
+        return ""
+    if len(value) > 254 or "@" not in value or value.startswith("@") or value.endswith("@"):
+        return None
+    return value
+
+
+def _create_account(username, password, role="member", email=""):
     username = str(username or "").strip()
     password = str(password or "")
     if not 2 <= len(username) <= 32:
         return None, username, "用户名长度需为 2-32 个字符"
     if not 6 <= len(password) <= 128:
         return None, username, "密码长度需为 6-128 位"
+    email = _normalize_email(email)
+    if email is None:
+        return None, username, "邮箱格式不正确"
     if db.get_user_by_name(username):
         return None, username, "用户名已存在"
+    if email and db.get_user_by_email(email):
+        return None, username, "该邮箱已被注册"
     try:
-        uid = db.add_user(username, auth.hash_password(password), role=role)
+        uid = db.add_user(username, auth.hash_password(password), role=role, email=email)
     except db.IntegrityError:
-        return None, username, "用户名已存在"
+        return None, username, "用户名或邮箱已存在"
     return uid, username, ""
 
 
@@ -370,19 +384,35 @@ def _create_account(username, password, role="member"):
 def login_page():
     if current_user_ok():
         return redirect(url_for("home_page"))
-    error = ""
+    error, mode = "", (request.form.get("mode") or "login")
     if request.method == "POST":
-        username = (request.form.get("username") or "").strip()
-        password = request.form.get("password") or ""
-        user = db.get_user_by_name(username)
-        if user and auth.verify_password(user, password):
-            auth.login_user(user["id"], remember=bool(request.form.get("remember")))
-            nxt = request.args.get("next") or request.form.get("next") or ""
-            return redirect(_safe_next(nxt))
-        error = "用户名或密码错误"
-    return render_template("login.html", error=error,
+        nxt = request.args.get("next") or request.form.get("next") or ""
+        if mode == "register":
+            if not _registration_enabled():
+                error = "当前未开放注册，请联系管理员"
+            else:
+                username = request.form.get("username") or ""
+                password = request.form.get("password") or ""
+                if password != (request.form.get("confirm") or ""):
+                    error = "两次输入的密码不一致"
+                else:
+                    uid, username, error = _create_account(
+                        username, password, email=request.form.get("email") or "")
+                    if not error:
+                        auth.login_user(uid)
+                        return redirect(_safe_next(nxt))
+        else:
+            username = (request.form.get("username") or "").strip()
+            password = request.form.get("password") or ""
+            user = db.get_user_by_name(username)
+            if user and auth.verify_password(user, password):
+                auth.login_user(user["id"], remember=bool(request.form.get("remember")))
+                return redirect(_safe_next(nxt))
+            error = "用户名或密码错误"
+    return render_template("login.html", error=error, mode=mode,
                            next=request.args.get("next", ""),
-                           can_register=_registration_enabled())
+                           can_register=_registration_enabled(),
+                           password_reset_enabled=mail.is_enabled())
 
 
 def current_user_ok():
@@ -429,9 +459,10 @@ def api_auth_register():
     if not _registration_enabled():
         return jsonify({"error": "注册已关闭，请联系管理员创建账号"}), 403
     d = request.get_json(force=True) or {}
-    uid, username, err = _create_account(d.get("username"), d.get("password"))
+    uid, username, err = _create_account(d.get("username"), d.get("password"),
+                                         email=d.get("email") or "")
     if err:
-        return jsonify({"error": err}), (409 if err == "用户名已存在" else 400)
+        return jsonify({"error": err}), (409 if "已存在" in err else 400)
     return jsonify({"token": auth.issue_token(uid), "user": {
         "id": uid, "username": username, "role": "member"}})
 
@@ -453,14 +484,73 @@ def register_page():
     if request.method == "POST":
         username = request.form.get("username") or ""
         password = request.form.get("password") or ""
+        email = request.form.get("email") or ""
         if password != (request.form.get("confirm") or ""):
             error = "两次输入的密码不一致"
         else:
-            uid, username, error = _create_account(username, password)
+            uid, username, error = _create_account(username, password, email=email)
             if not error:
                 auth.login_user(uid)
                 return redirect(_safe_next(nxt))
-    return render_template("register.html", error=error, next=nxt)
+    return render_template("register.html", error=error, next=nxt,
+                           password_reset_enabled=mail.is_enabled())
+
+
+# ---------------- 忘记密码 / 邮件重置 ----------------
+
+_PASSWORD_RESET_GENERIC_MSG = "如果该邮箱已注册且已开启找回，重置链接已发送到邮箱，请查收。"
+
+
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password_page():
+    if not mail.is_enabled():
+        return redirect(url_for("login_page"))
+    error, sent = "", False
+    if request.method == "POST":
+        email = _normalize_email(request.form.get("email") or "") or ""
+        user = db.get_user_by_email(email) if email else None
+        if user:
+            ttl = int(config.load_global_config()["auth"].get("password_reset_ttl_sec", 1800))
+            token, _ = db.issue_password_reset_token(user["id"], ttl_sec=ttl)
+            # 用配置的 scheme 构造绝对链接（本地 HTTPS 场景保证点开可用）
+            scheme = _SCHEME if _FORCE_HTTPS else request.scheme
+            base = request.host_url.rstrip("/")
+            if _FORCE_HTTPS and base.startswith("http://"):
+                base = "https://" + base[len("http://"):]
+            reset_url = "%s%s" % (base, url_for("reset_password_page", token=token))
+            try:
+                mail.send_password_reset(email, reset_url, ttl_minutes=max(1, ttl // 60))
+            except mail.MailError as exc:
+                error = "邮件发送失败：%s" % exc
+            else:
+                app.logger.warning("password reset requested for uid=%s", user["id"])
+        # 无论邮箱是否存在都显示同一句话，防止账号枚举
+        sent = not error
+    return render_template("forgot_password.html", error=error, sent=sent)
+
+
+@app.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password_page(token):
+    if not mail.is_enabled():
+        return redirect(url_for("login_page"))
+    error = ""
+    if request.method == "POST":
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+        if password != confirm:
+            error = "两次输入的密码不一致"
+        elif not 6 <= len(password) <= 128:
+            error = "密码长度需为 6-128 位"
+        else:
+            uid = db.consume_password_reset_token(token)
+            if not uid:
+                error = "链接无效或已过期，请重新申请"
+            else:
+                db.update_user(uid, password_hash=auth.hash_password(password),
+                               api_token_hash="", token_salt="")
+                app.logger.warning("password reset succeeded for uid=%s", uid)
+                return redirect(url_for("login_page"))
+    return render_template("reset_password.html", error=error, token=token)
 
 
 # ---------------- 页面 ----------------
@@ -795,11 +885,14 @@ def settings_page():
                   for r in db.list_git_remotes()]
     uid = g._auth_user["id"]
     storage_cfg = cfg.get("storage") or {}
+    mail_cfg = cfg.get("mail") or {}
     return render_template("settings.html", cfg=cfg,
                            api_key_masked=config.mask_secret(cfg["llm"]["api_key"]),
                            has_key=bool(cfg["llm"]["api_key"]),
                            storage_cfg=storage_cfg,
                            storage_password_masked=config.mask_secret(storage_cfg.get("password", "")),
+                           mail_cfg=mail_cfg,
+                           mail_password_masked=config.mask_secret(mail_cfg.get("password", "")),
                            is_admin=g._auth_user["role"] == "admin",
                            gh_configs=gh_configs,
                            notify_cfg=cfg.get("notify") or {},
@@ -2438,6 +2531,67 @@ def api_save_storage_settings():
                     "backend": patch.get("backend", cur.get("backend", "sqlite")),
                     "restart_required": changed,
                     "message": "配置已保存，重启服务后生效" if changed else "没有需要保存的改动"})
+
+
+@api_bp.get("/api/settings/mail")
+def api_get_mail_settings():
+    """读取系统级邮件配置（管理员）。密码脱敏。"""
+    if not _require_admin():
+        return jsonify({"error": "仅管理员可查看邮件配置"}), 403
+    m = config.load_global_config().get("mail") or {}
+    out = dict(m)
+    out["password"] = config.mask_secret(out.get("password", ""))
+    return jsonify(out)
+
+
+@api_bp.post("/api/settings/mail")
+def api_save_mail_settings():
+    """保存系统级邮件配置（管理员）。"""
+    if not _require_admin():
+        return jsonify({"error": "仅管理员可修改邮件配置"}), 403
+    d = request.get_json(force=True) or {}
+    patch = {}
+    for k in ("host", "username", "from_addr"):
+        if k in d and d[k] is not None:
+            patch[k] = str(d[k]).strip()
+    if "port" in d and d["port"] is not None:
+        try:
+            patch["port"] = int(d["port"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "端口需为数字"}), 400
+    if "timeout" in d and d["timeout"] is not None:
+        try:
+            patch["timeout"] = int(d["timeout"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "超时需为数字"}), 400
+    for k in ("enabled", "use_ssl"):
+        if k in d:
+            patch[k] = bool(d[k])
+    # 密码：新明文才写入；掩码或空值表示不变
+    if "password" in d:
+        pwd = str(d["password"] or "").strip()
+        if pwd and "*" not in pwd:
+            patch["password"] = pwd
+    config.save_config({"mail": patch})
+    return jsonify({"ok": True, "changed": bool(patch),
+                    "enabled": patch.get("enabled", (config.load_global_config().get("mail") or {}).get("enabled", False))})
+
+
+@api_bp.post("/api/settings/mail/test")
+def api_test_mail():
+    """管理员测试 SMTP 连通性：发一封测试邮件到指定地址。"""
+    if not _require_admin():
+        return jsonify({"error": "仅管理员可测试邮件配置"}), 403
+    d = request.get_json(force=True) or {}
+    to_addr = str(d.get("to") or "").strip()
+    if not to_addr or "@" not in to_addr:
+        return jsonify({"error": "请填写有效的测试收件邮箱"}), 400
+    try:
+        mail.send_mail(to_addr, "科研实验助手 · 邮件配置测试",
+                       "这是一封来自科研实验助手的测试邮件，收到即表示 SMTP 配置正确。")
+    except mail.MailError as exc:
+        return jsonify({"error": str(exc)}), 400
+    return jsonify({"ok": True})
 
 
 @api_bp.post("/api/notify/test")

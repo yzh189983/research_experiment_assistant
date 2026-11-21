@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS users (
     token_salt TEXT DEFAULT '',           -- token 派生盐
     created_at REAL,
     last_login REAL,
-    profile_json TEXT DEFAULT ''        -- 个人主页资料（按用户隔离）
+    profile_json TEXT DEFAULT '',       -- 个人主页资料（按用户隔离）
+    email TEXT DEFAULT ''               -- 账号邮箱（规范化小写，用于找回密码）
 );
 
 CREATE TABLE IF NOT EXISTS projects (
@@ -149,6 +150,15 @@ CREATE TABLE IF NOT EXISTS terminal_tickets (
     expires_at REAL NOT NULL,
     used_at REAL,
     read_only INTEGER DEFAULT 0
+);
+
+-- 密码重置令牌：只存 sha256 摘要，限时、一次性，重启不丢（复用终端票据模式）
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    token_hash TEXT PRIMARY KEY,
+    uid INTEGER NOT NULL,
+    expires_at REAL NOT NULL,
+    used_at REAL,
+    created_at REAL
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -408,6 +418,7 @@ CREATE INDEX IF NOT EXISTS idx_gpu_res_run ON project_gpu_reservations(run_id);
 # 依赖 user_id 列的索引：必须在老库 ALTER 补列之后再建，否则迁移时会报
 # "no such column: user_id"。全新建库时也能正常创建。
 USER_INDEXES = [
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE email <> ''",
     "CREATE INDEX IF NOT EXISTS idx_hosts_user ON hosts(user_id)",
     "CREATE INDEX IF NOT EXISTS idx_exp_user ON experiments(user_id)",
     "CREATE INDEX IF NOT EXISTS idx_runs_user ON runs(user_id)",
@@ -461,6 +472,8 @@ def init_db():
             conn.execute(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1")
     if "profile_json" not in _columns(conn, "users"):
         conn.execute("ALTER TABLE users ADD COLUMN profile_json TEXT DEFAULT ''")
+    if "email" not in _columns(conn, "users"):
+        conn.execute("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''")
     experiment_cols = (
         ("forked_from_experiment_id", "INTEGER"),
         ("forked_from_run_id", "INTEGER"),
@@ -767,6 +780,12 @@ def get_user_by_name(username):
     return q1("SELECT * FROM users WHERE username=?", (username,))
 
 
+def get_user_by_email(email):
+    if not email:
+        return None
+    return q1("SELECT * FROM users WHERE email=?", (str(email).strip().lower(),))
+
+
 def list_users():
     rows = q("SELECT id,username,role,created_at,last_login FROM users ORDER BY id")
     return [dict(r) for r in rows]
@@ -777,10 +796,11 @@ def count_users():
     return r["n"] if r else 0
 
 
-def add_user(username, password_hash, role="member"):
+def add_user(username, password_hash, role="member", email=""):
+    email = str(email or "").strip().lower()
     uid = ex(
-        "INSERT INTO users(username,password_hash,role,created_at) VALUES(?,?,?,?)",
-        (username, password_hash, role, now()))
+        "INSERT INTO users(username,password_hash,role,email,created_at) VALUES(?,?,?,?,?)",
+        (username, password_hash, role, email, now()))
     ensure_personal_project(uid)
     return uid
 
@@ -1015,6 +1035,41 @@ def consume_terminal_ticket(token, uid, host_id):
     row = q1("SELECT read_only FROM terminal_tickets WHERE token_hash=?", (token_hash,))
     ex("DELETE FROM terminal_tickets WHERE token_hash=?", (token_hash,))
     return {"read_only": bool(row and row["read_only"])}
+
+
+# ---------- password reset tokens ----------
+def issue_password_reset_token(uid, ttl_sec=1800):
+    """签发密码重置令牌：只返回明文 token，库里只存 sha256 摘要。"""
+    token = secrets.token_urlsafe(32)
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    ts = now()
+    expires_at = ts + max(60, int(ttl_sec or 1800))
+    # 同一用户旧的有效令牌先失效，避免多个链接并存
+    ex("UPDATE password_reset_tokens SET used_at=? WHERE uid=? AND used_at IS NULL AND expires_at>?",
+       (ts, uid, ts))
+    ex("DELETE FROM password_reset_tokens WHERE expires_at < ?", (ts - 86400,))
+    ex("""INSERT INTO password_reset_tokens(token_hash,uid,expires_at,created_at)
+          VALUES(?,?,?,?)""", (token_hash, uid, expires_at, ts))
+    return token, expires_at
+
+
+def consume_password_reset_token(token):
+    """原子消费重置令牌；成功返回 uid，失败（过期/已用/无效）返回 None。"""
+    if not token:
+        return None
+    token_hash = hashlib.sha256(str(token).encode("utf-8")).hexdigest()
+    conn = get_conn()
+    ts = now()
+    cur = conn.execute(
+        """UPDATE password_reset_tokens SET used_at=?
+           WHERE token_hash=? AND used_at IS NULL AND expires_at>?""",
+        (ts, token_hash, ts))
+    conn.commit()
+    if cur.rowcount == 0:
+        return None
+    row = q1("SELECT uid FROM password_reset_tokens WHERE token_hash=?", (token_hash,))
+    ex("DELETE FROM password_reset_tokens WHERE token_hash=?", (token_hash,))
+    return row["uid"] if row else None
 
 
 # ---------- experiments ----------
