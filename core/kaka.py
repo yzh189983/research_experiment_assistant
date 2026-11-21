@@ -42,6 +42,7 @@ BROADCAST_EVENTS = {
     "share_created": "分享链接创建",
     "share_revoked": "分享链接撤销",
     "member_changed": "成员变更",
+    "gpu_idle": "GPU 空闲",
 }
 
 # 54.4 本地数据集目录：只收官方来源，未核实许可一律标注需人工确认
@@ -103,6 +104,7 @@ def _llm_cfg():
         "model": k.get("model") or base.get("model") or "",
         "temperature": float(k.get("temperature") or 0.2),
         "max_tokens": int(k.get("max_tokens") or 1200),
+        "context_window": int(k.get("context_window") or 0),
         # 卡卡问答不走主模型 fallback，避免一次提问串行调用多个模型
         "fallback_models": [],
     }
@@ -447,34 +449,64 @@ def _scope_parts(scope):
     return "global", 0, 0
 
 
-def chat(uid, question, scope="global"):
-    """多轮对话：带最近历史向模型提问，回答与问题都落库；失败退回规则。"""
+def chat(uid, question, scope="global", conversation_id=None, skill_keys=None):
+    """多轮对话：带最近历史向模型提问，回答与问题都落库；失败退回规则。
+    58：话题路由选会话（可指定 conversation_id）；55：注入本次选择的技能；
+    57：记录上下文快照；56：采集经验。"""
     question = str(question or "").strip()
     if not question:
         return {"error": "消息不能为空"}
-    kind, eid, pid = _scope_parts(scope)
-    conv_id = db.get_or_create_kaka_conversation(scope, uid=uid)
-    history = db.list_kaka_messages(conv_id, uid=uid, limit=21)[-20:]
-    db.add_kaka_message(conv_id, "user", question, uid=uid)
+    from core import kaka_advanced as ka
 
+    kind, eid, pid = _scope_parts(scope)
+    # 58 话题路由：指定会话优先，否则按话题相似度续接/新建
+    topic_info = {"conversation_id": conversation_id, "topic": "", "routed": "explicit"}
+    if conversation_id:
+        conv = db.get_kaka_conversation(int(conversation_id), uid=uid)
+        if not conv:
+            return {"error": "会话不存在或无权限"}
+        conv_id = int(conversation_id)
+        topic_info["topic"] = conv.get("topic") or ""
+    else:
+        topic_info = ka.route_conversation(question, scope, uid=uid)
+        conv_id = topic_info["conversation_id"]
+
+    history = db.list_kaka_messages(conv_id, uid=uid, limit=21)[-20:]
+    topic_hint = topic_info.get("topic") or ""
+    db.add_kaka_message(conv_id, "user", question, uid=uid, topic_hint=topic_hint)
+
+    system_name, context = "GLOBAL_SYSTEM", ""
     if kind == "exp":
         ctx, _ = _prepare_context(eid, uid)
         system, context = KAKA_SYSTEM, _ask_context(uid, eid, None, ctx)
+        system_name = "KAKA_SYSTEM"
     elif kind == "project":
         system, context = KAKA_SYSTEM, _ask_context(uid, None, pid, None)
+        system_name = "KAKA_SYSTEM"
     else:
         system, context = GLOBAL_SYSTEM, _global_hint(uid)
+    # 55 注入本次选择的技能（skill_keys=None 时全部已启用）
+    skill_block = ka.skills_prompt(uid=uid, selected_keys=skill_keys)
+    used_skills = ka.installed_skills(uid=uid)
+    if skill_keys is not None:
+        wanted = set(str(k) for k in skill_keys)
+        used_skills = [s for s in used_skills if s["key"] in wanted]
+    if skill_block:
+        system = (system or "") + "\n\n" + skill_block
 
+    from core import context_usage as cu
     messages = [{"role": h["role"], "content": h["content"]} for h in history]
     messages.append({"role": "user", "content": f"当前上下文：\n{context}\n\n问题：{question}"})
 
     answer, source, tier, model = "", "rule", "unverified", ""
+    usage_info = None
     if _llm_ready():
         raw = _llm_chat(messages, system=system)
         if raw:
             answer = raw.strip()[:1200]
             source, model = "llm", _llm_cfg()["model"]
             tier = ai_trust.classify(answer)
+            usage_info = cu.from_api(llm.last_usage(), model=model)
     if not answer:
         if kind == "exp":
             r = ask(uid, question, eid=eid)
@@ -484,23 +516,53 @@ def chat(uid, question, scope="global"):
             r = ask_global(uid, question)
         answer = str(r.get("answer") or "")[:1200]
         tier, source = r.get("tier") or "unverified", r.get("source") or "rule"
+    if usage_info is None:
+        usage_info = cu.current_usage(uid, scope=scope, conversation_id=conv_id, model=model)
 
-    db.add_kaka_message(conv_id, "assistant", answer,
-                        {"tier": tier, "source": source, "model": model}, uid=uid)
+    # 57 上下文快照：记录本次回答"看到什么"，随回答消息落库供回查
+    snapshot = ka.build_context_snapshot(kind, eid=eid, pid=pid, uid=uid,
+                                         system_name=system_name, context_text=context)
+    meta = {"tier": tier, "source": source, "model": model,
+            "topic": topic_hint, "skills": [s["key"] for s in used_skills],
+            "context_usage": usage_info}
+    assistant_mid = db.add_kaka_message(conv_id, "assistant", answer, meta, uid=uid,
+                                        context=snapshot, topic_hint=topic_hint)
+    # 56 经验采集（RSI 关闭时也只轻量记录，供后续开启时分析）
+    ka.record_experience("answer", context=(question[:120]), feedback="none",
+                         outcome=f"source={source};tier={tier}", uid=uid)
     return {"answer": answer, "tier": tier, "source": source, "model": model,
-            "conversation_id": conv_id}
+            "conversation_id": conv_id, "topic": topic_hint,
+            "routed": topic_info.get("routed"), "context": snapshot,
+            "message_id": assistant_mid, "context_usage": usage_info,
+            "skills": [{"key": s["key"], "name": s["name"], "source": s["source"]} for s in used_skills]}
 
 
-def history(uid, scope="global", limit=50):
-    conv_id = db.get_or_create_kaka_conversation(scope, uid=uid)
+def history(uid, scope="global", limit=50, conversation_id=None):
+    """默认按 scope 聚合全部话题会话（兼容既有调用）；指定 conversation_id 只读该会话。"""
+    if conversation_id:
+        if not db.get_kaka_conversation(int(conversation_id), uid=uid):
+            return []
+        conv_ids = [int(conversation_id)]
+    else:
+        conv_ids = [c["id"] for c in db.list_scope_conversations(scope, uid=uid)]
+        if not conv_ids:
+            conv_ids = [db.get_or_create_kaka_conversation(scope, uid=uid)]
+    all_msgs = []
+    for cid in conv_ids:
+        all_msgs.extend(db.list_kaka_messages(cid, uid=uid, limit=limit))
+    all_msgs.sort(key=lambda m: m["id"])
     return [{"role": m["role"], "content": m["content"],
-             "created_at": m["created_at"], "meta": _j(m.get("meta"), {})}
-            for m in db.list_kaka_messages(conv_id, uid=uid, limit=limit)]
+             "created_at": m["created_at"], "meta": _j(m.get("meta"), {}),
+             "context": _j(m.get("context_json"), {}), "id": m["id"]}
+            for m in all_msgs[-limit:]]
 
 
 def clear_history(uid, scope="global"):
-    conv_id = db.get_or_create_kaka_conversation(scope, uid=uid)
-    db.clear_kaka_messages(conv_id, uid=uid)
+    conv_ids = [c["id"] for c in db.list_scope_conversations(scope, uid=uid)]
+    if not conv_ids:
+        conv_ids = [db.get_or_create_kaka_conversation(scope, uid=uid)]
+    for cid in conv_ids:
+        db.clear_kaka_messages(cid, uid=uid)
     return {"ok": True}
 
 
@@ -516,6 +578,22 @@ def broadcast(pid, event, title, detail="", exp_id=0, extra=None, uid=None):
     content = f"【{label}】{title}" + (f" — {detail}" if detail else "")
     payload = {"event": event, "exp_id": exp_id, **(extra or {})}
     return db.add_project_message(pid, "kaka", content[:2000], payload, uid=uid)
+
+
+def notify_idle_gpu(pid, uid=None):
+    """GPU 空闲时在项目群播报；免打扰时段跳过，返回播报条数。"""
+    from core import notify
+    nc = (config.load_config().get("notify") or {})
+    if notify._quiet_now(nc.get("quiet_hours", "")):
+        return 0
+    sent = 0
+    for r in db.gpu_idle_candidates(pid):
+        label = r["name"] or ("GPU %d" % (r["gpu_index"] or 0))
+        if broadcast(pid, "gpu_idle", f"{label} 已空闲",
+                     "当前没有排队任务，可以安排下一位使用。",
+                     extra={"resource_id": r["id"]}, uid=uid):
+            sent += 1
+    return sent
 
 
 def _broadcast_for_exp(eid, event, detail="", uid=None):

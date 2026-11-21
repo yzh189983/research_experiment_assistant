@@ -13,6 +13,9 @@
 
   var DICT = {
     'zh-CN': {
+      'nav.home': '主页面',
+      'home.enter': '进入实验台',
+      'home.projects': '项目管理',
       'nav.experiments': '实验',
       'nav.hosts': '服务器',
       'nav.terminal': '终端',
@@ -50,6 +53,9 @@
       'report.print': '打印 / 另存为 PDF'
     },
     en: {
+      'nav.home': 'Home',
+      'home.enter': 'Open workbench',
+      'home.projects': 'Projects',
       'nav.experiments': 'Experiments',
       'nav.hosts': 'Servers',
       'nav.terminal': 'Terminal',

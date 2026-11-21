@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/static/css/pages.css">
 {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 <a class="skip-link" href="#main-content" data-i18n="a11y.skip">跳到主要内容</a>
 <header class="nav">
   <a class="brand" href="/" aria-label="rekit home">
@@ -17,6 +17,7 @@
     <small>rekit</small>
   </a>
   <nav class="nav-links" aria-label="Primary">
+    <a href="/home" class="{{ 'on' if active=='home' }}" data-i18n="nav.home" {% if active=='home' %}aria-current="page"{% endif %}>主页面</a>
     <a href="/" class="{{ 'on' if active=='exp' }}" data-i18n="nav.experiments" {% if active=='exp' %}aria-current="page"{% endif %}>实验</a>
     <a href="/projects" class="{{ 'on' if active=='projects' }}" {% if active=='projects' %}aria-current="page"{% endif %}>项目</a>
     <a href="/hosts" class="{{ 'on' if active=='hosts' }}" data-i18n="nav.hosts" {% if active=='hosts' %}aria-current="page"{% endif %}>服务器</a>
@@ -26,7 +27,14 @@
   </nav>
   <div class="nav-user">
     <button type="button" class="lang-toggle" data-i18n-toggle aria-label="切换语言 / Switch language" title="切换语言 / Switch language">文/A</button>
-    <a class="nav-user-name" href="/profile" data-i18n-title="nav.profile" title="打开个人主页">{{ current_user.username if current_user else '' }}</a>
+    <a class="nav-profile-link" href="/profile" data-i18n-title="nav.profile" title="打开个人主页">
+      <span data-avatar-slot="nav">{% if avatar_url %}
+        <img class="nav-avatar" src="{{ avatar_url }}" alt="{{ current_user.username }}">
+      {% else %}
+        <span class="nav-avatar nav-avatar-fallback">{{ (current_user.username)[0] if current_user else '' }}</span>
+      {% endif %}</span>
+      <span class="nav-user-name">{{ current_user.username if current_user else '' }}</span>
+    </a>
     <form method="post" action="/logout" style="display:inline"><button class="nav-logout" type="submit" data-i18n="nav.logout" data-i18n-title="nav.logout" title="退出登录">退出</button></form>
   </div>
 </header>
@@ -40,6 +48,35 @@
 </footer>
 {% endif %}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- SuperAgent：左侧独立入口与侧边栏 -->
+<button id="sa-buddy" class="sa-buddy" type="button" aria-label="打开 SuperAgent" aria-expanded="false" title="SuperAgent · 会话管理">
+  <span class="sa-buddy-glyph" aria-hidden="true">⬡</span>
+  <span class="sa-buddy-label">SuperAgent</span>
+</button>
+<div id="sa-overlay" class="sa-overlay" aria-hidden="true"></div>
+<aside id="sa-panel" class="sa-panel" aria-label="SuperAgent 会话管理" aria-hidden="true">
+  <div class="sa-head">
+    <span class="sa-head-glyph" aria-hidden="true">⬡</span>
+    <b>SuperAgent</b>
+    <span class="sa-head-sub">会话管理</span>
+    <button type="button" id="sa-trash-btn" class="sa-head-btn" title="查看 / 返回垃圾箱">垃圾箱</button>
+    <button type="button" id="sa-close" class="sa-close" aria-label="关闭">×</button>
+  </div>
+  <div class="sa-body">
+    <div class="sa-desc">作为 SuperAgent 直接问：相同话题自动续接，新话题自动开。点下方会话可进入该会话内提问。</div>
+    <div class="sa-ask">
+      <input type="text" id="sa-input" placeholder="直接询问 SuperAgent…" aria-label="直接询问 SuperAgent">
+      <button type="button" id="sa-send">问</button>
+    </div>
+    <div class="sa-section-row">
+      <div class="sa-section-title" id="sa-section-title">最近一周会话</div>
+      <button type="button" id="sa-box-back" class="sa-mini" style="display:none">返回会话</button>
+    </div>
+    <div class="sa-list" id="sa-list"><div class="tiny faint">加载中…</div></div>
+    <div class="sa-topic" id="sa-topic" style="display:none"></div>
+  </div>
+</aside>
 
 <button id="kaka-buddy" class="kaka-buddy" type="button" aria-label="打开卡卡助手" aria-expanded="false" title="卡卡 · 科研副驾">
   <span class="kaka-antenna kaka-antenna-l" aria-hidden="true"></span>
@@ -58,16 +95,25 @@
   <div class="kaka-pop-head">
     <span class="kaka-pop-dot"></span>
     <b>卡卡 · 科研副驾</b>
+    <button type="button" id="kaka-skills-btn" class="kaka-clear" title="选择本次对话使用的技能">技能</button>
     <button type="button" id="kaka-clear" class="kaka-clear" title="清空对话">清空</button>
     <button type="button" id="kaka-pop-close" class="kaka-pop-close" aria-label="关闭">×</button>
   </div>
+  <div class="kaka-skills" id="kaka-skills" style="display:none"></div>
+  <div class="kaka-usage" id="kaka-usage" style="display:none">
+    <div class="kaka-usage-head"><span>上下文用量</span><b id="kaka-usage-text">—</b></div>
+    <div class="kaka-usage-track"><div class="kaka-usage-fill" id="kaka-usage-fill"></div></div>
+    <div class="kaka-usage-note" id="kaka-usage-note"></div>
+  </div>
+  <div class="kaka-topic-bar" id="kaka-topic-bar" style="display:none"></div>
   <div class="kaka-chat-log" id="kaka-chat-log">
-    <div class="kaka-intro">你好，我是卡卡，你的科研副驾。实验设计、写代码、查资料、整理数据集，或者随便聊聊，都可以问我。</div>
+    <div class="kaka-intro">你好，我是卡卡，你的科研副驾。实验设计、写代码、查资料、整理数据集，或者随便聊聊，都可以问我。左侧 SuperAgent 可帮你按话题管理会话。</div>
   </div>
   <div class="kaka-pop-ask">
     <textarea id="kaka-pop-input" rows="2" placeholder="问卡卡…（Enter 发送，Shift+Enter 换行）" aria-label="问卡卡"></textarea>
     <button type="button" id="kaka-pop-send">发送</button>
   </div>
+  <div class="kaka-ctx-panel" id="kaka-ctx-panel" style="display:none"></div>
 </aside>
 
 <script src="/static/js/i18n.map.js"></script>

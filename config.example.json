@@ -38,5 +38,14 @@
     "enabled": true,
     "session_days": 14,
     "allow_registration": true
+  },
+  "storage": {
+    "backend": "sqlite",
+    "host": "127.0.0.1",
+    "port": 0,
+    "database": "rekit",
+    "user": "",
+    "password": "",
+    "sslmode": "disable"
   }
 }
