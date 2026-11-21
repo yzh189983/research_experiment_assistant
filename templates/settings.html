@@ -93,11 +93,69 @@
             <input type="number" id="k-temp" step="0.05" min="0" max="2" value="{{ kaka_cfg.get('temperature') or 0.2 }}"></label>
           <label class="field"><span>最大输出 token</span>
             <input type="number" id="k-maxtokens" min="128" max="8000" value="{{ kaka_cfg.get('max_tokens') or 1200 }}"></label>
+          <label class="field"><span>上下文窗口 token</span>
+            <input type="number" id="k-context-window" min="1000" step="1000" value="{{ kaka_cfg.get('context_window') or 128000 }}">
+            <span class="tiny faint">用量条按这个上限计算；0 或留空则按模型名推断，默认 128K。</span></label>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn primary" id="btn-kaka-save">保存卡卡配置</button>
             <button class="btn" id="btn-kaka-test">测试卡卡模型</button>
             <span class="tiny" id="kaka-test-result" style="align-self:center"></span>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="skills">
+      <div class="sec-head">
+        <div class="sec-title">卡卡技能</div>
+        <button class="work-toggle" data-work-toggle="skills" aria-expanded="false">管理 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">SKILLS</span>
+        <span id="skills-preview">从官方技能市场装配卡卡能力</span>
+      </div>
+      <div class="work-body" data-work-body="skills" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">从 ClawHub（OpenClaw 官方技能市场）搜索并导入技能；内置技能也可直接启用。导入的<b>仅是指南文本</b>，不会执行技能里的安装脚本或代码。</div>
+          <div class="hub-search">
+            <input type="text" id="hub-q" placeholder="搜索官方技能，如 pdf、excel、论文…" aria-label="搜索 ClawHub 技能">
+            <button class="btn primary sm" id="hub-search-btn">搜索</button>
+            <button class="btn ghost sm" id="hub-trending-btn">热门</button>
+          </div>
+          <div id="hub-results" class="hub-results" style="display:none"></div>
+          <div class="skill-section-label">已安装 / 内置技能</div>
+          <div id="skill-list" class="skill-list"><div class="tiny faint">加载中…</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card work-card" data-work-card="rsi">
+      <div class="sec-head">
+        <div class="sec-title">RSI 自进化</div>
+        <button class="work-toggle" data-work-toggle="rsi" aria-expanded="false">管理 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">RSI</span>
+        <span id="rsi-preview">默认关闭 · 提案须人工审核</span>
+      </div>
+      <div class="work-body" data-work-body="rsi" style="display:none">
+        <div class="card-pad">
+          <div class="hint" style="margin:0 0 12px">受限自进化：卡卡只产出提示词 / 参数改进提案，须你逐条批准才生效，可回滚；不会自改代码或判据。</div>
+          <label class="field"><span>启用 RSI</span>
+            <select id="rsi-enabled">
+              <option value="0">关闭（默认）</option>
+              <option value="1">启用（仅生成提案，需人工批准）</option>
+            </select></label>
+          <label class="field"><span>最少样本数</span>
+            <input type="number" id="rsi-min" min="1" max="500" value="5"></label>
+          <label class="field"><span>观察窗口</span>
+            <input type="number" id="rsi-window" min="5" max="500" value="50"></label>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+            <button class="btn primary" id="btn-rsi-save">保存配置</button>
+            <button class="btn" id="btn-rsi-generate">生成提案</button>
+          </div>
+          <div class="tiny faint" id="rsi-stat"></div>
+          <div id="rsi-proposals" class="rsi-proposals" style="margin-top:10px"></div>
         </div>
       </div>
     </section>
@@ -369,6 +427,51 @@
       </div>
     </section>
     {% endif %}
+
+    {% if is_admin %}
+    <section class="card work-card" data-work-card="storage">
+      <div class="sec-head">
+        <div class="sec-title">数据存储</div>
+        <span class="badge idle">全局</span>
+        <button class="work-toggle" data-work-toggle="storage" aria-expanded="false">配置 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">STORAGE</span>
+        {{ '本地 SQLite' if storage_cfg.backend in ('', 'sqlite') else (storage_cfg.backend ~ ' · ' ~ storage_cfg.host ~ '/' ~ storage_cfg.database) }}
+      </div>
+      <div class="work-body" data-work-body="storage" style="display:none">
+        <div class="card-pad">
+          <label class="field"><span>后端类型</span>
+            <select id="st-backend">
+              <option value="sqlite" {{ 'selected' if storage_cfg.backend in ('', 'sqlite') }}>SQLite（本地文件，默认）</option>
+              <option value="postgresql" {{ 'selected' if storage_cfg.backend == 'postgresql' }}>PostgreSQL</option>
+              <option value="mysql" {{ 'selected' if storage_cfg.backend == 'mysql' }}>MySQL</option>
+            </select></label>
+          <div class="st-conn-fields" id="st-conn-fields" style="{{ '' if storage_cfg.backend not in ('', 'sqlite') else 'display:none' }}">
+            <label class="field"><span>主机地址</span>
+              <input type="text" id="st-host" value="{{ storage_cfg.host or '127.0.0.1' }}" placeholder="127.0.0.1"></label>
+            <label class="field"><span>端口</span>
+              <input type="number" id="st-port" value="{{ storage_cfg.port or '' }}" placeholder="留空用默认端口（5432 / 3306）"></label>
+            <label class="field"><span>数据库名</span>
+              <input type="text" id="st-database" value="{{ storage_cfg.database or 'rekit' }}" placeholder="rekit"></label>
+            <label class="field"><span>用户名</span>
+              <input type="text" id="st-user" value="{{ storage_cfg.user or '' }}" placeholder="数据库用户"></label>
+            <label class="field"><span>密码</span>
+              <input type="password" id="st-password" placeholder="{{ storage_password_masked or '填写数据库密码' }}"></label>
+            <label class="field"><span>SSL 模式（PostgreSQL）</span>
+              <input type="text" id="st-sslmode" value="{{ storage_cfg.sslmode or 'disable' }}" placeholder="disable / require / verify-full"></label>
+          </div>
+          <div class="hint" style="margin:-8px 0 12px">
+            当前为全局配置，影响所有账号。留空保持原值；密码不会回显，留空即不修改。切换后端需先建好空库并安装驱动（<code>pip install -e ".[postgres]"</code> 或 <code>".[mysql]"</code>），保存后<strong>重启服务</strong>才会连接新库。选回 SQLite 即恢复使用 <code>data/app.db</code>。
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <button class="btn primary sm" id="btn-storage-save">保存数据库配置</button>
+            <span class="tiny" id="storage-result"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -382,9 +485,11 @@ function setSettingOpen(name, open) {
   if (!card || !body || !btn) return;
   card.classList.toggle('open', open);
   body.style.display = open ? '' : 'none';
-  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →', kaka: '配置 →', 'dataset-search': '配置 →' };
+  const labels = { token: '生成 →', users: '管理 →', 'ai-eval': '评测 →', 'ai-tools': '调试 →', kaka: '配置 →', 'dataset-search': '配置 →', skills: '管理 →', rsi: '管理 →', storage: '配置 →' };
   btn.textContent = open ? '收起 ↑' : (labels[name] || '配置 →');
   btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open && name === 'skills' && typeof loadSkills === 'function') loadSkills();
+  if (open && name === 'rsi' && typeof loadRsi === 'function') loadRsi();
 }
 document.querySelectorAll('[data-work-toggle]').forEach(btn => {
   btn.onclick = () => {
@@ -411,6 +516,7 @@ function kakaBody() {
     api_key: document.getElementById('k-key').value.trim(),
     temperature: Number(document.getElementById('k-temp').value),
     max_tokens: Number(document.getElementById('k-maxtokens').value),
+    context_window: Number(document.getElementById('k-context-window')?.value || 0),
   };
 }
 document.getElementById('btn-save').onclick = async () => {
@@ -657,6 +763,199 @@ if (btnAiTool) btnAiTool.onclick = async () => {
   finally { btnAiTool.disabled = false; }
 };
 
-document.addEventListener('DOMContentLoaded', () => { loadAiTools(); loadAiToolAudit(); });
+/* ---- 55 卡卡技能市场 ---- */
+async function loadSkills() {
+  const box = document.getElementById('skill-list');
+  if (!box) return;
+  box.innerHTML = '<div class="tiny faint">加载中…</div>';
+  try {
+    const d = await api('/api/kaka/skills');
+    const items = d.items || [];
+    const active = items.filter(s => s.enabled).length;
+    const pv = document.getElementById('skills-preview');
+    if (pv) pv.textContent = `已启用 ${active} / ${items.length} 个技能`;
+    box.innerHTML = items.map(s => `
+      <div class="skill-row" data-skill="${esc(s.key)}">
+        <div class="skill-main">
+          <div class="skill-name">${esc(s.name)} <span class="skill-cat">${esc(s.category)}</span></div>
+          <div class="skill-desc">${esc(s.desc)}</div>
+        </div>
+        <div class="skill-actions">
+          ${s.installed
+            ? `<label class="switch"><input type="checkbox" class="skill-toggle" data-key="${esc(s.key)}" ${s.enabled ? 'checked' : ''}> 启用</label>
+               <button class="btn ghost sm skill-uninstall" data-key="${esc(s.key)}">卸载</button>`
+            : `<button class="btn sm skill-install" data-key="${esc(s.key)}">下载安装</button>`}
+        </div>
+      </div>`).join('');
+    box.querySelectorAll('.skill-install').forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try { await api('/api/kaka/skills/install', { method: 'POST', body: { skill_key: b.dataset.key } }); toast('技能已安装'); loadSkills(); }
+      catch (e) { toast(e.message, true); b.disabled = false; }
+    });
+    box.querySelectorAll('.skill-toggle').forEach(cb => cb.onchange = async () => {
+      try { await api('/api/kaka/skills/set', { method: 'POST', body: { skill_key: cb.dataset.key, enabled: cb.checked } }); loadSkills(); }
+      catch (e) { toast(e.message, true); }
+    });
+    box.querySelectorAll('.skill-uninstall').forEach(b => b.onclick = async () => {
+      try { await api('/api/kaka/skills/' + encodeURIComponent(b.dataset.key), { method: 'DELETE' }); toast('已卸载'); loadSkills(); }
+      catch (e) { toast(e.message, true); }
+    });
+  } catch (e) { box.innerHTML = '<div class="tiny" style="color:var(--err)">加载失败：' + esc(e.message) + '</div>'; }
+}
+
+/* ---- ClawHub 官方技能市场：搜索 / 导入 ---- */
+async function hubFetch(q, sort) {
+  const box = document.getElementById('hub-results');
+  if (!box) return;
+  box.style.display = '';
+  box.innerHTML = '<div class="tiny faint">搜索 ClawHub 中…</div>';
+  try {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (!q && sort) params.set('sort', sort);
+    const d = await api('/api/kaka/skills/hub/search?' + params.toString());
+    if (!d.ok) throw new Error(d.error || '搜索失败');
+    const items = d.items || [];
+    if (!items.length) { box.innerHTML = '<div class="tiny faint">没有找到匹配的技能。</div>'; return; }
+    const installedRefs = new Set((await api('/api/kaka/skills')).items
+      .filter(s => s.source === 'clawhub').map(s => s.key.replace(/^clawhub:/, '')));
+    box.innerHTML = '<div class="hub-head">ClawHub 官方技能市场' + (q ? ' · “' + esc(q) + '”' : ' · 热门') + '</div>' +
+      items.map(s => `
+        <div class="hub-item">
+          <div class="hub-item-main">
+            <div class="hub-item-name">${esc(s.name)} ${s.official ? '<span class="hub-badge">官方</span>' : ''}${s.featured ? '<span class="hub-badge alt">精选</span>' : ''}</div>
+            <div class="hub-item-desc">${esc(s.summary || '（无简介）')}</div>
+            <div class="hub-item-meta">${esc(s.ref)} · ${s.downloads} 次下载${s.version ? ' · v' + esc(s.version) : ''}</div>
+          </div>
+          <div class="hub-item-act">
+            ${installedRefs.has(s.ref)
+              ? '<span class="hub-installed">已导入</span>'
+              : `<button class="btn sm hub-install" data-ref="${esc(s.ref)}">导入</button>`}
+            ${s.canonical ? `<a class="hub-link" href="https://clawhub.ai${esc(s.canonical)}" target="_blank" rel="noopener">查看</a>` : ''}
+          </div>
+        </div>`).join('');
+    box.querySelectorAll('.hub-install').forEach(b => b.onclick = async () => {
+      b.disabled = true; b.textContent = '导入中…';
+      try {
+        const r = await api('/api/kaka/skills/hub/install', { method: 'POST', body: { ref: b.dataset.ref } });
+        if (!r.ok) throw new Error(r.error || '导入失败');
+        toast('已导入：' + r.name);
+        // 就地更新按钮，避免重新请求整个搜索结果
+        const act = b.parentElement;
+        act.innerHTML = '<span class="hub-installed">已导入</span>';
+        loadSkills();
+      } catch (e) { toast(e.message, true); b.disabled = false; b.textContent = '导入'; }
+    });
+  } catch (e) { box.innerHTML = '<div class="tiny" style="color:var(--err)">' + esc(e.message) + '</div>'; }
+}
+const hubBtn = document.getElementById('hub-search-btn');
+if (hubBtn) hubBtn.onclick = () => hubFetch((document.getElementById('hub-q').value || '').trim());
+const hubTrendBtn = document.getElementById('hub-trending-btn');
+if (hubTrendBtn) hubTrendBtn.onclick = () => { document.getElementById('hub-q').value = ''; hubFetch('', 'trending'); };
+const hubInput = document.getElementById('hub-q');
+if (hubInput) hubInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); hubFetch((hubInput.value || '').trim()); }
+});
+
+/* ---- 56 RSI 自进化 ---- */
+async function loadRsi() {
+  try {
+    const [cfg, props] = await Promise.all([
+      api('/api/kaka/rsi/config'), api('/api/kaka/rsi/proposals')
+    ]);
+    document.getElementById('rsi-enabled').value = cfg.enabled ? '1' : '0';
+    document.getElementById('rsi-min').value = cfg.min_samples;
+    document.getElementById('rsi-window').value = cfg.window;
+    const pv = document.getElementById('rsi-preview');
+    if (pv) pv.textContent = (cfg.enabled ? '已启用' : '默认关闭') + ' · 提案 ' + (props.items || []).filter(p => p.status === 'pending').length + ' 待审';
+    renderRsiProposals(props.items || []);
+  } catch (e) { toast(e.message, true); }
+}
+
+function renderRsiProposals(items) {
+  const box = document.getElementById('rsi-proposals');
+  if (!box) return;
+  const stat = document.getElementById('rsi-stat');
+  if (stat) stat.textContent = items.length ? `共 ${items.length} 条提案（含历史）` : '还没有提案，回答被纠正后可点「生成提案」。';
+  if (!items.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="tiny faint" style="margin-bottom:6px">最近提案</div>' + items.slice(0, 8).map(p => `
+    <div class="rsi-prop" data-pid="${p.id}">
+      <div class="rsi-prop-head"><b>${esc(p.title)}</b><span class="rsi-badge ${esc(p.status)}">${esc(p.status)}</span></div>
+      <div class="rsi-prop-body">${esc(p.rationale)}</div>
+      <div class="rsi-prop-change"><code>${esc(p.old_value)}</code> → <code>${esc(p.new_value)}</code></div>
+      ${p.status === 'pending' ? `<div class="rsi-prop-actions">
+        <button class="btn sm rsi-decide" data-id="${p.id}" data-decision="approved">批准</button>
+        <button class="btn ghost sm rsi-decide" data-id="${p.id}" data-decision="rejected">拒绝</button>
+      </div>` : (p.status === 'approved' ? `<div class="rsi-prop-actions"><button class="btn ghost sm rsi-decide" data-id="${p.id}" data-decision="rolled_back">回滚</button></div>` : '')}
+    </div>`).join('');
+  box.querySelectorAll('.rsi-decide').forEach(b => b.onclick = async () => {
+    try {
+      await api('/api/kaka/rsi/decide', { method: 'POST', body: { id: Number(b.dataset.id), decision: b.dataset.decision } });
+      toast('已' + ({ approved: '批准', rejected: '拒绝', rolled_back: '回滚' }[b.dataset.decision]));
+      loadRsi();
+    } catch (e) { toast(e.message, true); }
+  });
+}
+
+const btnRsiSave = document.getElementById('btn-rsi-save');
+if (btnRsiSave) btnRsiSave.onclick = async () => {
+  try {
+    await api('/api/kaka/rsi/config', { method: 'POST', body: {
+      enabled: document.getElementById('rsi-enabled').value === '1',
+      min_samples: Number(document.getElementById('rsi-min').value),
+      window: Number(document.getElementById('rsi-window').value)
+    }});
+    toast('RSI 配置已保存'); loadRsi();
+  } catch (e) { toast(e.message, true); }
+};
+const btnRsiGen = document.getElementById('btn-rsi-generate');
+if (btnRsiGen) btnRsiGen.onclick = async () => {
+  btnRsiGen.disabled = true;
+  try {
+    const r = await api('/api/kaka/rsi/generate', { method: 'POST', body: {} });
+    if (r.error) toast(r.error, true); else toast(`生成 ${r.count} 条提案`);
+    loadRsi();
+  } catch (e) { toast(e.message, true); }
+  finally { btnRsiGen.disabled = false; }
+};
+
+const stBackend = document.getElementById('st-backend');
+const stConnFields = document.getElementById('st-conn-fields');
+if (stBackend && stConnFields) {
+  stBackend.onchange = () => {
+    stConnFields.style.display = stBackend.value === 'sqlite' ? 'none' : '';
+  };
+}
+const btnStorageSave = document.getElementById('btn-storage-save');
+if (btnStorageSave) btnStorageSave.onclick = async () => {
+  const body = {
+    backend: stBackend.value,
+    host: document.getElementById('st-host').value.trim(),
+    port: document.getElementById('st-port').value.trim(),
+    database: document.getElementById('st-database').value.trim(),
+    user: document.getElementById('st-user').value.trim(),
+    password: document.getElementById('st-password').value.trim(),
+    sslmode: document.getElementById('st-sslmode').value.trim(),
+  };
+  const result = document.getElementById('storage-result');
+  btnStorageSave.disabled = true;
+  try {
+    const r = await api('/api/settings/storage', { method: 'POST', body });
+    if (r.restart_required) {
+      result.textContent = '已保存，重启服务后生效';
+      setTimeout(() => location.reload(), 900);
+    } else {
+      result.textContent = '没有需要保存的改动';
+    }
+    document.getElementById('st-password').value = '';
+  } catch (e) {
+    result.textContent = e.message || '保存失败';
+    if (result.classList) result.classList.add('err-text');
+  } finally {
+    btnStorageSave.disabled = false;
+  }
+};
+
+document.addEventListener('DOMContentLoaded', () => { loadAiTools(); loadAiToolAudit(); loadSkills(); loadRsi(); });
 </script>
 {% endblock %}

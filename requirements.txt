@@ -6,3 +6,6 @@ python-docx>=1.1
 pypdf>=4.0
 requests>=2.31
 simple-websocket>=1.0
+# 可选：外部数据库后端，默认 sqlite 不需要安装
+# PostgreSQL: psycopg2-binary>=2.9   (pip install -e ".[postgres]")
+# MySQL:      PyMySQL>=1.0           (pip install -e ".[mysql]")

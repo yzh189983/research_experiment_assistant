@@ -204,6 +204,14 @@ def _finish(run_id, exp_id, status, message, exit_code=None):
     except Exception:
         pass
 
+    # run 结束：释放自动占用的 GPU 排程，空闲时在项目群提醒
+    try:
+        released = db.release_gpu_reservation_for_run(run_id)
+        if released:
+            kaka.notify_idle_gpu(released["project_id"], uid=config.current_uid())
+    except Exception:
+        pass
+
     # 失败自动诊断（规则签名，立即可用）
     if status != "finished":
         try:

@@ -33,7 +33,7 @@ class TestDb(unittest.TestCase):
             "SELECT name FROM sqlite_master WHERE type='table'")}
         for t in ("users", "projects", "project_members", "hosts", "experiments",
                   "runs", "metrics", "events", "audit_log", "usage_log",
-                  "terminal_tickets"):
+                  "terminal_tickets", "project_gpu_resources", "project_gpu_reservations"):
             self.assertIn(t, names)
 
     def test_project_roles(self):

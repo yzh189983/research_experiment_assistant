@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% set active = 'home' %}
+{% block title %}主页面 · 科研实验助手{% endblock %}
+{% block body_class %}home-page{% endblock %}
+{% block body %}
+<div class="home-landing">
+  <div class="home-landing-inner">
+    <div class="eyebrow">Research Experiment Assistant · 科研实验助手</div>
+    <h1>把创新点交给它，<br><em>剩下的实验它替你盯着。</em></h1>
+    <p class="sub">写清楚你的想法，系统会拆方案、写代码、部署运行，跑完自动给出结论。</p>
+    <div class="home-landing-actions">
+      <a class="btn accent" href="/" data-i18n="home.enter">进入实验台</a>
+      <a class="btn" href="/projects" data-i18n="home.projects">项目管理</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

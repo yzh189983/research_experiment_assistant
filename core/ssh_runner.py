@@ -404,6 +404,10 @@ def deploy_and_launch(run_id, host_id, experiment_id, code, seed=None):
 
         # 启动实验
         db.update_run(run_id, status="running")
+        try:
+            db.bind_gpu_reservation_for_run(run_id, experiment_id, uid=config.current_uid())
+        except Exception:
+            pass
         bus_status(experiment_id, "running", run_id)
         emit("启动实验进程")
         run(client, f"cd {shlex.quote(remote_dir)} && rm -f run.log .run.exit .run.pid && "
@@ -429,6 +433,13 @@ def deploy_and_launch(run_id, host_id, experiment_id, code, seed=None):
         bus_note(experiment_id, msg, "error", run_id)
         db.add_event(experiment_id, run_id, msg, kind="error", level="error")
         db.update_run(run_id, status="failed", finished_at=db.now())
+        try:
+            released = db.release_gpu_reservation_for_run(run_id)
+            if released:
+                from core import kaka
+                kaka.notify_idle_gpu(released["project_id"], uid=config.current_uid())
+        except Exception:
+            pass
         db.update_experiment(experiment_id, status="failed")
         if client:
             try:

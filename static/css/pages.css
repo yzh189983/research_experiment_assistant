@@ -372,7 +372,7 @@ table.mt tbody tr:hover{background:#FBFBF7}
 .project-mark.large{width:46px; height:46px; font-size:20px}
 .project-detail-head{display:flex; align-items:center; gap:16px; padding:18px 20px}
 .project-detail-head h2{margin:0 0 5px; font-family:var(--serif); font-size:18px; font-weight:600}
-.project-stat-grid.compact{grid-template-columns:repeat(3,minmax(110px,1fr)); width:360px; max-width:100%}
+.project-stat-grid.compact{grid-template-columns:repeat(3,minmax(110px,1fr)); width:360px; max-width:100%; margin:0 auto}
 .detail-tabs{margin-bottom:18px; padding-left:20px}
 .detail-panel{margin-bottom:18px}
 @media(max-width:760px){
@@ -491,6 +491,10 @@ table.mt tbody tr:hover{background:#FBFBF7}
 .profile-shell{display:flex; flex-direction:column; gap:14px}
 .profile-summary-card{display:flex; align-items:center; gap:16px; padding:18px 20px}
 .profile-avatar.large{width:54px; height:54px; font-size:22px; flex-shrink:0}
+.profile-avatar-img{object-fit:cover; padding:0; border-radius:50%}
+.profile-avatar-editor{display:flex; align-items:center; gap:18px}
+.avatar-preview .profile-avatar{width:64px; height:64px; font-size:26px}
+.avatar-controls{display:flex; flex-direction:column; align-items:flex-start; gap:8px}
 .profile-summary-main{flex:1; min-width:0}
 .profile-summary-name{font-family:var(--serif); font-size:20px; font-weight:600; margin-bottom:4px}
 .profile-summary-tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:9px}
@@ -711,6 +715,67 @@ table.mt tbody tr:hover{background:#FBFBF7}
   .logbox{height:260px}
 }
 
+/* ---------- SuperAgent：左侧独立侧边栏 ---------- */
+.sa-buddy{
+  position:fixed; left:22px; bottom:22px; z-index:90;
+  display:flex; align-items:center; gap:7px; cursor:pointer;
+  border:1px solid var(--accent); background:var(--accent-soft); color:var(--accent);
+  padding:9px 13px; font-family:var(--mono); font-size:11px; font-weight:600;
+  box-shadow:0 4px 14px rgba(0,0,0,.10); transition:transform .18s ease;
+}
+.sa-buddy:hover{transform:translateY(-2px)}
+.sa-buddy.active{background:var(--accent); color:#fff}
+.sa-buddy-glyph{font-size:16px; line-height:1}
+.sa-buddy-label{white-space:nowrap}
+.sa-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.28); z-index:95;
+  opacity:0; pointer-events:none; transition:opacity .2s;
+}
+.sa-overlay.open{opacity:1; pointer-events:auto}
+.sa-panel{
+  position:fixed; top:0; left:0; bottom:0; width:390px; max-width:100vw;
+  background:#fff; border-right:1px solid var(--rule); z-index:96;
+  display:flex; flex-direction:column; font-size:12.5px;
+  transform:translateX(-100%); transition:transform .25s ease;
+}
+.sa-panel.open{transform:none}
+.sa-head{
+  display:flex; align-items:center; gap:8px; padding:14px 16px;
+  border-bottom:1px solid var(--rule); background:var(--surface-2);
+}
+.sa-head-glyph{color:var(--accent); font-size:17px}
+.sa-head b{font-family:var(--mono); font-size:13px}
+.sa-head-sub{font-size:10px; color:var(--faint); margin-left:2px}
+.sa-head-btn{border:1px solid var(--rule); background:transparent; color:var(--muted); font-size:10px; padding:3px 7px; cursor:pointer}
+.sa-head-btn:hover,.sa-head-btn.on{border-color:var(--accent); color:var(--accent)}
+.sa-close{margin-left:auto; border:0; background:transparent; cursor:pointer; font-size:19px; line-height:1; color:var(--muted)}
+.sa-body{flex:1; overflow:auto; padding:14px 16px; display:flex; flex-direction:column}
+.sa-desc{font-size:11px; color:var(--muted); line-height:1.65; margin-bottom:12px}
+.sa-ask{display:flex; gap:7px; margin-bottom:16px}
+.sa-ask input{flex:1; min-width:0; border:1px solid var(--accent); background:#fff; color:var(--text); padding:9px 11px; font-size:12.5px; font-family:inherit}
+.sa-ask button{border:1px solid var(--accent); background:var(--accent); color:#fff; padding:0 15px; cursor:pointer; font-size:12.5px}
+.sa-ask button:disabled{opacity:.5; cursor:default}
+.sa-section-row{display:flex; align-items:center; gap:8px}
+.sa-section-row .sa-section-title{flex:1; margin-bottom:8px}
+.sa-mini{border:1px solid var(--rule); background:transparent; color:var(--muted); font-size:10px; padding:2px 6px; cursor:pointer; margin-bottom:8px}
+.sa-mini:hover{border-color:var(--accent); color:var(--accent)}
+.sa-mini.danger:hover{border-color:var(--err); color:var(--err)}
+.sa-section-title{font-family:var(--mono); font-size:10px; color:var(--faint); margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid var(--rule)}
+.sa-list{display:flex; flex-direction:column; gap:5px}
+.sa-session{border:1px solid var(--rule); padding:9px 11px; cursor:pointer}
+.sa-session:hover{background:var(--accent-soft)}
+.sa-session.active{border-color:var(--accent); background:var(--accent-soft)}
+.sa-session-topic{font-size:12.5px; font-weight:600; margin-bottom:3px}
+.sa-session-preview{font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.sa-session-ops{display:flex; gap:6px; margin-top:7px}
+.sa-session-ops .sa-mini{margin-bottom:0}
+.sa-topic{margin-top:14px; padding:9px 11px; border:1px solid var(--accent); background:var(--accent-soft); font-size:11px; display:flex; align-items:center; gap:6px; flex-wrap:wrap}
+.sa-topic-mark{font-family:var(--mono); font-size:9px; color:var(--accent)}
+.sa-topic-hint{color:var(--muted); font-size:10px}
+.sa-topic-back{margin-left:auto; border:1px solid var(--rule); background:transparent; color:var(--muted); font-size:10px; padding:2px 7px; cursor:pointer}
+.sa-topic-back:hover{border-color:var(--accent); color:var(--accent)}
+@media(max-width:720px){.sa-panel{width:100vw}}
+
 /* ---------- 卡卡助手：可爱动态形象 ---------- */
 .kaka-buddy{
   position:fixed; right:22px; bottom:22px; width:62px; height:62px;
@@ -817,6 +882,63 @@ table.mt tbody tr:hover{background:#FBFBF7}
   color:var(--text); border:1px solid var(--rule);
 }
 .kaka-thinking{font-size:11.5px; color:var(--muted); align-self:flex-start}
+/* 58 SuperAgent：醒目标识 */
+.kaka-sa-btn{
+  border:1px solid var(--accent); background:var(--accent-soft); color:var(--accent);
+  font-family:var(--mono); font-size:10px; font-weight:600; padding:3px 7px; cursor:pointer;
+  white-space:nowrap;
+}
+.kaka-sa-btn:hover{background:var(--accent); color:#fff}
+.kaka-intro-sa{display:block; margin-top:8px; padding-top:8px; border-top:1px dashed var(--rule); font-size:11px; color:var(--accent); line-height:1.6}
+.kaka-sa-ask{display:flex; gap:6px; padding:8px 6px; border-bottom:1px solid var(--rule)}
+.kaka-sa-ask input{flex:1; min-width:0; border:1px solid var(--accent); background:#fff; color:var(--text); padding:6px 9px; font-size:11.5px; font-family:inherit}
+.kaka-sa-ask button{border:1px solid var(--accent); background:var(--accent); color:#fff; padding:0 12px; cursor:pointer; font-size:11.5px}
+.kaka-sa-back{margin-left:auto; border:1px solid var(--rule); background:transparent; color:var(--muted); font-size:9.5px; padding:1px 6px; cursor:pointer}
+.kaka-sa-back:hover{border-color:var(--accent); color:var(--accent)}
+.kaka-sa-list{max-height:200px; overflow:auto}
+.kaka-sa-title{font-family:var(--mono); font-size:11px; font-weight:600; color:var(--accent); padding:5px 6px 4px}
+.kaka-sa-desc{font-size:10px; color:var(--muted); line-height:1.5; padding:0 6px 7px; border-bottom:1px solid var(--rule)}
+.kaka-sa-mark{font-family:var(--mono); font-size:9.5px; font-weight:600; color:var(--accent)}
+.kaka-topic-desc{font-size:10px; color:var(--faint); margin-top:3px}
+/* 58 会话列表 / 话题条；57 依据按钮 / 上下文面板 */
+.kaka-skills{border-bottom:1px solid var(--rule); max-height:240px; overflow:auto; background:var(--surface-2); padding:8px 10px}
+.kaka-skills-head{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; margin-bottom:4px}
+.kaka-skills-head span{flex:1}
+.kaka-skills-hint{font-size:10px; color:var(--faint); margin-bottom:6px}
+.kaka-skills-list{display:flex; flex-direction:column; gap:2px}
+.kaka-skill-opt{display:flex; align-items:center; gap:7px; padding:5px 4px; font-size:12px; cursor:pointer}
+.kaka-skill-opt:hover{background:var(--accent-soft)}
+.kaka-skill-opt input{width:auto; margin:0}
+.kaka-skill-opt span{flex:1}
+.kaka-skill-opt em{font-style:normal; font-family:var(--mono); font-size:9px; color:var(--accent); border:1px solid var(--accent); padding:1px 4px}
+.kaka-skills-foot{display:flex; justify-content:flex-end; margin-top:6px}
+.kaka-sessions{border-bottom:1px solid var(--rule); max-height:180px; overflow:auto; background:var(--surface-2); padding:6px}
+.kaka-sessions-head{font-size:10px; font-family:var(--mono); color:var(--faint); padding:4px 6px 6px}
+.kaka-session{padding:6px 8px; cursor:pointer; border:1px solid transparent}
+.kaka-session:hover{background:var(--accent-soft)}
+.kaka-session.active{border-color:var(--accent)}
+.kaka-session-topic{font-size:12px; font-weight:600; color:var(--text)}
+.kaka-session-preview{font-size:10.5px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.kaka-usage{padding:7px 14px 8px; border-bottom:1px solid var(--rule); background:var(--surface-2)}
+.kaka-usage-head{display:flex; align-items:center; justify-content:space-between; font-size:10px; color:var(--muted); margin-bottom:5px}
+.kaka-usage-head b{font-family:var(--mono); font-size:11px; color:var(--text)}
+.kaka-usage-track{height:5px; background:var(--rule); overflow:hidden}
+.kaka-usage-fill{height:100%; width:0; background:var(--accent); transition:width .35s ease, background .35s ease}
+.kaka-usage-fill.warn{background:#d9971c}
+.kaka-usage-fill.danger{background:var(--err)}
+.kaka-usage-note{font-size:9.5px; color:var(--faint); margin-top:4px}
+.kaka-topic-bar{padding:6px 14px; font-size:11px; border-bottom:1px solid var(--rule); background:var(--accent-soft)}
+.kaka-topic-tag{font-family:var(--mono); font-size:9px; color:var(--accent); border:1px solid var(--accent); padding:1px 5px; margin-right:6px}
+.kaka-msg-tools{display:flex; gap:6px; margin-top:7px; flex-wrap:wrap}
+.kaka-mini{border:1px solid var(--rule); background:transparent; color:var(--muted); font-size:10px; padding:2px 7px; cursor:pointer; font-family:inherit}
+.kaka-mini:hover:not(:disabled){border-color:var(--accent); color:var(--accent)}
+.kaka-mini:disabled{opacity:.45; cursor:default}
+.kaka-ctx-panel{position:absolute; left:10px; right:10px; bottom:76px; max-height:60%; overflow:auto; background:var(--paper); border:1px solid var(--border-strong); box-shadow:0 -6px 18px rgba(0,0,0,.08); padding:10px 12px; font-size:11px; z-index:5}
+.kaka-ctx-head{display:flex; align-items:center; justify-content:space-between; font-weight:600; font-size:12px; margin-bottom:8px}
+.kaka-ctx-row{border-top:1px solid var(--rule); padding:7px 0}
+.kaka-ctx-row b{display:block; color:var(--faint); font-size:9.5px; font-family:var(--mono); margin-bottom:3px}
+.kaka-ctx-row span,.kaka-ctx-row pre{font-size:11px; color:var(--muted); white-space:pre-wrap; word-break:break-word; margin:0; line-height:1.6}
+.kaka-ctx-note{color:var(--faint); font-size:10px; margin-top:8px; font-style:italic}
 .kaka-pop-ask{
   display:flex; gap:8px; padding:12px;
   border-top:1px solid var(--rule); align-items:flex-end;
@@ -920,6 +1042,99 @@ table.mt tbody tr:hover{background:#FBFBF7}
 .ds-collect{display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start}
 .ds-collect input[type=text]{flex:1; min-width:220px; border:1px solid var(--rule); padding:8px 10px; font-size:12.5px}
 .ds-candidate{margin-top:12px; padding:10px 12px; border:1px dashed var(--rule); font-size:12px; line-height:1.75}
+
+/* 55 技能市场 / ClawHub / 56 RSI */
+.hub-search{display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap}
+.hub-search input[type=text]{flex:1; min-width:220px; border:1px solid var(--rule); padding:8px 10px; font-size:12.5px; background:#fff; color:var(--text)}
+.hub-results{border:1px solid var(--rule); max-height:300px; overflow:auto; margin-bottom:14px; padding:6px}
+.hub-head{font-size:10px; font-family:var(--mono); color:var(--faint); padding:4px 6px 8px}
+.hub-item{display:flex; align-items:flex-start; gap:12px; padding:8px 6px; border-top:1px solid var(--rule)}
+.hub-item:first-of-type{border-top:0}
+.hub-item-main{flex:1; min-width:0}
+.hub-item-name{font-size:12.5px; font-weight:600; margin-bottom:3px}
+.hub-badge{font-size:9px; font-family:var(--mono); color:var(--accent); border:1px solid var(--accent); padding:1px 5px; margin-left:5px}
+.hub-badge.alt{color:var(--muted); border-color:var(--rule)}
+.hub-item-desc{font-size:11px; color:var(--muted); line-height:1.55; margin-bottom:3px}
+.hub-item-meta{font-size:10px; color:var(--faint); font-family:var(--mono)}
+.hub-item-act{display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0}
+.hub-installed{font-size:10px; color:var(--accent)}
+.hub-link{font-size:10px; color:var(--muted); text-decoration:none; border-bottom:1px dotted var(--rule)}
+.skill-section-label{font-size:10px; font-family:var(--mono); color:var(--faint); margin:2px 0 8px}
+.skill-list{display:flex; flex-direction:column; gap:8px; max-height:360px; overflow:auto}
+.skill-row{display:flex; align-items:center; gap:12px; border:1px solid var(--rule); padding:9px 11px}
+.skill-main{flex:1; min-width:0}
+.skill-name{font-size:12.5px; font-weight:600; margin-bottom:3px}
+.skill-cat{font-size:9px; color:var(--faint); font-family:var(--mono); border:1px solid var(--rule); padding:1px 5px; margin-left:4px}
+.skill-desc{font-size:11px; color:var(--muted); line-height:1.5}
+.skill-actions{display:flex; align-items:center; gap:8px; flex-shrink:0}
+.switch{display:flex; align-items:center; gap:4px; font-size:11px; color:var(--muted); cursor:pointer}
+.switch input{width:auto}
+.rsi-proposals{display:flex; flex-direction:column; gap:8px; max-height:300px; overflow:auto}
+.rsi-prop{border:1px solid var(--rule); padding:9px 11px; font-size:11.5px}
+.rsi-prop-head{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:5px}
+.rsi-badge{font-family:var(--mono); font-size:9px; padding:2px 6px; border:1px solid var(--rule); color:var(--muted)}
+.rsi-badge.pending{color:var(--warn)}
+.rsi-badge.approved{color:var(--accent)}
+.rsi-badge.rejected,.rsi-badge.rolled_back{color:var(--faint)}
+.rsi-prop-body{color:var(--muted); line-height:1.6; margin-bottom:6px}
+.rsi-prop-change{margin-bottom:6px}
+.rsi-prop-change code{font-size:10.5px; background:var(--surface-2); padding:1px 4px}
+.rsi-prop-actions{display:flex; gap:6px}
+
+/* 项目概览统计 */
+.overview-stats{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 18px}
+.ov-stat{display:flex; align-items:baseline; gap:9px; padding:10px 16px; background:var(--surface-2); border:1px solid var(--rule); border-radius:3px}
+.ov-stat span{font-size:12px; color:var(--faint); letter-spacing:.06em}
+.ov-stat b{font-family:var(--mono); font-size:17px; font-weight:600; color:var(--accent)}
+
+/* 项目详情页各标签面板字号放大 */
+.detail-tabs .project-tab{font-size:13.5px; padding:11px 15px}
+.detail-panel .sec-title{font-size:15px}
+.detail-panel .eyebrow{font-size:11px}
+.detail-panel .section-intro{font-size:13px}
+.detail-panel .plan-label{font-size:12px}
+.detail-panel .btn{font-size:12px}
+.detail-panel .tiny{font-size:12px}
+.detail-panel .hint{font-size:12px}
+.detail-panel .badge{font-size:11px}
+.detail-panel input,.detail-panel textarea,.detail-panel select{font-size:13px}
+.detail-panel table th,.detail-panel table td{font-size:12px}
+
+/* 59 项目 GPU 资源与排程 */
+.gpu-block{margin:8px 0}
+.gpu-block summary{cursor:pointer; font-size:12px; color:var(--accent); margin-bottom:6px; outline:none}
+.gpu-form{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0 10px}
+.gpu-form input,.gpu-form select{padding:6px 8px; border:1px solid var(--rule); background:#fff; color:var(--text); font-size:12px; font-family:var(--sans)}
+.gpu-form input:focus,.gpu-form select:focus{outline:none; border-color:var(--accent)}
+.gpu-idle{font-size:11px; color:var(--muted); margin:10px 0; padding:7px 10px; background:var(--accent-soft); border-left:2px solid var(--accent)}
+.gpu-subtitle{font-size:12px; margin:14px 0 6px; font-family:var(--mono)}
+.gpu-time{font-weight:700; color:#0f8a4d; white-space:nowrap}
+
+/* 主页面：暖白纸面 + 深墨标题 + 期刊绿聚焦（局部配色，不影响全站期刊风）
+   设计依据：背景退后、单一强调色、高对比文本、充足层级 —— 内容型落地页原则 */
+body.home-page{--home-bg:#FBFAF6; --home-green:#0F5F46; --home-green-deep:#0A4633; --home-line:#D8E4DE; background:var(--home-bg)}
+body.home-page .nav{background:#FFFFFF}
+body.home-page .brand{color:var(--home-green)}
+body.home-page .brand small{color:var(--faint)}
+body.home-page .nav-links a.on{color:var(--home-green); border-bottom-color:var(--home-green)}
+
+.home-landing{min-height:calc(100vh - 118px); display:flex; align-items:center; justify-content:center}
+.home-landing-inner{max-width:1000px; text-align:center; padding:48px 24px}
+.home-landing .eyebrow{
+  display:inline-block; font-size:30px; letter-spacing:.04em; color:var(--home-green);
+  text-transform:uppercase; font-weight:600; padding-bottom:18px; line-height:1.3;
+  border-bottom:1px solid var(--home-line);
+}
+.home-landing h1{
+  font-family:var(--serif); font-size:44px; line-height:1.42; font-weight:600;
+  margin:24px 0 18px; color:var(--text); letter-spacing:.01em;
+}
+.home-landing h1 em{font-style:normal; color:var(--home-green-deep)}
+.home-landing .sub{font-size:14.5px; color:var(--muted); line-height:1.85; margin:0 auto 32px; max-width:580px}
+.home-landing-actions{display:flex; gap:12px; justify-content:center; flex-wrap:wrap}
+.home-landing-actions .btn.accent{background:var(--home-green); border-color:var(--home-green)}
+.home-landing-actions .btn.accent:hover{background:var(--home-green-deep); border-color:var(--home-green-deep)}
+@media(max-width:720px){.home-landing h1{font-size:30px} .home-landing .eyebrow{font-size:20px; letter-spacing:.02em; padding-bottom:12px}}
 
 @media(max-width:720px){
   .kaka-buddy{right:14px; bottom:14px}

@@ -25,25 +25,13 @@
   </div>
 </div>
 
-<section class="card project-detail-head">
-  <div class="project-mark large">{{ project.name[:1] }}</div>
-  <div style="flex:1;min-width:0">
-    <h2>{{ project.name }}</h2>
-    <div class="project-meta">{{ project.description or '暂无项目说明' }}</div>
-  </div>
-  <div class="project-stat-grid compact">
-    <div class="project-stat"><i>实验</i><b>{{ experiments|length }}</b></div>
-    <div class="project-stat"><i>成员</i><b>{{ members|length }}</b></div>
-    <div class="project-stat"><i>角色</i><b>{{ role }}</b></div>
-  </div>
-</section>
-
 <div class="project-tabs detail-tabs">
   <button class="project-tab on" data-detail-tab="overview">概览</button>
   <button class="project-tab" data-detail-tab="members">成员</button>
   <button class="project-tab" data-detail-tab="experiments">实验</button>
   <button class="project-tab" data-detail-tab="discuss">讨论</button>
   <button class="project-tab" data-detail-tab="datasets">数据集</button>
+  <button class="project-tab" data-detail-tab="gpu">资源 / 排程</button>
   <button class="project-tab" data-detail-tab="shares">分享</button>
 </div>
 
@@ -51,6 +39,11 @@
   <div class="sec-head"><div class="sec-title">项目概览</div><span class="eyebrow">Overview</span></div>
   <div class="card-pad">
     <p class="section-intro">{{ project.description or '还没有填写项目说明。' }}</p>
+    <div class="overview-stats">
+      <div class="ov-stat"><span>实验</span><b>{{ experiments|length }}</b></div>
+      <div class="ov-stat"><span>成员</span><b>{{ members|length }}</b></div>
+      <div class="ov-stat"><span>角色</span><b>{{ role }}</b></div>
+    </div>
     {% if role == 'owner' %}
     <div class="project-edit-form">
       <div class="plan-label">项目设置</div>
@@ -172,6 +165,45 @@
   </div>
 </section>
 
+<section class="card detail-panel" data-detail-panel="gpu" style="display:none">
+  <div class="sec-head"><div class="sec-title">服务器 GPU 资源与排程</div><span class="eyebrow">GPU Queue</span></div>
+  <div class="card-pad">
+    <p class="section-intro">在项目里登记可用 GPU，团队成员按时间段排队；卡卡会盯着空闲状态，并在项目群聊提醒下一位使用。</p>
+    {% if role in ['owner', 'editor'] %}
+    <details class="gpu-block">
+      <summary>登记 GPU 资源</summary>
+      <div class="gpu-form">
+        <select id="gpu-host"><option value="">选择服务器</option></select>
+        <input type="number" id="gpu-index" min="0" placeholder="GPU 编号" style="width:104px">
+        <input type="text" id="gpu-name" placeholder="名称，如 A100-0" style="width:150px">
+        <input type="number" id="gpu-mem" min="0" placeholder="显存 MB" style="width:108px">
+        <input type="text" id="gpu-note" placeholder="备注（可选）" style="width:170px">
+        <button type="button" class="btn sm" id="btn-gpu-add">登记</button>
+      </div>
+    </details>
+    <details class="gpu-block">
+      <summary>申请排队</summary>
+      <div class="gpu-form">
+        <select id="gpu-resource"><option value="">选择 GPU</option></select>
+        <input type="datetime-local" id="gpu-start">
+        <span class="tiny faint">至</span>
+        <input type="datetime-local" id="gpu-end">
+        <select id="gpu-exp"><option value="0">不关联实验</option>{% for e in experiments %}<option value="{{ e.id }}">{{ e.title }}</option>{% endfor %}</select>
+        <input type="text" id="gpu-res-note" placeholder="备注（可选）" style="width:150px">
+        <button type="button" class="btn sm" id="btn-gpu-book">申请</button>
+      </div>
+    </details>
+    {% else %}
+    <div class="hint">你是 viewer，只能查看资源与排程。</div>
+    {% endif %}
+    <div class="gpu-idle" id="gpu-idle"></div>
+    <h4 class="gpu-subtitle">GPU 资源</h4>
+    <div id="gpu-resources">加载中…</div>
+    <h4 class="gpu-subtitle">排队日程</h4>
+    <div id="gpu-schedule">加载中…</div>
+  </div>
+</section>
+
 <section class="card detail-panel" data-detail-panel="shares" style="display:none">
   <div class="sec-head"><div class="sec-title">项目分享</div><span class="eyebrow">Read only</span></div>
   <div class="card-pad">
@@ -206,6 +238,7 @@ document.querySelectorAll('[data-detail-tab]').forEach(tab => tab.onclick = () =
   if (t === 'shares') loadShares();
   if (t === 'discuss') loadChat();
   if (t === 'datasets') loadDatasets();
+  if (t === 'gpu') loadGpu();
 });
 
 const btnSave = document.getElementById('btn-project-save');
@@ -493,6 +526,144 @@ async function loadDatasets() {
     });
   } catch (e) { box.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>'; }
 }
+
+function gpuTime(ts) {
+  if (!ts) return '—';
+  const d = new Date(Number(ts) * 1000);
+  return (d.getMonth() + 1) + '/' + d.getDate() + ' ' +
+    String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+function gpuStamp(v) {
+  if (!v) return 0;
+  const t = new Date(v).getTime();
+  return isNaN(t) ? 0 : Math.floor(t / 1000);
+}
+
+async function loadGpu() {
+  const rBox = document.getElementById('gpu-resources');
+  const sBox = document.getElementById('gpu-schedule');
+  if (!rBox || !sBox) return;
+  try {
+    const [rr, sr] = await Promise.all([
+      api(`/api/projects/${PID}/gpu/resources`),
+      api(`/api/projects/${PID}/gpu/schedule`)
+    ]);
+    const items = rr.items || [];
+    const sched = sr.items || [];
+    const idle = rr.idle || [];
+
+    const idleBox = document.getElementById('gpu-idle');
+    if (idleBox) {
+      idleBox.innerHTML = idle.length
+        ? '空闲 GPU：' + idle.map(x => esc(x.name || ('GPU ' + x.gpu_index))).join('、') +
+          (CAN_WRITE ? ' <button type="button" class="btn ghost sm" id="btn-gpu-remind">提醒到群</button>' : '')
+        : '当前没有空闲 GPU。';
+      const remind = document.getElementById('btn-gpu-remind');
+      if (remind) remind.onclick = async () => {
+        try {
+          const r = await api(`/api/projects/${PID}/gpu/remind`, { method: 'POST' });
+          toast(r.sent ? ('已提醒 ' + r.sent + ' 条到项目群') : '当前没有需要提醒的空闲 GPU');
+        } catch (e) { toast(e.message, true); }
+      };
+    }
+
+    const hostSel = document.getElementById('gpu-host');
+    if (hostSel) {
+      const cur = hostSel.value;
+      hostSel.innerHTML = '<option value="">选择服务器</option>' +
+        (rr.hosts || []).map(h => `<option value="${h.id}">${esc(h.name)} (${esc(h.host)})</option>`).join('');
+      hostSel.value = cur;
+    }
+    const resSel = document.getElementById('gpu-resource');
+    if (resSel) {
+      const cur = resSel.value;
+      resSel.innerHTML = '<option value="">选择 GPU</option>' +
+        items.map(x => `<option value="${x.id}">${esc(x.host_name || '服务器')} / ${esc(x.name || ('GPU ' + x.gpu_index))}</option>`).join('');
+      resSel.value = cur;
+    }
+
+    rBox.innerHTML = items.length
+      ? '<table class="ds-table"><thead><tr><th>服务器 / GPU</th><th>显存</th><th>状态</th><th>负责人</th><th>备注</th><th></th></tr></thead><tbody>' +
+        items.map(x => `<tr>
+          <td class="tiny"><b>${esc(x.host_name || '—')}</b> / ${esc(x.name || ('GPU ' + x.gpu_index))}</td>
+          <td class="tiny">${x.memory_mb ? esc(x.memory_mb) + ' MB' : '—'}</td>
+          <td class="tiny"><span class="badge ${x.status === 'active' ? 'ok' : 'idle'}">${esc(x.status)}</span></td>
+          <td class="tiny">${esc(x.owner_name || '—')}</td>
+          <td class="tiny">${esc(x.note || '—')}</td>
+          <td class="tiny">${CAN_WRITE ? `<button class="btn ghost sm" data-gpu-status="${x.id}" data-v="${x.status === 'active' ? 'maintenance' : 'active'}">${x.status === 'active' ? '置维护' : '恢复'}</button> <button class="btn ghost sm" data-gpu-del="${x.id}">删除</button>` : '—'}</td>
+        </tr>`).join('') + '</tbody></table>'
+      : '<div class="tiny faint">还没有登记 GPU 资源。登记前请先在「服务器」页面添加你名下的服务器。</div>';
+
+    sBox.innerHTML = sched.length
+      ? '<table class="ds-table"><thead><tr><th>GPU</th><th>使用者</th><th>时间段</th><th>实验</th><th>状态</th><th></th></tr></thead><tbody>' +
+        sched.map(v => `<tr>
+          <td class="tiny">${esc(v.host_name || '—')} / ${esc(v.resource_name || ('GPU ' + v.gpu_index))}</td>
+          <td class="tiny">${esc(v.user_name || '—')}</td>
+          <td class="tiny gpu-time">${gpuTime(v.start_at)} — ${gpuTime(v.end_at)}</td>
+          <td class="tiny">${esc(v.experiment_title || '—')}</td>
+          <td class="tiny"><span class="badge ${v.status === 'active' ? 'ok' : 'idle'}">${esc(v.status)}</span></td>
+          <td class="tiny">${CAN_WRITE && v.status === 'queued' ? `<button class="btn ghost sm" data-gpu-cancel="${v.id}">取消</button>` : '—'}</td>
+        </tr>`).join('') + '</tbody></table>'
+      : '<div class="tiny faint">还没有排队日程。</div>';
+
+    rBox.querySelectorAll('[data-gpu-status]').forEach(b => b.onclick = async () => {
+      try {
+        await api(`/api/projects/${PID}/gpu/resources/${b.dataset.gpuStatus}`, {
+          method: 'PUT', body: { status: b.dataset.v }
+        });
+        toast('资源状态已更新'); loadGpu();
+      } catch (e) { toast(e.message, true); }
+    });
+    rBox.querySelectorAll('[data-gpu-del]').forEach(b => b.onclick = async () => {
+      if (!confirm('删除这个 GPU 资源？')) return;
+      try {
+        await api(`/api/projects/${PID}/gpu/resources/${b.dataset.gpuDel}`, { method: 'DELETE' });
+        toast('已删除'); loadGpu();
+      } catch (e) { toast(e.message, true); }
+    });
+    sBox.querySelectorAll('[data-gpu-cancel]').forEach(b => b.onclick = async () => {
+      if (!confirm('取消这条排队？')) return;
+      try {
+        await api(`/api/projects/${PID}/gpu/schedule/${b.dataset.gpuCancel}`, { method: 'DELETE' });
+        toast('已取消排队'); loadGpu();
+      } catch (e) { toast(e.message, true); }
+    });
+  } catch (e) {
+    rBox.innerHTML = '<div class="tiny err">' + esc(e.message) + '</div>';
+  }
+}
+
+const btnGpuAdd = document.getElementById('btn-gpu-add');
+if (btnGpuAdd) btnGpuAdd.onclick = async () => {
+  const body = {
+    host_id: Number(document.getElementById('gpu-host').value || 0),
+    gpu_index: Number(document.getElementById('gpu-index').value || 0),
+    name: document.getElementById('gpu-name').value.trim(),
+    memory_mb: Number(document.getElementById('gpu-mem').value || 0),
+    note: document.getElementById('gpu-note').value.trim()
+  };
+  if (!body.host_id) return toast('先选择服务器', true);
+  try {
+    await api(`/api/projects/${PID}/gpu/resources`, { method: 'POST', body });
+    toast('GPU 已登记'); loadGpu();
+  } catch (e) { toast(e.message, true); }
+};
+
+const btnGpuBook = document.getElementById('btn-gpu-book');
+if (btnGpuBook) btnGpuBook.onclick = async () => {
+  const body = {
+    resource_id: Number(document.getElementById('gpu-resource').value || 0),
+    start_at: gpuStamp(document.getElementById('gpu-start').value),
+    end_at: gpuStamp(document.getElementById('gpu-end').value),
+    experiment_id: Number(document.getElementById('gpu-exp').value || 0),
+    note: document.getElementById('gpu-res-note').value.trim()
+  };
+  if (!body.resource_id || !body.start_at || !body.end_at) return toast('选择 GPU 并填写起止时间', true);
+  try {
+    await api(`/api/projects/${PID}/gpu/schedule`, { method: 'POST', body });
+    toast('排队申请已提交'); loadGpu();
+  } catch (e) { toast(e.message, true); }
+};
 
 const btnDS = document.getElementById('btn-ds-collect');
 if (btnDS) btnDS.onclick = async () => {

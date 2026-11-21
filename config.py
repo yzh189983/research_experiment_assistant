@@ -21,6 +21,7 @@ WORKSPACE_DIR = os.path.join(DATA_DIR, "workspace")   # 每个实验的本地代
 DB_PATH = os.path.join(DATA_DIR, "app.db")
 CONFIG_FILE = os.path.join(DATA_DIR, "config.json")
 USERS_DIR = os.path.join(DATA_DIR, "users")           # 每用户一份配置覆盖
+AVATAR_DIR = os.path.join(DATA_DIR, "avatars")        # 用户头像（实际数据，随 data/ 被忽略）
 SECRET_KEY_FILE = os.path.join(DATA_DIR, "secret.key")
 
 DEFAULTS = {
@@ -45,6 +46,7 @@ DEFAULTS = {
         "api_key": "",              # 卡卡专用 Key，留空跟随 llm.api_key
         "temperature": 0.2,
         "max_tokens": 1200,
+        "context_window": 128000,   # 上下文窗口上限，用于卡卡用量条；0 表示按模型名推断
     },
     "dataset_search": {
         # 卡卡数据集收集的外部检索；失败会自动退回内置目录，不影响主流程
@@ -95,6 +97,18 @@ DEFAULTS = {
         "webhook_url": "",          # Webhook 地址（企业微信/钉钉/自定义）
         "events": ["finished", "failed", "criteria_failed"],  # 触发事件
         "quiet_hours": "",          # 免打扰时段，如 "22:00-08:00"
+    },
+    "storage": {
+        # 数据后端：sqlite（默认，data/app.db）| postgresql | mysql
+        # 留空 / sqlite 时完全沿用原来的本地 SQLite 文件存储，零行为变化。
+        # 配了 postgresql/mysql 才需要对应驱动（psycopg2-binary / PyMySQL）。
+        "backend": "sqlite",
+        "host": "127.0.0.1",
+        "port": 0,                  # 0 = 各后端默认端口（5432 / 3306）
+        "database": "rekit",
+        "user": "",
+        "password": "",             # 明文填写即可，落盘会自动加密
+        "sslmode": "disable",       # PostgreSQL 的 sslmode；MySQL 忽略
     },
 }
 
@@ -166,7 +180,7 @@ def _deep_merge(base, patch):
 
 
 def ensure_dirs():
-    for d in (DATA_DIR, WORKSPACE_DIR, USERS_DIR):
+    for d in (DATA_DIR, WORKSPACE_DIR, USERS_DIR, AVATAR_DIR):
         # 先判断存在再建：目录通常都在，避免无谓调用 os.makedirs
         # （某些沙箱/打包环境下 makedirs 即使 exist_ok 也会被拦截报错）
         if not os.path.isdir(d):
@@ -192,6 +206,10 @@ def _decode_secrets(cfg):
         key = (cfg.get(section) or {}).get("api_key")
         if key and str(key).startswith(crypto.PREFIX):
             cfg[section]["api_key"] = crypto.decrypt(key)
+    storage = cfg.get("storage") or {}
+    password = storage.get("password")
+    if password and str(password).startswith(crypto.PREFIX):
+        storage["password"] = crypto.decrypt(password)
     return cfg
 
 
@@ -203,6 +221,11 @@ def _encode_secrets(patch):
         key = out[section]["api_key"]
         if key and not str(key).startswith(crypto.PREFIX) and "*" not in str(key):
             out[section]["api_key"] = crypto.encrypt(str(key))
+    storage = out.get("storage")
+    if isinstance(storage, dict) and storage.get("password"):
+        pwd = storage["password"]
+        if not str(pwd).startswith(crypto.PREFIX) and "*" not in str(pwd):
+            storage["password"] = crypto.encrypt(str(pwd))
     return out
 
 
@@ -261,6 +284,11 @@ def migrate_config_secrets():
             if not key or str(key).startswith(crypto.PREFIX) or set(str(key)) == {"*"}:
                 continue
             raw[section]["api_key"] = crypto.encrypt(key)
+            changed = True
+        storage = raw.get("storage") or {}
+        if storage.get("password") and not str(storage["password"]).startswith(crypto.PREFIX):
+            storage["password"] = crypto.encrypt(str(storage["password"]))
+            raw["storage"] = storage
             changed = True
         if changed:
             with open(path, "w", encoding="utf-8") as f:

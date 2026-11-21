@@ -13,10 +13,14 @@ import threading
 import time
 
 import config
-from core import crypto
+from core import crypto, db_backend
 from config import DB_PATH, ensure_dirs
 
 _local = threading.local()
+
+# 后端无关的完整性冲突异常：SQLite 下是 sqlite3.IntegrityError，
+# 外部库下由 db_backend 映射，app.py 等处统一 catch 这个即可。
+IntegrityError = db_backend.IntegrityError
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -305,6 +309,10 @@ CREATE TABLE IF NOT EXISTS kaka_conversations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL DEFAULT 1,
     scope TEXT NOT NULL DEFAULT 'global',
+    topic TEXT DEFAULT '',           -- 58 SuperAgent：话题标题
+    keywords TEXT DEFAULT '',        -- 58 话题关键词（逗号分隔）
+    last_active_at REAL,             -- 58 最近活跃时间（用于一周窗口）
+    status TEXT DEFAULT 'active',    -- active / archived
     created_at REAL,
     updated_at REAL
 );
@@ -315,8 +323,86 @@ CREATE TABLE IF NOT EXISTS kaka_messages (
     role TEXT NOT NULL,
     content TEXT NOT NULL,
     meta TEXT DEFAULT '{}',
+    context_json TEXT DEFAULT '',    -- 57 上下文快照
+    topic_hint TEXT DEFAULT '',      -- 58 消息携带的话题提示
     created_at REAL
 );
+
+-- 55 卡卡技能：用户已安装的技能（含配置）
+CREATE TABLE IF NOT EXISTS kaka_skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    skill_key TEXT NOT NULL,         -- 技能唯一键，对应市场/内置定义
+    enabled INTEGER DEFAULT 1,
+    config_json TEXT DEFAULT '{}',   -- 用户参数覆盖
+    source TEXT DEFAULT 'builtin',   -- builtin / market:<id> / clawhub:<owner>/<slug>
+    name TEXT DEFAULT '',            -- 显示名
+    description TEXT DEFAULT '',     -- 技能说明
+    prompt_text TEXT DEFAULT '',     -- 注入卡卡的提示词（来自 SKILL.md 正文）
+    version TEXT DEFAULT '',
+    source_url TEXT DEFAULT '',
+    installed_at REAL,
+    UNIQUE(user_id, skill_key)
+);
+
+-- 56 RSI 自进化：经验采集 + 改进提案
+CREATE TABLE IF NOT EXISTS kaka_rsi_experiences (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    behavior TEXT NOT NULL,          -- 行为类型：answer/warning/summary/query
+    context TEXT DEFAULT '',         -- 上下文摘要
+    feedback TEXT DEFAULT '',        -- accepted/ignored/corrected/rated
+    outcome TEXT DEFAULT '',         -- 事后标注
+    created_at REAL
+);
+CREATE TABLE IF NOT EXISTS kaka_rsi_proposals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    category TEXT NOT NULL,          -- prompt/skill_param/retrieval
+    target_key TEXT DEFAULT '',      -- 目标技能或提示词键
+    title TEXT NOT NULL,
+    rationale TEXT DEFAULT '',       -- 依据案例说明
+    old_value TEXT DEFAULT '',
+    new_value TEXT DEFAULT '',
+    status TEXT DEFAULT 'pending',   -- pending/approved/rejected/rolled_back
+    evidence_json TEXT DEFAULT '[]',
+    created_at REAL,
+    decided_at REAL
+);
+
+-- 59 项目级服务器 GPU 资源与排队日程
+CREATE TABLE IF NOT EXISTS project_gpu_resources (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    host_id INTEGER NOT NULL DEFAULT 0,
+    gpu_index INTEGER NOT NULL DEFAULT 0,
+    name TEXT DEFAULT '',
+    memory_mb INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active',   -- active | maintenance | offline
+    owner_id INTEGER NOT NULL DEFAULT 1,
+    note TEXT DEFAULT '',
+    created_at REAL,
+    updated_at REAL,
+    UNIQUE(project_id, host_id, gpu_index)
+);
+CREATE TABLE IF NOT EXISTS project_gpu_reservations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    resource_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL DEFAULT 1,
+    experiment_id INTEGER DEFAULT 0,
+    run_id INTEGER DEFAULT 0,
+    start_at REAL NOT NULL,
+    end_at REAL NOT NULL,
+    actual_end_at REAL,
+    status TEXT DEFAULT 'queued',   -- queued | active | done | cancelled
+    note TEXT DEFAULT '',
+    created_at REAL,
+    updated_at REAL
+);
+CREATE INDEX IF NOT EXISTS idx_gpu_res_project ON project_gpu_reservations(project_id, start_at);
+CREATE INDEX IF NOT EXISTS idx_gpu_res_resource ON project_gpu_reservations(resource_id, status);
+CREATE INDEX IF NOT EXISTS idx_gpu_res_run ON project_gpu_reservations(run_id);
 """
 
 # 依赖 user_id 列的索引：必须在老库 ALTER 补列之后再建，否则迁移时会报
@@ -343,17 +429,19 @@ USER_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_project_messages_project ON project_messages(project_id, id)",
     "CREATE INDEX IF NOT EXISTS idx_project_datasets_project ON project_datasets(project_id, id)",
     "CREATE INDEX IF NOT EXISTS idx_kaka_conv_user_scope ON kaka_conversations(user_id, scope)",
-    "CREATE INDEX IF NOT EXISTS idx_kaka_msg_conv ON kaka_messages(conversation_id, id)"
+    "CREATE INDEX IF NOT EXISTS idx_kaka_msg_conv ON kaka_messages(conversation_id, id)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_conv_recent ON kaka_conversations(user_id, last_active_at)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_skills_user ON kaka_skills(user_id, skill_key)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_rsi_exp_user ON kaka_rsi_experiences(user_id, created_at)",
+    "CREATE INDEX IF NOT EXISTS idx_kaka_rsi_prop_user ON kaka_rsi_proposals(user_id, status)"
 ]
 
 
 def get_conn():
     if getattr(_local, "conn", None) is None:
-        ensure_dirs()
-        conn = sqlite3.connect(DB_PATH, timeout=15, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA busy_timeout=15000")
-        conn.execute("PRAGMA journal_mode=WAL")
+        # db_backend.connect 在 sqlite 分支里执行与改造前完全一致的连接初始化；
+        # 传入 DB_PATH（模块级变量），测试里对 db.DB_PATH 的重定向依然有效。
+        conn, _backend = db_backend.connect(DB_PATH)
         _local.conn = conn
     return _local.conn
 
@@ -401,6 +489,21 @@ def init_db():
     for table in ("git_remotes",):
         if "user_id" not in _columns(conn, table):
             conn.execute(f"ALTER TABLE {table} ADD COLUMN user_id INTEGER NOT NULL DEFAULT 1")
+    # 58 SuperAgent / 57 上下文：老库补列
+    for col, ddl in (("topic", "TEXT DEFAULT ''"), ("keywords", "TEXT DEFAULT ''"),
+                     ("last_active_at", "REAL"), ("status", "TEXT DEFAULT 'active'")):
+        if col not in _columns(conn, "kaka_conversations"):
+            conn.execute(f"ALTER TABLE kaka_conversations ADD COLUMN {col} {ddl}")
+    if "context_json" not in _columns(conn, "kaka_messages"):
+        conn.execute("ALTER TABLE kaka_messages ADD COLUMN context_json TEXT DEFAULT ''")
+    if "topic_hint" not in _columns(conn, "kaka_messages"):
+        conn.execute("ALTER TABLE kaka_messages ADD COLUMN topic_hint TEXT DEFAULT ''")
+    for col, ddl in (("name", "TEXT DEFAULT ''"), ("description", "TEXT DEFAULT ''"),
+                     ("prompt_text", "TEXT DEFAULT ''"), ("version", "TEXT DEFAULT ''"),
+                     ("source_url", "TEXT DEFAULT ''")):
+        if col not in _columns(conn, "kaka_skills"):
+            conn.execute(f"ALTER TABLE kaka_skills ADD COLUMN {col} {ddl}")
+    conn.execute("UPDATE kaka_conversations SET last_active_at=updated_at WHERE last_active_at IS NULL")
     conn.commit()
     for sql in USER_INDEXES:
         conn.execute(sql)
@@ -426,6 +529,16 @@ def ex(sql, args=()):
 
 def now():
     return time.time()
+
+
+def _j(value, default):
+    """把 TEXT 字段解析为 JSON；失败返回默认值。"""
+    if isinstance(value, dict if isinstance(default, dict) else list):
+        return value
+    try:
+        return json.loads(value or "") if isinstance(default, (dict, list)) else default
+    except Exception:
+        return default
 
 
 def _uid(explicit=None):
@@ -626,6 +739,8 @@ def delete_project(pid, uid=None):
     ex("DELETE FROM share_links WHERE project_id=?", (pid,))
     ex("DELETE FROM project_messages WHERE project_id=?", (pid,))
     ex("DELETE FROM project_datasets WHERE project_id=?", (pid,))
+    ex("DELETE FROM project_gpu_reservations WHERE project_id=?", (int(pid),))
+    ex("DELETE FROM project_gpu_resources WHERE project_id=?", (int(pid),))
     ex("DELETE FROM kaka_conversations WHERE scope=?", (f"project:{pid}",))
     ex("DELETE FROM project_members WHERE project_id=?", (pid,))
     ex("DELETE FROM projects WHERE id=?", (pid,))
@@ -1381,15 +1496,168 @@ def delete_project_dataset(dataset_id, project_id, uid=None):
     return True
 
 
-def get_or_create_kaka_conversation(scope, uid=None):
+# ---------------- 59 项目 GPU 资源与排程 ----------------
+def list_project_hosts(pid):
+    """项目成员名下的服务器，供项目内登记 GPU 资源时选择。"""
+    ids = [r["user_id"] for r in q("SELECT user_id FROM project_members WHERE project_id=?", (int(pid),))]
+    if not ids:
+        return []
+    marks = ",".join("?" for _ in ids)
+    return [dict(r) for r in q(
+        f"SELECT id, name, host, port, username, gpu FROM hosts "
+        f"WHERE user_id IN ({marks}) ORDER BY id", tuple(ids))]
+
+
+def add_project_gpu_resource(pid, host_id, gpu_index, name="", memory_mb=0, note="", uid=None):
+    if q1("SELECT id FROM project_gpu_resources WHERE project_id=? AND host_id=? AND gpu_index=?",
+          (int(pid), int(host_id), int(gpu_index))):
+        return 0
+    t = now()
+    return ex("""INSERT INTO project_gpu_resources
+        (project_id,host_id,gpu_index,name,memory_mb,status,owner_id,note,created_at,updated_at)
+        VALUES(?,?,?,?,?,'active',?,?,?,?)""",
+        (int(pid), int(host_id), int(gpu_index), str(name or "")[:120], int(memory_mb or 0),
+         _uid(uid), str(note or "")[:500], t, t))
+
+
+def list_project_gpu_resources(pid, uid=None):
+    return [dict(r) for r in q("""SELECT r.*, h.name AS host_name, h.host AS host_addr,
+            u.username AS owner_name FROM project_gpu_resources r
+            LEFT JOIN hosts h ON h.id=r.host_id
+            LEFT JOIN users u ON u.id=r.owner_id
+            WHERE r.project_id=? ORDER BY r.id""", (int(pid),))]
+
+
+def update_project_gpu_resource(rid, pid, fields, uid=None):
+    allowed = {"name", "memory_mb", "status", "note", "owner_id"}
+    sets, args = [], []
+    for k, v in fields.items():
+        if k in allowed:
+            sets.append(f"{k}=?")
+            args.append(v)
+    if not sets:
+        return False
+    sets.append("updated_at=?")
+    args.append(now())
+    args += [int(rid), int(pid)]
+    ex(f"UPDATE project_gpu_resources SET {','.join(sets)} WHERE id=? AND project_id=?", tuple(args))
+    return True
+
+
+def delete_project_gpu_resource(rid, pid, uid=None):
+    if q1("SELECT id FROM project_gpu_reservations WHERE resource_id=? AND status IN ('queued','active')",
+          (int(rid),)):
+        return False
+    ex("DELETE FROM project_gpu_resources WHERE id=? AND project_id=?", (int(rid), int(pid)))
+    return True
+
+
+def add_project_gpu_reservation(pid, resource_id, start_at, end_at,
+                                experiment_id=0, note="", uid=None):
+    if not q1("SELECT id FROM project_gpu_resources WHERE id=? AND project_id=? AND status='active'",
+              (int(resource_id), int(pid))):
+        return None
+    if float(end_at) <= float(start_at):
+        return None
+    t = now()
+    return ex("""INSERT INTO project_gpu_reservations
+        (project_id,resource_id,user_id,experiment_id,start_at,end_at,status,note,created_at,updated_at)
+        VALUES(?,?,?,?,?,?,'queued',?,?,?)""",
+        (int(pid), int(resource_id), _uid(uid), int(experiment_id or 0),
+         float(start_at), float(end_at), str(note or "")[:500], t, t))
+
+
+def list_project_gpu_reservations(pid, uid=None, limit=300):
+    return [dict(r) for r in q("""SELECT v.*, r.name AS resource_name, r.gpu_index,
+            h.name AS host_name, u.username AS user_name, e.title AS experiment_title
+            FROM project_gpu_reservations v
+            LEFT JOIN project_gpu_resources r ON r.id=v.resource_id
+            LEFT JOIN hosts h ON h.id=r.host_id
+            LEFT JOIN users u ON u.id=v.user_id
+            LEFT JOIN experiments e ON e.id=v.experiment_id
+            WHERE v.project_id=? ORDER BY v.start_at DESC LIMIT ?""", (int(pid), int(limit)))]
+
+
+def find_gpu_conflicts(resource_id, start_at, end_at, exclude_id=0):
+    return [dict(r) for r in q("""SELECT id, user_id, start_at, end_at, status
+            FROM project_gpu_reservations WHERE resource_id=? AND id!=?
+              AND status IN ('queued','active') AND start_at < ? AND end_at > ?""",
+            (int(resource_id), int(exclude_id), float(end_at), float(start_at)))]
+
+
+def update_project_gpu_reservation(sid, pid, fields, uid=None):
+    allowed = {"start_at", "end_at", "experiment_id", "note", "resource_id"}
+    sets, args = [], []
+    for k, v in fields.items():
+        if k in allowed:
+            sets.append(f"{k}=?")
+            args.append(v)
+    if not sets:
+        return False
+    sets.append("updated_at=?")
+    args.append(now())
+    args += [int(sid), int(pid)]
+    ex(f"UPDATE project_gpu_reservations SET {','.join(sets)} WHERE id=? AND project_id=?", tuple(args))
+    return True
+
+
+def cancel_project_gpu_reservation(sid, pid, uid=None):
+    ex("UPDATE project_gpu_reservations SET status='cancelled', updated_at=? "
+       "WHERE id=? AND project_id=? AND status='queued'", (now(), int(sid), int(pid)))
+
+
+def bind_gpu_reservation_for_run(run_id, exp_id, uid=None):
+    """run 启动时把该用户在该实验上最早的一条 queued 排程转为 active。"""
+    run = q1("SELECT id, user_id FROM runs WHERE id=?", (int(run_id),))
+    exp = q1("SELECT id, project_id FROM experiments WHERE id=?", (int(exp_id),))
+    if not run or not exp or not exp.get("project_id"):
+        return None
+    row = q1("""SELECT v.* FROM project_gpu_reservations v
+                JOIN project_gpu_resources r ON r.id=v.resource_id
+                WHERE v.project_id=? AND v.experiment_id=? AND v.user_id=?
+                  AND v.status='queued' AND r.status='active'
+                ORDER BY v.start_at LIMIT 1""",
+             (exp["project_id"], int(exp_id), run["user_id"]))
+    if not row:
+        return None
+    ex("UPDATE project_gpu_reservations SET status='active', run_id=?, updated_at=? WHERE id=?",
+       (int(run_id), now(), row["id"]))
+    return dict(row)
+
+
+def release_gpu_reservation_for_run(run_id):
+    """run 结束/失败时释放排程，返回被释放的资源信息供群提醒。"""
+    row = q1("SELECT id, project_id, resource_id FROM project_gpu_reservations "
+             "WHERE run_id=? AND status='active'", (int(run_id),))
+    if not row:
+        return None
+    ex("UPDATE project_gpu_reservations SET status='done', actual_end_at=?, updated_at=? WHERE id=?",
+       (now(), now(), row["id"]))
+    res = q1("SELECT name, gpu_index FROM project_gpu_resources WHERE id=?", (row["resource_id"],))
+    label = "GPU %d" % res["gpu_index"] if res else "GPU"
+    return {"project_id": row["project_id"], "resource_id": row["resource_id"],
+            "name": (res["name"] if res and res["name"] else label)}
+
+
+def gpu_idle_candidates(pid):
+    """空闲资源：状态正常且没有 queued / active 排程。"""
+    return [dict(r) for r in q("""SELECT r.id, r.name, r.gpu_index FROM project_gpu_resources r
+            WHERE r.project_id=? AND r.status='active'
+              AND NOT EXISTS (SELECT 1 FROM project_gpu_reservations v
+                              WHERE v.resource_id=r.id AND v.status IN ('queued','active'))
+            ORDER BY r.id""", (int(pid),))]
+
+
+def get_or_create_kaka_conversation(scope, uid=None, topic="", keywords=""):
     scope = str(scope or "global")[:80]
     uid = _uid(uid)
-    row = q1("SELECT id FROM kaka_conversations WHERE user_id=? AND scope=?",
-             (uid, scope))
+    row = q1("SELECT id FROM kaka_conversations WHERE user_id=? AND scope=? "
+             "AND COALESCE(status,'active')!='trash'", (uid, scope))
     if row:
         return row["id"]
-    return ex("INSERT INTO kaka_conversations(user_id,scope,created_at,updated_at) VALUES(?,?,?,?)",
-              (uid, scope, now(), now()))
+    return ex("INSERT INTO kaka_conversations(user_id,scope,topic,keywords,last_active_at,created_at,updated_at) "
+              "VALUES(?,?,?,?,?,?,?)",
+              (uid, scope, str(topic or "")[:120], str(keywords or "")[:500], now(), now(), now()))
 
 
 def list_kaka_messages(conversation_id, uid=None, limit=30):
@@ -1399,15 +1667,216 @@ def list_kaka_messages(conversation_id, uid=None, limit=30):
     return [dict(r) for r in rows][::-1]
 
 
-def add_kaka_message(conversation_id, role, content, meta=None, uid=None):
-    mid = ex("INSERT INTO kaka_messages(conversation_id,user_id,role,content,meta,created_at) "
-             "VALUES(?,?,?,?,?,?)",
+def add_kaka_message(conversation_id, role, content, meta=None, uid=None,
+                     context=None, topic_hint=""):
+    mid = ex("INSERT INTO kaka_messages(conversation_id,user_id,role,content,meta,context_json,topic_hint,created_at) "
+             "VALUES(?,?,?,?,?,?,?,?)",
              (int(conversation_id), _uid(uid), str(role), str(content or "")[:4000],
-              json.dumps(meta or {}, ensure_ascii=False), now()))
-    ex("UPDATE kaka_conversations SET updated_at=? WHERE id=?", (now(), conversation_id))
+              json.dumps(meta or {}, ensure_ascii=False),
+              json.dumps(context, ensure_ascii=False) if context is not None else "",
+              str(topic_hint or "")[:120], now()))
+    ts = now()
+    ex("UPDATE kaka_conversations SET updated_at=?, last_active_at=? WHERE id=?",
+       (ts, ts, conversation_id))
     return mid
 
 
 def clear_kaka_messages(conversation_id, uid=None):
     ex("DELETE FROM kaka_messages WHERE conversation_id=? AND user_id=?",
        (int(conversation_id), _uid(uid)))
+
+
+# ---------- 57 上下文可视化 ----------
+def get_kaka_message(message_id, uid=None):
+    row = q1("SELECT * FROM kaka_messages WHERE id=? AND user_id=?",
+             (int(message_id), _uid(uid)))
+    if not row:
+        return None
+    d = dict(row)
+    d["meta"] = _j(d.get("meta"), {})
+    d["context"] = _j(d.get("context_json"), {})
+    return d
+
+
+# ---------- 58 SuperAgent：会话管理 ----------
+def list_kaka_conversations(uid=None, days=7, limit=50, include_archived=False, status=None):
+    """列出会话，按活跃时间倒序。
+    status 为 None 时沿用旧语义（最近 N 天、按 include_archived 过滤）；
+    指定 status（active / archived / trash）时精确过滤，且不受 days 限制。"""
+    uid = _uid(uid)
+    sql = "SELECT * FROM kaka_conversations WHERE user_id=?"
+    args = [uid]
+    if status:
+        sql += " AND COALESCE(status,'active')=?"
+        args.append(str(status))
+    else:
+        sql += " AND last_active_at>=?"
+        args.append(now() - max(1, int(days)) * 86400)
+        if not include_archived:
+            sql += " AND COALESCE(status,'active')='active'"
+    sql += " ORDER BY last_active_at DESC LIMIT ?"
+    args.append(int(limit))
+    return [dict(r) for r in q(sql, tuple(args))]
+
+
+def list_scope_conversations(scope, uid=None):
+    """某 scope 下未删除的会话（含归档，排除垃圾箱），用于按 scope 聚合历史。"""
+    return [dict(r) for r in q(
+        "SELECT id FROM kaka_conversations WHERE user_id=? AND scope=? "
+        "AND COALESCE(status,'active')!='trash' ORDER BY id",
+        (_uid(uid), str(scope)))]
+
+
+def get_kaka_conversation(conv_id, uid=None):
+    row = q1("SELECT * FROM kaka_conversations WHERE id=? AND user_id=?",
+             (int(conv_id), _uid(uid)))
+    return dict(row) if row else None
+
+
+def update_kaka_conversation(conv_id, uid=None, **fields):
+    if not fields:
+        return
+    allowed = ("scope", "topic", "keywords", "last_active_at", "status")
+    sets, args = [], []
+    for k, v in fields.items():
+        if k in allowed:
+            sets.append(f"{k}=?")
+            args.append(v)
+    if not sets:
+        return
+    args += [int(conv_id), _uid(uid)]
+    ex(f"UPDATE kaka_conversations SET {','.join(sets)} WHERE id=? AND user_id=?", tuple(args))
+
+
+def trash_kaka_conversation(conv_id, uid=None):
+    ex("UPDATE kaka_conversations SET status='trash' WHERE id=? AND user_id=?",
+       (int(conv_id), _uid(uid)))
+
+
+def restore_kaka_conversation(conv_id, uid=None):
+    ex("UPDATE kaka_conversations SET status='active' WHERE id=? AND user_id=?",
+       (int(conv_id), _uid(uid)))
+
+
+def delete_kaka_conversation(conv_id, uid=None):
+    """从垃圾箱彻底删除会话及其全部消息，仅限本人会话。"""
+    uid = _uid(uid)
+    if not q1("SELECT id FROM kaka_conversations WHERE id=? AND user_id=?",
+              (int(conv_id), uid)):
+        return False
+    ex("DELETE FROM kaka_messages WHERE conversation_id=? AND user_id=?", (int(conv_id), uid))
+    ex("DELETE FROM kaka_conversations WHERE id=? AND user_id=?", (int(conv_id), uid))
+    return True
+
+
+def create_kaka_conversation(scope, uid=None, topic="", keywords=""):
+    uid = _uid(uid)
+    return ex(
+        "INSERT INTO kaka_conversations(user_id,scope,topic,keywords,last_active_at,created_at,updated_at) "
+        "VALUES(?,?,?,?,?,?,?)",
+        (uid, str(scope or "global")[:80], str(topic or "")[:120],
+         str(keywords or "")[:500], now(), now(), now()))
+
+
+# ---------- 55 卡卡技能 ----------
+def list_kaka_skills(uid=None):
+    return [dict(r) for r in q(
+        "SELECT * FROM kaka_skills WHERE user_id=? ORDER BY id", (_uid(uid),))]
+
+
+def get_kaka_skill(skill_key, uid=None):
+    row = q1("SELECT * FROM kaka_skills WHERE user_id=? AND skill_key=?",
+             (_uid(uid), str(skill_key)))
+    if not row:
+        return None
+    d = dict(row)
+    d["config"] = _j(d.get("config_json"), {})
+    return d
+
+
+def upsert_kaka_skill(skill_key, enabled=True, config=None, source="builtin", uid=None,
+                      name="", description="", prompt_text="", version="", source_url=""):
+    uid = _uid(uid)
+    row = q1("SELECT id FROM kaka_skills WHERE user_id=? AND skill_key=?", (uid, str(skill_key)))
+    if row:
+        ex("UPDATE kaka_skills SET enabled=?, config_json=?, source=?, name=?, description=?, "
+           "prompt_text=?, version=?, source_url=? WHERE id=?",
+           (1 if enabled else 0, json.dumps(config or {}, ensure_ascii=False),
+            str(source), str(name), str(description), str(prompt_text),
+            str(version), str(source_url), row["id"]))
+        return row["id"]
+    return ex("INSERT INTO kaka_skills(user_id,skill_key,enabled,config_json,source,name,"
+              "description,prompt_text,version,source_url,installed_at) "
+              "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+              (uid, str(skill_key), 1 if enabled else 0,
+               json.dumps(config or {}, ensure_ascii=False), str(source), str(name),
+               str(description), str(prompt_text), str(version), str(source_url), now()))
+
+
+def delete_kaka_skill(skill_key, uid=None):
+    ex("DELETE FROM kaka_skills WHERE user_id=? AND skill_key=?", (_uid(uid), str(skill_key)))
+
+
+# ---------- 56 RSI 自进化 ----------
+def update_kaka_message_meta(message_id, patch, uid=None):
+    """合并更新消息 meta（用于反馈标记等）。"""
+    row = q1("SELECT meta FROM kaka_messages WHERE id=? AND user_id=?",
+             (int(message_id), _uid(uid)))
+    if not row:
+        return False
+    meta = _j(row["meta"], {})
+    meta.update(patch or {})
+    ex("UPDATE kaka_messages SET meta=? WHERE id=? AND user_id=?",
+       (json.dumps(meta, ensure_ascii=False), int(message_id), _uid(uid)))
+    return True
+
+
+def add_rsi_experience(behavior, context="", feedback="", outcome="", uid=None):
+    return ex("INSERT INTO kaka_rsi_experiences(user_id,behavior,context,feedback,outcome,created_at) "
+              "VALUES(?,?,?,?,?,?)",
+              (_uid(uid), str(behavior), str(context)[:2000], str(feedback),
+               str(outcome)[:500], now()))
+
+
+def list_rsi_experiences(uid=None, limit=200):
+    return [dict(r) for r in q(
+        "SELECT * FROM kaka_rsi_experiences WHERE user_id=? ORDER BY id DESC LIMIT ?",
+        (_uid(uid), int(limit)))]
+
+
+def add_rsi_proposal(category, title, target_key="", rationale="", old_value="",
+                     new_value="", evidence=None, uid=None):
+    return ex("INSERT INTO kaka_rsi_proposals(user_id,category,target_key,title,rationale,"
+              "old_value,new_value,evidence_json,status,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
+              (_uid(uid), str(category), str(target_key), str(title), str(rationale)[:2000],
+               str(old_value)[:2000], str(new_value)[:2000],
+               json.dumps(evidence or [], ensure_ascii=False), "pending", now()))
+
+
+def list_rsi_proposals(uid=None, status=None, limit=100):
+    sql = "SELECT * FROM kaka_rsi_proposals WHERE user_id=?"
+    args = [_uid(uid)]
+    if status:
+        sql += " AND status=?"
+        args.append(str(status))
+    sql += " ORDER BY id DESC LIMIT ?"
+    args.append(int(limit))
+    out = []
+    for r in q(sql, tuple(args)):
+        d = dict(r)
+        d["evidence"] = _j(d.get("evidence_json"), [])
+        out.append(d)
+    return out
+
+
+def decide_rsi_proposal(proposal_id, decision, uid=None):
+    """decision: approved / rejected / rolled_back。"""
+    if decision not in ("approved", "rejected", "rolled_back"):
+        return False
+    cur = q1("SELECT status FROM kaka_rsi_proposals WHERE id=? AND user_id=?",
+             (int(proposal_id), _uid(uid)))
+    if not cur:
+        return False
+    ex("UPDATE kaka_rsi_proposals SET status=?, decided_at=? WHERE id=? AND user_id=?",
+       (decision, now(), int(proposal_id), _uid(uid)))
+    return True

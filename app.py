@@ -14,7 +14,7 @@ import requests
 import threading
 import time
 import traceback
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 
 from datetime import timedelta
 
@@ -99,7 +99,15 @@ def _load_user():
 
 @app.context_processor
 def _inject_user():
-    return {"current_user": getattr(g, "_auth_user", None),
+    u = getattr(g, "_auth_user", None)
+    avatar_url = ""
+    if u:
+        try:
+            avatar_url = _avatar_url(u["id"], token=request.args.get("token", ""))
+        except Exception:
+            avatar_url = ""
+    return {"current_user": u,
+            "avatar_url": avatar_url,
             "auth_enabled": True,
             "active": getattr(g, "active_page", "")}
 
@@ -315,7 +323,8 @@ def _registration_enabled():
 
 def _safe_next(nxt):
     nxt = nxt or ""
-    return nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("index")
+    # 没有 next 时默认落到主页面；有 next（来自 login_required 的原访问页）则尊重它
+    return nxt if nxt.startswith("/") and not nxt.startswith("//") else url_for("home_page")
 
 
 def _safe_url(value):
@@ -352,7 +361,7 @@ def _create_account(username, password, role="member"):
         return None, username, "用户名已存在"
     try:
         uid = db.add_user(username, auth.hash_password(password), role=role)
-    except sqlite3.IntegrityError:
+    except db.IntegrityError:
         return None, username, "用户名已存在"
     return uid, username, ""
 
@@ -360,7 +369,7 @@ def _create_account(username, password, role="member"):
 @app.route("/login", methods=["GET", "POST"])
 def login_page():
     if current_user_ok():
-        return redirect(url_for("index"))
+        return redirect(url_for("home_page"))
     error = ""
     if request.method == "POST":
         username = (request.form.get("username") or "").strip()
@@ -436,7 +445,7 @@ def logout_page():
 @app.route("/register", methods=["GET", "POST"])
 def register_page():
     if current_user_ok():
-        return redirect(url_for("index"))
+        return redirect(url_for("home_page"))
     if not _registration_enabled():
         return redirect(url_for("login_page"))
     error = ""
@@ -455,6 +464,13 @@ def register_page():
 
 
 # ---------------- 页面 ----------------
+
+@app.route("/home")
+@auth.login_required
+def home_page():
+    _set_active("home")
+    return render_template("home.html")
+
 
 @app.route("/")
 @auth.login_required
@@ -778,9 +794,13 @@ def settings_page():
                    "default_branch": r["default_branch"] or "main"}
                   for r in db.list_git_remotes()]
     uid = g._auth_user["id"]
+    storage_cfg = cfg.get("storage") or {}
     return render_template("settings.html", cfg=cfg,
                            api_key_masked=config.mask_secret(cfg["llm"]["api_key"]),
                            has_key=bool(cfg["llm"]["api_key"]),
+                           storage_cfg=storage_cfg,
+                           storage_password_masked=config.mask_secret(storage_cfg.get("password", "")),
+                           is_admin=g._auth_user["role"] == "admin",
                            gh_configs=gh_configs,
                            notify_cfg=cfg.get("notify") or {},
                            ai_eval_runs=ai_eval.latest(uid=uid, limit=5),
@@ -2282,6 +2302,10 @@ def api_get_settings():
     cfg = config.load_config()
     out = json.loads(json.dumps(cfg))
     out["llm"]["api_key"] = config.mask_secret(out["llm"]["api_key"])
+    if out.get("kaka"):
+        out["kaka"]["api_key"] = config.mask_secret(out["kaka"].get("api_key", ""))
+    if out.get("storage"):
+        out["storage"]["password"] = config.mask_secret(out["storage"].get("password", ""))
     return jsonify(out)
 
 
@@ -2336,6 +2360,8 @@ def api_save_settings():
             patch["kaka"]["temperature"] = float(kaka_d["temperature"])
         if "max_tokens" in kaka_d:
             patch["kaka"]["max_tokens"] = int(kaka_d["max_tokens"])
+        if "context_window" in kaka_d:
+            patch["kaka"]["context_window"] = int(kaka_d["context_window"])
         if "enabled" in kaka_d:
             patch["kaka"]["enabled"] = bool(kaka_d["enabled"])
     ds_d = d.get("dataset_search") or {}
@@ -2365,6 +2391,53 @@ def api_save_settings():
     config.save_user_config(g._auth_user["id"], patch)
     return jsonify({"ok": True, "llm_configured": llm.is_configured(),
                     "kaka_ready": kaka._llm_ready()})
+
+
+@api_bp.get("/api/settings/storage")
+def api_get_storage_settings():
+    """读取系统级存储配置（管理员）。密码脱敏，不返回明文。"""
+    if not _require_admin():
+        return jsonify({"error": "仅管理员可查看数据库配置"}), 403
+    st = config.load_global_config().get("storage") or {}
+    out = dict(st)
+    out["password"] = config.mask_secret(out.get("password", ""))
+    return jsonify(out)
+
+
+@api_bp.post("/api/settings/storage")
+def api_save_storage_settings():
+    """保存系统级存储配置（管理员）。切换后端需重启服务才生效。"""
+    if not _require_admin():
+        return jsonify({"error": "仅管理员可修改数据库配置"}), 403
+    d = request.get_json(force=True) or {}
+    cur = config.load_global_config().get("storage") or {}
+    patch = {}
+
+    backend = str(d.get("backend") or "").strip().lower()
+    if backend and backend in ("sqlite", "postgresql", "mysql", "postgres", "pg"):
+        patch["backend"] = {"postgres": "postgresql", "pg": "postgresql"}.get(backend, backend)
+    for k in ("host", "database", "user", "sslmode"):
+        if k in d and d[k] is not None:
+            patch[k] = str(d[k]).strip()
+    if "port" in d and d["port"] is not None:
+        try:
+            patch["port"] = int(d["port"])
+        except (TypeError, ValueError):
+            return jsonify({"error": "端口需为数字"}), 400
+
+    # 密码：新明文才写入；掩码（含 *）与空值都表示"不变"
+    if "password" in d:
+        pwd = str(d["password"] or "").strip()
+        if pwd and "*" not in pwd:
+            patch["password"] = pwd
+
+    changed = bool(patch)
+    if changed:
+        config.save_config({"storage": patch})
+    return jsonify({"ok": True, "changed": changed,
+                    "backend": patch.get("backend", cur.get("backend", "sqlite")),
+                    "restart_required": changed,
+                    "message": "配置已保存，重启服务后生效" if changed else "没有需要保存的改动"})
 
 
 @api_bp.post("/api/notify/test")
@@ -2406,14 +2479,19 @@ def api_kaka_global_ask():
 @api_bp.post("/api/kaka/chat")
 def api_kaka_chat():
     d = request.get_json(force=True) or {}
-    return jsonify(kaka.chat(g._auth_user["id"], d.get("message"), d.get("scope") or "global"))
+    return jsonify(kaka.chat(g._auth_user["id"], d.get("message"), d.get("scope") or "global",
+                             conversation_id=d.get("conversation_id"),
+                             skill_keys=d.get("skill_keys")))
 
 
 @api_bp.get("/api/kaka/history")
 def api_kaka_history():
     scope = request.args.get("scope") or "global"
+    conv = request.args.get("conversation_id") or None
     return jsonify({"items": kaka.history(g._auth_user["id"], scope,
-                                          limit=int(request.args.get("limit") or 50))})
+                                          limit=int(request.args.get("limit") or 50),
+                                          conversation_id=int(conv) if conv else None),
+                    "conversation_id": int(conv) if conv else None})
 
 
 @api_bp.delete("/api/kaka/history")
@@ -2434,6 +2512,176 @@ def api_test_kaka():
         return jsonify({"ok": True, "reply": r.strip()[:50], "model": cfg["model"]})
     except Exception as e:
         return jsonify({"ok": False, "error": crypto.redact(str(e))}), 200
+
+
+# ---------------- 55 卡卡技能配置 ----------------
+@api_bp.get("/api/kaka/skills")
+def api_kaka_skills():
+    from core import kaka_advanced as ka
+    return jsonify({"items": ka.market_list(uid=g._auth_user["id"]),
+                    "installed": ka.installed_skills(uid=g._auth_user["id"])})
+
+
+@api_bp.post("/api/kaka/skills/install")
+def api_kaka_skill_install():
+    from core import kaka_advanced as ka
+    d = request.get_json(force=True) or {}
+    r = ka.install_skill(d.get("skill_key"), d.get("config"), uid=g._auth_user["id"])
+    return jsonify(r), (200 if r.get("ok") else 400)
+
+
+@api_bp.post("/api/kaka/skills/set")
+def api_kaka_skill_set():
+    from core import kaka_advanced as ka
+    d = request.get_json(force=True) or {}
+    r = ka.set_skill(d.get("skill_key"), d.get("enabled"), d.get("config"), uid=g._auth_user["id"])
+    return jsonify(r), (200 if r.get("ok") else 400)
+
+
+@api_bp.delete("/api/kaka/skills/<skill_key>")
+def api_kaka_skill_remove(skill_key):
+    from core import kaka_advanced as ka
+    return jsonify(ka.uninstall_skill(skill_key, uid=g._auth_user["id"]))
+
+
+@api_bp.get("/api/kaka/skills/hub/search")
+def api_kaka_skill_hub_search():
+    """搜索 / 浏览 ClawHub（OpenClaw 官方技能市场）。q 为空时按 sort 取热门。"""
+    from core import kaka_hub
+    q = (request.args.get("q") or "").strip()
+    sort = (request.args.get("sort") or "trending").strip()
+    limit = min(50, max(1, int(request.args.get("limit") or 12)))
+    r = kaka_hub.search(q=q, sort=sort, limit=limit)
+    return jsonify(r), (200 if r.get("ok") else 502)
+
+
+@api_bp.get("/api/kaka/skills/hub/detail")
+def api_kaka_skill_hub_detail():
+    from core import kaka_hub
+    r = kaka_hub.detail(request.args.get("owner") or "", (request.args.get("slug") or "").strip())
+    return jsonify(r), (200 if r.get("ok") else 400)
+
+
+@api_bp.post("/api/kaka/skills/hub/install")
+def api_kaka_skill_hub_install():
+    """从 ClawHub 导入技能说明为卡卡技能；只导入文本，不执行安装脚本。"""
+    from core import kaka_hub
+    d = request.get_json(force=True) or {}
+    r = kaka_hub.install(d.get("ref"), uid=g._auth_user["id"])
+    return jsonify(r), (200 if r.get("ok") else 400)
+
+
+# ---------------- 56 RSI 自进化 ----------------
+@api_bp.get("/api/kaka/rsi/config")
+def api_rsi_config():
+    from core import kaka_advanced as ka
+    return jsonify(ka.rsi_config(uid=g._auth_user["id"]))
+
+
+@api_bp.post("/api/kaka/rsi/config")
+def api_rsi_config_save():
+    from core import kaka_advanced as ka
+    return jsonify(ka.set_rsi_config(request.get_json(force=True) or {}, uid=g._auth_user["id"]))
+
+
+@api_bp.get("/api/kaka/rsi/proposals")
+def api_rsi_proposals():
+    from core import kaka_advanced as ka
+    return jsonify({"items": ka.list_proposals(status=request.args.get("status") or None,
+                                               uid=g._auth_user["id"])})
+
+
+@api_bp.post("/api/kaka/rsi/generate")
+def api_rsi_generate():
+    from core import kaka_advanced as ka
+    return jsonify(ka.generate_proposals(uid=g._auth_user["id"]))
+
+
+@api_bp.post("/api/kaka/rsi/decide")
+def api_rsi_decide():
+    from core import kaka_advanced as ka
+    d = request.get_json(force=True) or {}
+    r = ka.decide_proposal(d.get("id"), d.get("decision"), uid=g._auth_user["id"])
+    return jsonify(r), (200 if r.get("ok") else 400)
+
+
+@api_bp.get("/api/kaka/rsi/experiences")
+def api_rsi_experiences():
+    from core import db
+    return jsonify({"items": db.list_rsi_experiences(uid=g._auth_user["id"],
+                                                     limit=int(request.args.get("limit") or 50))})
+
+
+@api_bp.post("/api/kaka/message/<int:mid>/feedback")
+def api_kaka_message_feedback(mid):
+    """用户对回答反馈：useful / corrected / ignored，回流 RSI 经验。"""
+    from core import db, kaka_advanced as ka
+    d = request.get_json(force=True) or {}
+    fb = (d.get("feedback") or "").strip()
+    if fb not in ("useful", "corrected", "ignored"):
+        return jsonify({"error": "无效反馈"}), 400
+    if not db.update_kaka_message_meta(mid, {"feedback": fb}, uid=g._auth_user["id"]):
+        return jsonify({"error": "消息不存在或无权限"}), 404
+    m = db.get_kaka_message(mid, uid=g._auth_user["id"])
+    ka.record_experience("answer", context=(m.get("content") or "")[:120],
+                         feedback=fb, outcome="user_feedback", uid=g._auth_user["id"])
+    return jsonify({"ok": True})
+
+
+# ---------------- 57 上下文可视化 ----------------
+@api_bp.get("/api/kaka/message/<int:mid>/context")
+def api_kaka_message_context(mid):
+    from core import db
+    m = db.get_kaka_message(mid, uid=g._auth_user["id"])
+    if not m:
+        return jsonify({"error": "消息不存在或无权限"}), 404
+    return jsonify({"context": m.get("context") or {}, "meta": m.get("meta") or {}})
+
+
+@api_bp.get("/api/kaka/context-usage")
+def api_kaka_context_usage():
+    from core import context_usage as cu
+    scope = (request.args.get("scope") or "global").strip() or "global"
+    cid = request.args.get("conversation_id") or None
+    return jsonify(cu.current_usage(g._auth_user["id"], scope=scope,
+                                    conversation_id=int(cid) if cid and cid.isdigit() else None))
+
+
+# ---------------- 58 SuperAgent 会话管理 ----------------
+@api_bp.get("/api/kaka/conversations")
+def api_kaka_conversations():
+    from core import kaka_advanced as ka
+    days = int(request.args.get("days") or 7)
+    status = (request.args.get("status") or "").strip() or None
+    return jsonify({"items": ka.recent_conversations(
+        uid=g._auth_user["id"], days=days, status=status)})
+
+
+@api_bp.post("/api/kaka/conversations/<int:cid>/archive")
+def api_kaka_conversation_archive(cid):
+    from core import kaka_advanced as ka
+    return jsonify(ka.archive_conversation(cid, uid=g._auth_user["id"]))
+
+
+@api_bp.post("/api/kaka/conversations/<int:cid>/trash")
+def api_kaka_conversation_trash(cid):
+    from core import kaka_advanced as ka
+    return jsonify(ka.trash_conversation(cid, uid=g._auth_user["id"]))
+
+
+@api_bp.post("/api/kaka/conversations/<int:cid>/restore")
+def api_kaka_conversation_restore(cid):
+    from core import kaka_advanced as ka
+    return jsonify(ka.restore_conversation(cid, uid=g._auth_user["id"]))
+
+
+@api_bp.delete("/api/kaka/conversations/<int:cid>")
+def api_kaka_conversation_delete(cid):
+    from core import kaka_advanced as ka
+    r = ka.delete_conversation(cid, uid=g._auth_user["id"])
+    if not r.get("ok"):
+        return jsonify(r), 404
+    return jsonify(r)
 
 
 # ---------------- AI 可信 / 评测 / 工具沙箱 ----------------
@@ -2601,6 +2849,123 @@ def api_project_dataset_delete(pid, did):
     return jsonify({"ok": True})
 
 
+# ---------------- 59 项目 GPU 资源与排程 ----------------
+@api_bp.get("/api/projects/<int:pid>/gpu/resources")
+def api_project_gpu_resources(pid):
+    own_project_or_404(pid)
+    return jsonify({
+        "items": db.list_project_gpu_resources(pid, uid=g._auth_user["id"]),
+        "hosts": db.list_project_hosts(pid),
+        "members": db.list_project_members(pid),
+        "idle": db.gpu_idle_candidates(pid),
+    })
+
+
+@api_bp.post("/api/projects/<int:pid>/gpu/resources")
+def api_project_gpu_resource_add(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(silent=True) or {}
+    rid = db.add_project_gpu_resource(
+        pid, d.get("host_id") or 0, d.get("gpu_index") or 0,
+        d.get("name") or "", d.get("memory_mb") or 0, d.get("note") or "",
+        uid=g._auth_user["id"])
+    if not rid:
+        return jsonify({"error": "该服务器上的这个 GPU 编号已登记"}), 400
+    return jsonify({"ok": True, "id": rid})
+
+
+@api_bp.put("/api/projects/<int:pid>/gpu/resources/<int:rid>")
+def api_project_gpu_resource_update(pid, rid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(silent=True) or {}
+    fields = {k: d[k] for k in ("name", "memory_mb", "status", "note", "owner_id") if k in d}
+    if not fields:
+        return jsonify({"error": "没有可更新的字段"}), 400
+    if fields.get("status") not in (None, "active", "maintenance", "offline"):
+        return jsonify({"error": "状态无效"}), 400
+    db.update_project_gpu_resource(rid, pid, fields, uid=g._auth_user["id"])
+    return jsonify({"ok": True})
+
+
+@api_bp.delete("/api/projects/<int:pid>/gpu/resources/<int:rid>")
+def api_project_gpu_resource_delete(pid, rid):
+    own_project_or_404(pid, "write")
+    if not db.delete_project_gpu_resource(rid, pid, uid=g._auth_user["id"]):
+        return jsonify({"error": "还有排队或使用中的日程，不能删除"}), 400
+    return jsonify({"ok": True})
+
+
+@api_bp.get("/api/projects/<int:pid>/gpu/schedule")
+def api_project_gpu_schedule(pid):
+    own_project_or_404(pid)
+    return jsonify({"items": db.list_project_gpu_reservations(pid, uid=g._auth_user["id"])})
+
+
+@api_bp.post("/api/projects/<int:pid>/gpu/schedule")
+def api_project_gpu_schedule_add(pid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(silent=True) or {}
+    try:
+        start, end = float(d.get("start_at")), float(d.get("end_at"))
+    except (TypeError, ValueError):
+        return jsonify({"error": "时间格式无效"}), 400
+    rid = int(d.get("resource_id") or 0)
+    conflicts = db.find_gpu_conflicts(rid, start, end)
+    if conflicts:
+        return jsonify({"error": "该时段已被占用", "conflicts": conflicts}), 409
+    sid = db.add_project_gpu_reservation(
+        pid, rid, start, end, d.get("experiment_id") or 0, d.get("note") or "",
+        uid=g._auth_user["id"])
+    if not sid:
+        return jsonify({"error": "资源不可用或时间无效"}), 400
+    return jsonify({"ok": True, "id": sid})
+
+
+@api_bp.put("/api/projects/<int:pid>/gpu/schedule/<int:sid>")
+def api_project_gpu_schedule_update(pid, sid):
+    own_project_or_404(pid, "write")
+    d = request.get_json(silent=True) or {}
+    fields = {}
+    for k in ("start_at", "end_at"):
+        if k in d:
+            try:
+                fields[k] = float(d[k])
+            except (TypeError, ValueError):
+                return jsonify({"error": "时间格式无效"}), 400
+    for k in ("experiment_id", "note", "resource_id"):
+        if k in d:
+            fields[k] = d[k]
+    if not fields:
+        return jsonify({"error": "没有可更新的字段"}), 400
+    row = db.q1("SELECT resource_id, start_at, end_at FROM project_gpu_reservations "
+                "WHERE id=? AND project_id=?", (sid, pid))
+    if not row:
+        return jsonify({"error": "日程不存在"}), 404
+    rid = int(fields.get("resource_id") or row["resource_id"])
+    start = fields.get("start_at", row["start_at"])
+    end = fields.get("end_at", row["end_at"])
+    conflicts = db.find_gpu_conflicts(rid, start, end, exclude_id=sid)
+    if conflicts:
+        return jsonify({"error": "该时段已被占用", "conflicts": conflicts}), 409
+    db.update_project_gpu_reservation(sid, pid, fields, uid=g._auth_user["id"])
+    return jsonify({"ok": True})
+
+
+@api_bp.delete("/api/projects/<int:pid>/gpu/schedule/<int:sid>")
+def api_project_gpu_schedule_cancel(pid, sid):
+    own_project_or_404(pid, "write")
+    db.cancel_project_gpu_reservation(sid, pid, uid=g._auth_user["id"])
+    return jsonify({"ok": True})
+
+
+@api_bp.post("/api/projects/<int:pid>/gpu/remind")
+def api_project_gpu_remind(pid):
+    own_project_or_404(pid, "write")
+    from core import kaka
+    sent = kaka.notify_idle_gpu(pid, uid=g._auth_user["id"])
+    return jsonify({"ok": True, "sent": sent})
+
+
 # ---------------- 用户管理（管理员） ----------------
 
 def _require_admin():
@@ -2702,6 +3067,96 @@ def api_save_profile():
         profile[key] = value
     db.save_profile(u["id"], profile)
     return jsonify({"ok": True, "profile": profile})
+
+
+_AVATAR_MAX_BYTES = 4 * 1024 * 1024
+_AVATAR_ALLOWED = {"image/png", "image/jpeg", "image/webp"}
+
+
+def _avatar_path(uid):
+    return os.path.join(config.AVATAR_DIR, f"{int(uid)}.png")
+
+
+def _avatar_url(uid, profile=None, token=""):
+    """头像访问地址；带版本号以便上传后浏览器强制刷新。
+    <img> 无法带 Bearer 头，token 链接访问时把 token 附到 query 供鉴权。"""
+    profile = profile if profile is not None else db.get_profile(uid)
+    if not profile.get("avatar"):
+        return ""
+    ver = int(profile.get("avatar_ver") or 0)
+    url = f"/api/avatar/{int(uid)}?v={ver}"
+    if token:
+        url += "&token=" + quote(token)
+    return url
+
+
+@app.get("/api/avatar/<int:uid>")
+def api_avatar(uid):
+    """登录用户可读取头像；<img> 不能带 Bearer，故也接受 query token（由 current_user 支持）。"""
+    if not auth.current_user():
+        abort(404)
+    path = _avatar_path(uid)
+    if not os.path.isfile(path):
+        abort(404)
+    with open(path, "rb") as fh:
+        data = fh.read()
+    resp = Response(data, mimetype="image/png")
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
+
+
+@api_bp.post("/api/profile/avatar")
+def api_upload_avatar():
+    """上传头像：统一裁成正方形 PNG（Pillow 可用时压缩到 256px），存 data/avatars。"""
+    u = auth.current_user()
+    f = request.files.get("file")
+    if not f or not f.filename:
+        return jsonify({"error": "没有收到图片"}), 400
+    mime = (f.mimetype or "").lower()
+    if mime not in _AVATAR_ALLOWED:
+        return jsonify({"error": "仅支持 PNG / JPG / WEBP 图片"}), 400
+    raw = f.read(_AVATAR_MAX_BYTES + 1)
+    if len(raw) > _AVATAR_MAX_BYTES:
+        return jsonify({"error": "图片不能超过 4MB"}), 400
+    try:
+        from PIL import Image, ImageOps
+        import io
+        im = Image.open(io.BytesIO(raw))
+        im.load()
+        im = ImageOps.exif_transpose(im).convert("RGB")
+        # 居中裁剪为正方形，缩放到 256×256
+        side = min(im.size)
+        left = (im.width - side) // 2
+        top = (im.height - side) // 2
+        im = im.crop((left, top, left + side, top + side)).resize((256, 256), Image.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, format="PNG", optimize=True)
+        data = buf.getvalue()
+    except ImportError:
+        data = raw  # 无 Pillow：仅按 MIME 校验后原样保存
+    except Exception:
+        return jsonify({"error": "无法解析这张图片，请换一张"}), 400
+    with open(_avatar_path(u["id"]), "wb") as fh:
+        fh.write(data)
+    profile = db.get_profile(u["id"])
+    profile["avatar"] = True
+    profile["avatar_ver"] = int(profile.get("avatar_ver") or 0) + 1
+    db.save_profile(u["id"], profile)
+    token = request.args.get("token") or request.headers.get("Authorization", "").replace("Bearer ", "")
+    return jsonify({"ok": True, "avatar_url": _avatar_url(u["id"], profile, token=token)})
+
+
+@api_bp.delete("/api/profile/avatar")
+def api_delete_avatar():
+    u = auth.current_user()
+    path = _avatar_path(u["id"])
+    if os.path.isfile(path):
+        os.remove(path)
+    profile = db.get_profile(u["id"])
+    profile["avatar"] = False
+    profile["avatar_ver"] = int(profile.get("avatar_ver") or 0) + 1
+    db.save_profile(u["id"], profile)
+    return jsonify({"ok": True})
 
 
 # ---------------- 注册 Blueprint ----------------

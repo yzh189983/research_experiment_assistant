@@ -202,6 +202,39 @@ td .dim{color:var(--muted);font-size:12px}
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
   .reveal{opacity:1;transform:none}
 }
+
+/* ---------- 侧边栏文档导航 ---------- */
+:root{--nav-w:252px}
+body{padding-left:var(--nav-w)}
+.doc-nav{position:fixed;inset:0 auto 0 0;width:var(--nav-w);z-index:60;display:flex;flex-direction:column;background:rgba(250,252,254,.97);backdrop-filter:blur(12px);border-right:1px solid var(--rule);box-shadow:6px 0 26px rgba(30,45,75,.06)}
+.doc-nav-head{display:flex;align-items:center;padding:20px 18px 14px;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--text)}
+.doc-nav-head::before{content:"";width:10px;height:10px;flex:none;margin-right:9px;border:2px solid var(--accent);border-radius:2px;background:linear-gradient(135deg,var(--accent),var(--cyan))}
+.doc-nav-head small{display:block;font-family:var(--sans);font-size:10.5px;font-weight:400;color:var(--muted);letter-spacing:0;margin-top:2px}
+.doc-nav-scroll{flex:1;overflow-y:auto;padding:12px 10px 28px;scrollbar-width:thin}
+.doc-nav a{display:block;padding:8px 10px;margin:2px 0;border-radius:5px;color:var(--muted);text-decoration:none;font-size:13px;line-height:1.45;border-left:2px solid transparent;transition:.18s}
+.doc-nav a:hover{color:var(--accent);background:rgba(15,122,90,.07)}
+.doc-nav a.active{color:var(--accent);background:rgba(15,122,90,.11);border-left-color:var(--accent);font-weight:600}
+.doc-nav .nav-num{font-family:var(--mono);font-size:10px;color:var(--rule-strong);margin-right:7px}
+.doc-nav a.active .nav-num{color:var(--accent)}
+.doc-nav a.nav-sub{padding-left:19px;font-size:12px;padding-top:5px;padding-bottom:5px}
+.doc-nav-close{display:none;margin-left:auto;border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer}
+.doc-nav-toggle{display:none}
+.doc-mask{display:none}
+.paper section,.paper h3[id]{scroll-margin-top:88px}
+@media(max-width:980px){
+  body{padding-left:0}
+  .doc-nav{width:272px;transform:translateX(-100%);transition:transform .25s ease;box-shadow:8px 0 30px rgba(20,35,60,.18)}
+  body.nav-open .doc-nav{transform:none}
+  .doc-nav-close{display:block}
+  .doc-nav-toggle{display:flex;align-items:center;gap:6px;position:fixed;left:14px;bottom:18px;z-index:70;border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:22px;padding:9px 15px;font-size:12px;cursor:pointer;box-shadow:0 8px 24px rgba(15,122,90,.28)}
+  .doc-mask{display:none;position:fixed;inset:0;background:rgba(15,25,40,.35);z-index:55}
+  body.nav-open .doc-mask{display:block}
+  .paper{padding-left:24px;padding-right:24px}
+}
+@media print{
+  body{padding-left:0}
+  .doc-nav,.doc-mask,.doc-nav-toggle{display:none!important}
+}
 </style>
 </head>
 <body>
@@ -357,11 +390,19 @@ td .dim{color:var(--muted);font-size:12px}
       </div>
       <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="8" width="16" height="12" rx="4"/><path d="M12 4v4M9 14h.01M15 14h.01M9 17h6"/></svg></div>
-        <h3>卡卡智能体</h3><p>右下角的卡卡会眨眼、点头、浮动；实验页工作台按阶段给出阻塞项与下一步，能写实验脚本、盯运行异常、总结结果并播报到项目群。模型可在设置页单独配置，留空则跟随主模型。</p>
+        <h3>卡卡智能体</h3><p>右下角的卡卡会眨眼、点头、浮动；实验页工作台按阶段给出阻塞项与下一步，能写实验脚本、盯运行异常、总结结果并播报到项目群。左下角独立的 SuperAgent 侧边栏按话题管理最近一周会话，可直接问或进入会话内问，过时会话可移入垃圾箱并恢复 / 彻底删除。对话可勾选本次使用的技能（支持从 ClawHub 官方技能市场搜索导入），每条回答都能「看依据」，顶部还有 <code>15K / 128K</code> 式的上下文用量条。模型与上下文窗口可在设置页单独配置。</p>
       </div>
       <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v14H4zM4 10h16M10 10v9"/></svg></div>
         <h3>项目群聊与数据集资产</h3><p>项目详情页新增「讨论 / 数据集」页：成员可发消息，输入 <code>@</code> 自动弹出可提及对象（卡卡 + 成员，支持筛选与键盘选择），<code>@卡卡</code> 查失败原因与进展；输入研究方向即可优先检索 CCF-A / 中科院一区论文，提取数据集并给出文件级下载链接。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/></svg></div>
+        <h3>GPU 排队与资源管理</h3><p>项目详情页「资源 / 排程」页登记成员服务器上的 GPU，团队按时间段排队；run 启动自动占用、结束 / 失败自动释放并回填，重叠时段被拦截。GPU 空闲且无人排队时卡卡在项目群提醒，viewer 只读。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
+        <h3>可配置数据存储</h3><p>业务数据默认存本地 SQLite（零配置）；管理员可在「设置 → 数据存储」一键切换到自建 PostgreSQL / MySQL，也可改 <code>data/config.json</code>。密码加密落盘、页面只显掩码，切换需重启生效；表结构与 SQL 由适配层自动翻译，上层功能不变。</p>
       </div>
       <div class="card">
         <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3l14 9-14 9V3zM5 12h9"/></svg></div>
@@ -525,7 +566,8 @@ td .dim{color:var(--muted);font-size:12px}
           <li><b style="color:var(--accent)">✓ 多 run 统计与显著性检验（已完成）</b>：mean ± std / 95% CI，Welch t 与 Mann-Whitney U 给 p 值</li>
           <li><b style="color:var(--accent)">✓ AI 自审 / 失败诊断（已完成）</b>：六维模拟审稿 + 12 类错误签名诊断卡，结论更稳、排错更快</li>
           <li><b style="color:var(--accent)">✓ AI P0 可信底座（已完成）</b>：五档可信分级 + 逐句证据、5 个回归样例、7 个白名单工具与二次确认审计</li>
-          <li><b style="color:var(--accent)">✓ 卡卡智能体与项目群聊（已完成）</b>：实验前写脚本 / 实验中盯异常 / 实验后总结播报，群内 @卡卡 问答与数据集资产库</li>
+          <li><b style="color:var(--accent)">✓ 卡卡智能体与项目群聊（已完成）</b>：实验前写脚本 / 实验中盯异常 / 实验后总结播报，群内 @卡卡 问答与数据集资产库；技能市场（ClawHub）、RSI 自进化、上下文「看依据」与用量条、SuperAgent 话题路由与会话垃圾箱、项目内 GPU 排队日程表与服务器资源管理</li>
+          <li><b style="color:var(--accent)">✓ 可配置数据存储（已完成）</b>：默认本地 SQLite；管理员在「设置 → 数据存储」或 <code>data/config.json</code> 切换到自建 PostgreSQL / MySQL，密码加密落盘，适配层自动翻译 SQL，切换需重启生效</li>
         </ul>
       </div>
       <div class="rgroup p1">
@@ -602,7 +644,11 @@ td .dim{color:var(--muted);font-size:12px}
   }));
 
   const links = Array.from(document.querySelectorAll('.topbar nav a'));
-  const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const sections = links.map(a => {
+    const href = a.getAttribute('href');
+    if(!href || href.charAt(0) !== '#') return null;
+    try { return document.querySelector(href); } catch (e) { return null; }
+  }).filter(Boolean);
   const toTop = document.getElementById('toTop');
 
   function onScroll() {
@@ -616,6 +662,80 @@ td .dim{color:var(--muted);font-size:12px}
   onScroll();
 
   if (toTop) toTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+</script>
+<script>
+(function initDocNav(){
+  var secs = Array.prototype.slice.call(document.querySelectorAll('.paper section'));
+  if(!secs.length) return;
+  var nav = document.createElement('aside');
+  nav.className = 'doc-nav';
+  nav.setAttribute('aria-label', '文档目录');
+  nav.innerHTML = '<div class="doc-nav-head"><span>目录<small>点击直达功能说明</small></span><button class="doc-nav-close" type="button" aria-label="关闭目录">×</button></div><div class="doc-nav-scroll"></div>';
+  var scroll = nav.querySelector('.doc-nav-scroll');
+  var items = [];
+  secs.forEach(function(sec, i){
+    var h2 = sec.querySelector('.sec-head h2');
+    if(!h2) return;
+    if(!sec.id) sec.id = 'doc-sec-' + (i + 1);
+    var numEl = sec.querySelector('.sec-num');
+    var num = numEl ? numEl.textContent.trim() : String(i + 1);
+    var a = document.createElement('a');
+    a.href = '#' + sec.id;
+    a.innerHTML = '<span class="nav-num">' + num + '</span>';
+    a.appendChild(document.createTextNode(h2.textContent.trim()));
+    scroll.appendChild(a);
+    items.push({el:a, target:sec});
+    Array.prototype.forEach.call(sec.querySelectorAll('h3.sub-h'), function(h3, j){
+      if(!h3.id) h3.id = sec.id + '-sub-' + (j + 1);
+      var sa = document.createElement('a');
+      sa.href = '#' + h3.id;
+      sa.className = 'nav-sub';
+      sa.textContent = h3.textContent.trim();
+      scroll.appendChild(sa);
+      items.push({el:sa, target:h3});
+    });
+  });
+  var mask = document.createElement('div');
+  mask.className = 'doc-mask';
+  var toggle = document.createElement('button');
+  toggle.className = 'doc-nav-toggle';
+  toggle.type = 'button';
+  toggle.textContent = '☰ 目录';
+  document.body.appendChild(mask);
+  document.body.appendChild(nav);
+  document.body.appendChild(toggle);
+  function closeNav(){ document.body.classList.remove('nav-open'); }
+  toggle.addEventListener('click', function(){ document.body.classList.toggle('nav-open'); });
+  mask.addEventListener('click', closeNav);
+  nav.querySelector('.doc-nav-close').addEventListener('click', closeNav);
+  items.forEach(function(it){
+    it.el.addEventListener('click', function(e){
+      e.preventDefault();
+      closeNav();
+      var href = it.el.getAttribute('href');
+      if(history.replaceState) history.replaceState(null, '', href);
+      else location.hash = href;
+      it.target.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  if(!window.IntersectionObserver) return;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(!e.isIntersecting) return;
+      var active = null;
+      items.forEach(function(it){
+        var on = it.target === e.target;
+        it.el.classList.toggle('active', on);
+        if(on) active = it.el;
+      });
+      if(active){
+        var ar = active.getBoundingClientRect(), sr = scroll.getBoundingClientRect();
+        scroll.scrollTop += (ar.top - sr.top) - scroll.clientHeight / 2;
+      }
+    });
+  }, {rootMargin:'-12% 0px -72% 0px', threshold:0});
+  items.forEach(function(it){ obs.observe(it.target); });
 })();
 </script>
 </body>

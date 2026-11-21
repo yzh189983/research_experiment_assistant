@@ -14,7 +14,11 @@
   </div>
 
   <section class="card profile-summary-card">
-    <div class="profile-avatar large">{{ (profile.name or current_user.username)[0] }}</div>
+    <div data-avatar-slot="summary">{% if avatar_url %}
+      <img class="profile-avatar large profile-avatar-img" src="{{ avatar_url }}" alt="头像">
+    {% else %}
+      <div class="profile-avatar large">{{ (profile.name or current_user.username)[0] }}</div>
+    {% endif %}</div>
     <div class="profile-summary-main">
       <div class="profile-summary-name">{{ profile.name or current_user.username }}</div>
       <div class="muted tiny">{{ profile.title or '科研工作者' }} {% if profile.affiliation %}· {{ profile.affiliation }}{% endif %}</div>
@@ -39,6 +43,33 @@
   </div>
 
   <div class="work-grid">
+    <section class="card work-card" data-work-card="avatar">
+      <div class="sec-head">
+        <div class="sec-title">头像</div>
+        <span class="tiny muted">显示在导航栏与个人主页</span>
+        <button class="work-toggle" data-work-toggle="avatar" aria-expanded="false">更换 →</button>
+      </div>
+      <div class="work-preview">
+        <span class="preview-tag">AVATAR</span>
+        {% if avatar_url %}已设置头像 · 点开可更换或移除{% else %}还没上传头像，导航栏显示姓名首字{% endif %}
+      </div>
+      <div class="work-body" data-work-body="avatar" style="display:none">
+        <div class="card-pad profile-avatar-editor">
+          <div class="avatar-preview" data-avatar-slot="editor">{% if avatar_url %}
+              <img class="profile-avatar large profile-avatar-img" src="{{ avatar_url }}" alt="头像预览">
+            {% else %}
+              <div class="profile-avatar large">{{ (profile.name or current_user.username)[0] }}</div>
+            {% endif %}</div>
+          <div class="avatar-controls">
+            <label class="btn sm accent" for="avatar-file">选择图片…</label>
+            <input type="file" id="avatar-file" accept="image/png,image/jpeg,image/webp" style="display:none">
+            <div class="tiny faint">支持 PNG / JPG / WEBP，不超过 4MB；会自动裁成正方形并压缩。</div>
+            {% if avatar_url %}<button class="btn ghost sm" id="btn-avatar-remove" type="button">移除头像</button>{% endif %}
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="card work-card" data-work-card="card">
       <div class="sec-head">
         <div class="sec-title">名片</div>
@@ -180,7 +211,7 @@ function setProfileOpen(name, open) {
   if (!card || !body || !btn) return;
   card.classList.toggle('open', open);
   body.style.display = open ? '' : 'none';
-  btn.textContent = open ? '收起 ↑' : ({ card: '查看 →', edit: '编辑 →', security: '修改 →' }[name] || '查看 →');
+  btn.textContent = open ? '收起 ↑' : ({ avatar: '更换 →', card: '查看 →', edit: '编辑 →', security: '修改 →' }[name] || '查看 →');
   btn.setAttribute('aria-expanded', open ? 'true' : 'false');
 }
 document.querySelectorAll('[data-work-toggle]').forEach(btn => {
@@ -207,6 +238,72 @@ const profileIds = {
   email: 'pf-email', orcid: 'pf-orcid', scholar: 'pf-scholar',
   github: 'pf-github', website: 'pf-website',
 };
+
+const PROFILE_INITIAL = {{ (profile.name or current_user.username)[0] | tojson }};
+const NAV_INITIAL = {{ (current_user.username)[0] | tojson }};
+const URL_TOKEN = new URLSearchParams(location.search).get('token') || '';
+const authHdr = () => URL_TOKEN ? { 'Authorization': 'Bearer ' + URL_TOKEN } : {};
+
+function applyAvatar(url) {
+  // url 为空表示移除
+  const big = (slot, cls, initial) => {
+    const box = document.querySelector(`[data-avatar-slot="${slot}"]`);
+    if (!box) return;
+    box.innerHTML = url
+      ? `<img class="${cls} profile-avatar-img" src="${esc(url)}" alt="头像">`
+      : `<div class="${cls}">${esc(initial)}</div>`;
+  };
+  big('summary', 'profile-avatar large', PROFILE_INITIAL);
+  big('editor', 'profile-avatar large', PROFILE_INITIAL);
+  const nav = document.querySelector('[data-avatar-slot="nav"]');
+  if (nav) nav.innerHTML = url
+    ? `<img class="nav-avatar" src="${esc(url)}" alt="头像">`
+    : `<span class="nav-avatar nav-avatar-fallback">${esc(NAV_INITIAL)}</span>`;
+  const previewTag = document.querySelector('[data-work-card="avatar"] .work-preview');
+  if (previewTag) previewTag.innerHTML = '<span class="preview-tag">AVATAR</span>' + (url ? '已设置头像 · 点开可更换或移除' : '还没上传头像，导航栏显示姓名首字');
+  const rm = document.getElementById('btn-avatar-remove');
+  if (url && !rm) {
+    const btn = document.createElement('button');
+    btn.className = 'btn ghost sm'; btn.id = 'btn-avatar-remove'; btn.type = 'button';
+    btn.textContent = '移除头像';
+    btn.onclick = removeAvatar;
+    const controls = document.querySelector('.avatar-controls');
+    if (controls) controls.appendChild(btn);
+  } else if (!url && rm) {
+    rm.remove();
+  }
+}
+
+const avatarFile = document.getElementById('avatar-file');
+if (avatarFile) avatarFile.onchange = async () => {
+  const file = avatarFile.files && avatarFile.files[0];
+  if (!file) return;
+  if (!/^image\/(png|jpeg|webp)$/i.test(file.type)) { toast('只支持 PNG / JPG / WEBP 图片', true); return; }
+  if (file.size > 4 * 1024 * 1024) { toast('图片不能超过 4MB', true); return; }
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const r = await fetch('/api/profile/avatar', { method: 'POST', body: fd, headers: authHdr() });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '上传失败');
+    applyAvatar(d.avatar_url);
+    toast('头像已更新');
+  } catch (e) { toast(e.message, true); }
+  avatarFile.value = '';
+};
+
+async function removeAvatar() {
+  if (!confirm('确定移除头像？')) return;
+  try {
+    const r = await fetch('/api/profile/avatar', { method: 'DELETE', headers: authHdr() });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || '移除失败');
+    applyAvatar('');
+    toast('头像已移除');
+  } catch (e) { toast(e.message, true); }
+}
+const btnAvatarRemove = document.getElementById('btn-avatar-remove');
+if (btnAvatarRemove) btnAvatarRemove.onclick = removeAvatar;
 
 document.getElementById('btn-save-profile').onclick = async () => {
   const body = {};
